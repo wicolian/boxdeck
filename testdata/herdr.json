@@ -1,0 +1,17 @@
+{
+  "id": "cli:api:snapshot",
+  "result": {
+    "type": "session_snapshot",
+    "snapshot": {
+      "version": "0.9.0", "protocol": 22,
+      "workspaces": [{"workspace_id":"w1","label":"demo","tab_count":2,"pane_count":2,"focused":true}],
+      "tabs": [{"workspace_id":"w1","tab_id":"w1:t1","label":"work","pane_count":1}],
+      "panes": [{"workspace_id":"w1","tab_id":"w1:t1","pane_id":"w1:p1","agent":"claude"}],
+      "layouts": [],
+      "agents": [
+        {"agent":"claude","agent_status":"working","cwd":"/home/demo/project","pane_id":"w1:p1","tab_id":"w1:t1","workspace_id":"w1","terminal_id":"term_1","terminal_title_stripped":"Fix login","tokens":{"context":"⛁ 25% (245k)","limit":"5h 88%","cache_high":"cache hit 98.6%"}},
+        {"agent":"codex","agent_status":"idle","cwd":"/home/demo/project","pane_id":"w1:p2","tab_id":"w1:t2","workspace_id":"w1","terminal_title_stripped":"Review migration"}
+      ]
+    }
+  }
+}
