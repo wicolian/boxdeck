@@ -176,6 +176,13 @@ response includes `source` and `needsYou`. Key values are `Enter`, `y`, `n`,
 
 ## Browser and CDP
 
+Security notes for the CDP tunnel: `/cdp/` accepts `?token=` because CDP clients cannot set
+headers. That token is a long-lived bearer token, so it can land in a proxy or shell log; use a
+token you can revoke (`boxdeck token revoke PREFIX`) and never put the deck behind a logging
+proxy that keeps query strings. Every WebSocket upgrade (terminal, screencast, CDP) also checks
+the browser's `Origin` against the deck host, so a cookie session on another site cannot hijack
+them.
+
 Boxdeck manages one Chromium or Chrome process per box. It uses a persistent
 profile at `~/.local/share/boxdeck/browser`, reads the debugging port from the
 browser output, and exposes the page list from `/json/list`.
