@@ -19,14 +19,16 @@ targets:
         SWIFT_VERSION: "5.10"
         CODE_SIGNING_ALLOWED: NO
     info:
-      CFBundleDisplayName: Boxdeck
-      CFBundleURLTypes:
-        - CFBundleURLSchemes:
-            - boxdeck
-      NSCameraUsageDescription: Scan a Boxdeck pairing QR code.
-      UIBackgroundModes:
-        - fetch
-        - remote-notification
+      path: Boxdeck/Info.plist
+      properties:
+        CFBundleDisplayName: Boxdeck
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - boxdeck
+        NSCameraUsageDescription: Scan a Boxdeck pairing QR code.
+        UIBackgroundModes:
+          - fetch
+          - remote-notification
     scheme:
       testTargets: []
   BoxdeckWatch:
