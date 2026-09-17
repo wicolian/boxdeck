@@ -1,0 +1,7 @@
+{
+  "id": "files",
+  "name": "Files",
+  "tag": "box files",
+  "open": {"path": "#/files", "embed": true},
+  "docs": "https://github.com/wicolian/boxdeck"
+}

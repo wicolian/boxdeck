@@ -1,0 +1,10 @@
+{
+  "id": "ollama",
+  "name": "Ollama",
+  "tag": "local models",
+  "detect": {"bin": "ollama", "port": 11434},
+  "install": {"hint": "Install Ollama on the box", "url": "https://ollama.com/download"},
+  "open": {"url": "http://{host}:11434", "embed": false},
+  "health": {"http": "http://127.0.0.1:11434/"},
+  "docs": "https://github.com/ollama/ollama"
+}

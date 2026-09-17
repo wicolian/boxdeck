@@ -1,0 +1,10 @@
+{
+  "id": "syncthing",
+  "name": "Syncthing",
+  "tag": "folder sync",
+  "detect": {"bin": "syncthing", "port": 8384},
+  "install": {"hint": "Install Syncthing on the box", "url": "https://syncthing.net/downloads/"},
+  "open": {"url": "http://{host}:8384", "embed": false},
+  "health": {"http": "http://127.0.0.1:8384/"},
+  "docs": "https://docs.syncthing.net/"
+}

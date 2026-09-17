@@ -1,0 +1,12 @@
+{
+  "id": "code-server",
+  "name": "code-server",
+  "tag": "browser IDE",
+  "detect": {"bin": "code-server"},
+  "install": {"hint": "Install code-server on the box", "url": "https://github.com/coder/code-server"},
+  "start": {"cmd": ["code-server", "--bind-addr", "127.0.0.1:{port}", "--auth", "none"], "port": 0},
+  "stop": "signal",
+  "open": {"url": "http://{host}:{port}", "embed": true},
+  "health": {"http": "http://127.0.0.1:{port}/"},
+  "docs": "https://coder.com/docs/code-server"
+}

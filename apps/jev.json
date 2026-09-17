@@ -1,0 +1,12 @@
+{
+  "id": "jev",
+  "name": "Jev",
+  "tag": "browser workspace",
+  "detect": {"bin": "jev-ui"},
+  "install": {"hint": "Install jev-ui on the box", "url": "https://github.com/williamcotton/jev"},
+  "start": {"cmd": ["jev-ui", "--host", "127.0.0.1", "--port", "{port}"], "port": 8766},
+  "stop": "signal",
+  "open": {"url": "http://{host}:{port}", "embed": true},
+  "health": {"http": "http://127.0.0.1:{port}/"},
+  "docs": "https://github.com/williamcotton/jev"
+}

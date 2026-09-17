@@ -1,0 +1,12 @@
+{
+  "id": "t3code",
+  "name": "T3 Code",
+  "tag": "agent harness",
+  "detect": {"bin": "t3"},
+  "install": {"hint": "curl -fsSL https://t3.codes/install.sh | sh", "url": "https://t3.codes"},
+  "start": {"cmd": ["t3", "serve", "--host", "127.0.0.1", "--port", "{port}"], "port": 3773},
+  "stop": "signal",
+  "open": {"url": "http://{host}:{port}", "embed": false},
+  "health": {"http": "http://127.0.0.1:{port}/"},
+  "docs": "https://github.com/pingdotgg/t3code"
+}

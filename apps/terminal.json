@@ -1,0 +1,7 @@
+{
+  "id": "terminal",
+  "name": "Terminal",
+  "tag": "tmux shell",
+  "open": {"path": "#/terminal", "embed": true},
+  "docs": "https://github.com/tsl0922/ttyd"
+}

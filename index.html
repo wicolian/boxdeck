@@ -46,6 +46,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 @media(max-width:760px){.files-mobile-tabs{display:flex;gap:6px;margin-bottom:10px}.files-mobile-tabs button{flex:1}.files-layout{display:block;min-height:0}.files-layout[data-mode="tree"] .files-editor{display:none}.files-layout[data-mode="editor"] .files-tree{display:none}.files-editor,.files-tree{min-height:560px}.editor-shell,.editor-preview{height:480px}.file-tree-list{height:500px}.git-layout{display:block;min-height:0}.git-repos{margin-bottom:12px}.git-repo-list{max-height:180px}.git-worktree{grid-template-columns:minmax(0,1fr) auto;gap:8px}.git-worktree .git-worktree-branch{grid-column:1}.git-worktree a{grid-column:2;grid-row:1 / span 2}.git-change{grid-template-columns:26px minmax(0,1fr)}.git-change-actions{grid-column:2}.git-change-actions button{min-height:44px}.git-graph-row{grid-template-columns:62px 1fr}.git-lane{width:58px}}
 </style>
 <link rel="stylesheet" href="views-net.css">
+<link rel="stylesheet" href="/assets/views-apps.css">
 </head>
 <body>
 <aside class="rail" aria-label="Main navigation"><a class="brand" href="#/overview" aria-label="Boxdeck overview"><span class="lamp"></span><span class="brand-name">boxdeck</span></a><nav id="rail-nav"></nav><div class="rail-bottom"><button id="rail-toggle" title="Collapse navigation" aria-label="Collapse navigation"><span class="nav-label">Collapse</span><span aria-hidden="true">‹</span></button><form method="post" action="/logout"><button title="Sign out"><span aria-hidden="true">↪</span><span class="nav-label">Sign out</span></button></form></div></aside>
@@ -250,5 +251,6 @@ window.addEventListener('hashchange',route);document.addEventListener('visibilit
 route();connectStream();refresh();loadSettings();setInterval(refresh,5000);setInterval(()=>{if(document.hidden)return;if(current==='processes')loadProcesses();if(current==='boxes')loadBoxes();if(lastMetric&&Date.now()-lastMetric>4000){$('live-status').classList.add('stale');text('live-status-text','Reconnecting');}},3000);
 </script>
 <script src="views-net.js"></script>
+<script src="/assets/views-apps.js"></script>
 </body>
 </html>

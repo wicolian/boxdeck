@@ -1,0 +1,9 @@
+{
+  "id": "herdr",
+  "name": "herdr",
+  "tag": "agent orchestration",
+  "detect": {"bin": "herdr"},
+  "install": {"hint": "Install herdr and start it on the box", "url": "https://github.com/herdrdev/herdr"},
+  "open": {"path": "#/terminal", "embed": true},
+  "docs": "https://github.com/herdrdev/herdr"
+}

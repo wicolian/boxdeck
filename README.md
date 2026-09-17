@@ -74,12 +74,22 @@ from 3 to 30 seconds after 15 seconds without a poll.
 ## Navigate the console
 
 Use the collapsible left rail for Overview, Ports, Processes, Agents, Herd,
-Browser, Network, Terminal, Files, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
-
-Use the collapsible left rail for Overview, Ports, Processes, Agents, Terminal,
-Files, Git, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
+Browser, Network, Terminal, Apps, Files, Git, Docker, Boxes and Settings.
+Routes use hashes, such as `#/processes`, so
 changing views keeps the page and stream alive. On phones, four direct links and
 More form a five-item bottom bar. More opens the remaining views.
+
+Apps is the catalog of tools that run on the box. Built-ins include Terminal,
+Files, Chromium, T3 Code, herdr, Jev, code-server, File Browser, Ollama and
+Syncthing. Each card shows whether its tool is running, detected, or missing;
+managed tools have Start, Stop, Restart, Open and Log actions. Add a JSON recipe
+to `~/.config/boxdeck/apps` and choose Reload recipes, or use the `apps` array
+in the config. See [apps/README.md](apps/README.md).
+
+![Apps grid on desktop](./captures/apps/apps-grid-desktop.png)
+![Apps grid on a phone](./captures/apps/apps-grid-phone.png)
+![Apps log drawer](./captures/apps/apps-log-drawer.png)
+![Apps strip on Overview](./captures/apps/apps-overview-strip.png)
 
 Each board has a filter with a clear action when nothing matches. Ports, Processes,
 Agents and Docker also have sort controls. Terminal fills the view. Files has a
