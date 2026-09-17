@@ -66,20 +66,25 @@ boxdeck usage --days 7 --table
 boxdeck usage --days 30 --json
 ```
 
-Example local table output from the 8103 QA device:
+How the estimate is made:
 
-```text
-PROVIDER	TODAY TOKENS	TODAY COST	SESSIONS
-claude	515654016	$0.0000	355
-codex	1454275508	$636.2414	160
-estimate at list price
-```
+- Prices are the providers' own list prices (platform.claude.com and developers.openai.com),
+  per million tokens, for input, cached input, cache write and output. Cached input is priced
+  at the cache read rate, never at the input rate.
+- Codex: a session's `input_tokens` includes its cached reads and cache writes, so the uncached
+  part is what is left after both. Each turn is billed on its own: a turn with more than
+  272k input tokens gets the long context rate, and the thread's service tier applies as a
+  multiplier (`flex` 0.5, `fast` 2, `priority` 2). Rows are keyed `model@tier+long` so you can see
+  which tier a cost came from.
+- Claude: tokens are already split by the API into input, cache write, cache read and output.
+  Claude subscriptions do not bill per token; the number is what the same usage would cost on the
+  API, which is the only honest comparison across devices.
+- Every response carries `device`, the box's name, so a fleet roll-up says which machine spent what.
 
-Pricing defaults cover the model names recognized by this build. Override one
-with the config shape below, using USD per million tokens:
+Override any price or tier multiplier in the config, USD per million tokens:
 
 ```json
-{"pricing":{"model":{"gpt-6-astra":{"in":10,"cachedIn":1,"cacheWrite":12.5,"out":50}}}}
+{"pricing":{"model":{"gpt-6-astra":{"in":10,"cachedIn":1,"cacheWrite":12.5,"out":50}},"tiers":{"flex":0.5}}}
 ```
 
 ![Usage view on desktop](./captures/usage-desktop.png)

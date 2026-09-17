@@ -39,7 +39,7 @@ func TestUsageScannerRollsUpClaudeAndCodexSessions(t *testing.T) {
 		t.Fatalf("deduped claude day = %+v", day)
 	}
 	codexDay := store.Days["codex|2026-09-17"]
-	if codexDay.Tokens.In != 500 || codexDay.Tokens.CachedIn != 100 || codexDay.Tokens.CacheWrite != 25 || codexDay.Tokens.Out != 200 || codexDay.Sessions != 1 {
+	if codexDay.Tokens.In != 375 || codexDay.Tokens.CachedIn != 100 || codexDay.Tokens.CacheWrite != 25 || codexDay.Tokens.Out != 200 || codexDay.Sessions != 1 {
 		t.Fatalf("codex day = %+v", codexDay)
 	}
 	if store.CodexQuota.Primary.Pct != 42 || store.CodexQuota.Secondary.Pct != 11 {
@@ -60,7 +60,7 @@ func TestUsageScannerReplacesGrowingFileWithoutDoubleCounting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := first.Days["codex|2026-09-17"].Tokens; got.In != 7 || got.CachedIn != 2 || got.Out != 3 {
+	if got := first.Days["codex|2026-09-17"].Tokens; got.In != 5 || got.CachedIn != 2 || got.Out != 3 {
 		t.Fatalf("first scan = %+v", got)
 	}
 	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
@@ -76,7 +76,7 @@ func TestUsageScannerReplacesGrowingFileWithoutDoubleCounting(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := second.Days["codex|2026-09-17"].Tokens
-	if got.In != 17 || got.CachedIn != 4 || got.Out != 9 {
+	if got.In != 13 || got.CachedIn != 4 || got.Out != 9 {
 		t.Fatalf("growing scan = %+v", got)
 	}
 }

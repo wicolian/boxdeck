@@ -24,6 +24,14 @@ type tokenTotals struct {
 	Out        int64 `json:"out"`
 }
 
+func (t tokenTotals) plus(other tokenTotals) tokenTotals {
+	t.In += other.In
+	t.CachedIn += other.CachedIn
+	t.CacheWrite += other.CacheWrite
+	t.Out += other.Out
+	return t
+}
+
 func (t *tokenTotals) add(other tokenTotals) {
 	t.In += other.In
 	t.CachedIn += other.CachedIn
@@ -181,6 +189,9 @@ type usageService struct {
 }
 
 func newUsageService(cfg config) *usageService {
+	if cfg.Host != "" {
+		configuredDevice = cfg.Host
+	}
 	path := filepath.Join(cfg.home, ".local", "share", "boxdeck", "usage.json")
 	store, err := loadUsageStore(path)
 	if err != nil {
@@ -478,6 +489,9 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 		}
 	} else {
 		model := ""
+		tier := ""
+		var prevTotal tokenTotals
+		turns := map[string]tokenTotals{}
 		var latest usageEvent
 		var latestAt time.Time
 		var latestQuota codexQuota
@@ -491,15 +505,24 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 				continue
 			}
 			var payload struct {
-				Model string `json:"model"`
-				Type  string `json:"type"`
-				Info  struct {
+				Model       string `json:"model"`
+				ServiceTier string `json:"service_tier"`
+				Type        string `json:"type"`
+				// Codex records the tier once per thread, in a thread settings event.
+				ThreadSettings struct {
+					ServiceTier string `json:"service_tier"`
+					Model       string `json:"model"`
+				} `json:"thread_settings"`
+				Info struct {
 					Total struct {
 						In         int64 `json:"input_tokens"`
 						CachedIn   int64 `json:"cached_input_tokens"`
 						CacheWrite int64 `json:"cache_write_input_tokens"`
 						Out        int64 `json:"output_tokens"`
 					} `json:"total_token_usage"`
+					Last struct {
+						In int64 `json:"input_tokens"`
+					} `json:"last_token_usage"`
 				} `json:"info"`
 				RateLimits map[string]struct {
 					UsedPercent float64 `json:"used_percent"`
@@ -512,6 +535,15 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 			if payload.Model != "" {
 				model = cleanModel(payload.Model)
 			}
+			if payload.ServiceTier != "" && payload.ServiceTier != "default" {
+				tier = payload.ServiceTier
+			}
+			if payload.ThreadSettings.ServiceTier != "" && payload.ThreadSettings.ServiceTier != "default" {
+				tier = payload.ThreadSettings.ServiceTier
+			}
+			if payload.ThreadSettings.Model != "" {
+				model = cleanModel(payload.ThreadSettings.Model)
+			}
 			if raw.Type != "event_msg" || payload.Type != "token_count" {
 				continue
 			}
@@ -521,7 +553,29 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 			}
 			if when.After(latestAt) || latestAt.IsZero() {
 				latestAt = when
-				latest = usageEvent{Model: model, Timestamp: when, Tokens: tokenTotals{In: payload.Info.Total.In, CachedIn: payload.Info.Total.CachedIn, CacheWrite: payload.Info.Total.CacheWrite, Out: payload.Info.Total.Out}}
+				// Codex input_tokens is the whole prompt: cached reads and cache writes are
+				// subsets of it, so the uncached part is what is left after both.
+				total := tokenTotals{In: payload.Info.Total.In - payload.Info.Total.CachedIn - payload.Info.Total.CacheWrite, CachedIn: payload.Info.Total.CachedIn, CacheWrite: payload.Info.Total.CacheWrite, Out: payload.Info.Total.Out}
+				if total.In < 0 {
+					total.In = 0
+				}
+				// Per turn: the delta since the previous token_count, billed at the long
+				// context rate when this turn's input crossed the threshold, and at the
+				// session's service tier.
+				delta := tokenTotals{In: total.In - prevTotal.In, CachedIn: total.CachedIn - prevTotal.CachedIn, CacheWrite: total.CacheWrite - prevTotal.CacheWrite, Out: total.Out - prevTotal.Out}
+				if delta.In < 0 || delta.CachedIn < 0 || delta.CacheWrite < 0 || delta.Out < 0 {
+					delta = total // the counter reset (new thread); count the whole thing once
+				}
+				prevTotal = total
+				key := model
+				if tier != "" {
+					key += "@" + tier
+				}
+				if payload.Info.Last.In > longContextTokens {
+					key += "+long"
+				}
+				turns[key] = turns[key].plus(delta)
+				latest = usageEvent{Model: model, Timestamp: when, Tokens: total}
 				for name, window := range payload.RateLimits {
 					reset := ""
 					if window.ResetsAt > 0 {
@@ -542,7 +596,11 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 			return file, err
 		}
 		if !latestAt.IsZero() {
-			file.Events = []usageEvent{latest}
+			file.Events = nil
+			for key, tokens := range turns {
+				file.Events = append(file.Events, usageEvent{Model: key, Timestamp: latest.Timestamp, Tokens: tokens})
+			}
+			sort.Slice(file.Events, func(i, j int) bool { return file.Events[i].Model < file.Events[j].Model })
 			file.CodexQuota = latestQuota
 			file.QuotaAt = latestAt
 		}
@@ -573,6 +631,9 @@ func rebuildDays(store *usageStore, pricing pricingConfig, now time.Time) {
 			store.CodexQuotaAt = file.QuotaAt
 		}
 		for _, event := range file.Events {
+			if event.Tokens.In == 0 && event.Tokens.CachedIn == 0 && event.Tokens.CacheWrite == 0 && event.Tokens.Out == 0 {
+				continue // synthetic or empty messages carry no usage and would only add noise rows
+			}
 			day := event.Timestamp.UTC().Format("2006-01-02")
 			key := file.Provider + "|" + day
 			row := store.Days[key]
@@ -677,7 +738,7 @@ func snapshotFromStore(store usageStore, days int, now time.Time) usageResponse 
 	if updated.IsZero() {
 		updated = now
 	}
-	return usageResponse{Providers: providers, Device: "box", UpdatedAt: updated.UTC().Format(time.RFC3339)}
+	return usageResponse{Providers: providers, Device: deviceName(), UpdatedAt: updated.UTC().Format(time.RFC3339)}
 }
 
 func countSessions(files map[string]usageFile, provider string, since, until time.Time) int {
@@ -762,4 +823,18 @@ func appendQuotaSample(history []quotaSample, provider, window string, quota quo
 		}
 	}
 	return append(history, quotaSample{Provider: provider, Window: window, Pct: quota.Pct, ResetsAt: quota.ResetsAt, At: now.UTC()})
+}
+
+// deviceName is what this machine calls itself in usage output: the configured host name when
+// boxdeck runs as a server, else the OS hostname (the standalone "boxdeck usage" case).
+var configuredDevice string
+
+func deviceName() string {
+	if configuredDevice != "" {
+		return configuredDevice
+	}
+	if h, err := os.Hostname(); err == nil && h != "" {
+		return h
+	}
+	return "this device"
 }
