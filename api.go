@@ -198,6 +198,11 @@ func (a *app) apiFiles(w http.ResponseWriter, r *http.Request) {
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
+	// The API is a data channel for agents, never a place to render a page: active
+	// content is sent as a download inside a sandbox so a hostile file in the home
+	// folder cannot run with the deck's cookie.
+	w.Header().Set("Content-Security-Policy", "sandbox; default-src 'none'")
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+strings.ReplaceAll(filepath.Base(abs), "\"", "")+"\"")
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", strconv.FormatInt(st.Size(), 10))
 	_, _ = io.CopyN(w, f, st.Size())
