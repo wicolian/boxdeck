@@ -47,11 +47,13 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 </style>
 <link rel="stylesheet" href="views-net.css">
 <link rel="stylesheet" href="/assets/views-apps.css">
+<link rel="stylesheet" href="/assets/alerts.css?v=1">
 </head>
 <body>
 <aside class="rail" aria-label="Main navigation"><a class="brand" href="#/overview" aria-label="Boxdeck overview"><span class="lamp"></span><span class="brand-name">boxdeck</span></a><nav id="rail-nav"></nav><div class="rail-bottom"><button id="rail-toggle" title="Collapse navigation" aria-label="Collapse navigation"><span class="nav-label">Collapse</span><span aria-hidden="true">‹</span></button><form method="post" action="/logout"><button title="Sign out"><span aria-hidden="true">↪</span><span class="nav-label">Sign out</span></button></form></div></aside>
 <main>
-<header class="mast"><div class="context"><h1 id="view-title" tabindex="-1">Overview</h1><span class="host" id="host">Connecting</span></div><div class="mast-actions"><div class="quota-pills" id="quota-pills" aria-label="Agent quotas"></div><span id="live-status" class="live-label stale"><span class="lamp"></span><span id="live-status-text">Connecting</span></span><button class="shortcut-hint" id="help-open" aria-label="Keyboard shortcuts" title="Keyboard shortcuts">?</button></div></header>
+<header class="mast"><div class="context"><h1 id="view-title" tabindex="-1">Overview</h1><span class="host" id="host">Connecting</span></div><div class="mast-actions"><div class="quota-pills" id="quota-pills" aria-label="Agent quotas"></div><a id="alert-masthead" class="alert-masthead" href="#/alerts" hidden></a><span id="live-status" class="live-label stale"><span class="lamp"></span><span id="live-status-text">Connecting</span></span><button class="shortcut-hint" id="help-open" aria-label="Keyboard shortcuts" title="Keyboard shortcuts">?</button></div></header>
+<div id="overview-alert-line" class="overview-alert-line" hidden></div>
 <p id="connection" class="notice" role="status"></p>
 <div id="overview-quick" class="quick"></div>
 <div class="live-band" id="live-band" aria-label="Live machine health">
@@ -252,5 +254,6 @@ route();connectStream();refresh();loadSettings();setInterval(refresh,5000);setIn
 </script>
 <script src="views-net.js"></script>
 <script src="/assets/views-apps.js"></script>
+<script src="/assets/alerts.js?v=1"></script>
 </body>
 </html>

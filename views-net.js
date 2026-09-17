@@ -57,8 +57,9 @@
     link.title = label;
     link.innerHTML = netNavIcon(id) + `<span class="nav-label">${escn(label)}</span>`;
     const docker = rail && rail.querySelector('[data-nav="docker"]');
+    const agents = rail && rail.querySelector('[data-nav="agents"]');
     const boxes = rail && rail.querySelector('[data-nav="boxes"]');
-    if (rail) rail.insertBefore(link, boxes || (docker ? docker.nextSibling : null));
+    if (rail) rail.insertBefore(link, id === 'alerts' && agents ? agents.nextSibling : (boxes || (docker ? docker.nextSibling : null)));
     const more = document.getElementById('more-nav');
     if (more) {
       const moreLink = document.createElement('a');

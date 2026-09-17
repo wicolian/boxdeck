@@ -101,6 +101,19 @@ func TestBuildMenuModelFromFixture(t *testing.T) {
 	}
 }
 
+func TestBuildMenuShowsNeedsYouAlertsAndEscalatesIcon(t *testing.T) {
+	model := BuildMenu([]BoxSnapshot{{Name: "box", URL: "http://box:8100", Token: "token", OK: true, Alerts: []Alert{{ID: "a1", Title: "Approve", Severity: "critical", State: "open", Link: "#/agents?pane=qa", Actions: []AlertAction{{Label: "Approve", Method: "POST", Path: "/api/herd/keys", Body: map[string]any{"pane": "qa", "keys": "Enter"}}}}}}})
+	if model.IconState != IconRust || len(model.Needs) != 1 {
+		t.Fatalf("alert menu model = %+v", model)
+	}
+	if model.Needs[0].ActionLabel != "Approve" || model.Needs[0].Token != "token" {
+		t.Fatalf("alert action = %+v", model.Needs[0])
+	}
+	if !strings.Contains(RenderText(model), "Needs you") || !strings.Contains(RenderText(model), "Approve") {
+		t.Fatalf("alert menu text = %s", RenderText(model))
+	}
+}
+
 func TestMenuModelUnreachableAndDiscovered(t *testing.T) {
 	model := BuildMenu([]BoxSnapshot{
 		{Name: "down", URL: "http://down:8100", Since: "2026-09-17T22:05:00Z"},

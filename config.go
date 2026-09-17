@@ -51,34 +51,43 @@ func (s *shortcut) UnmarshalJSON(b []byte) error {
 func (s shortcut) MarshalJSON() ([]byte, error) { return json.Marshal([2]any{s.Name, s.Port}) }
 
 type config struct {
-	Port         portNumber        `json:"port"`
-	Bind         string            `json:"bind"`
-	Host         string            `json:"host"`
-	User         string            `json:"user"`
-	Password     string            `json:"password"`
-	FilesPort    portNumber        `json:"filesPort"`
-	FilesRoot    string            `json:"filesRoot"`
-	FilesAuth    bool              `json:"filesAuth"` // Accepted for migration; the unified origin always authenticates.
-	TTYDPort     portNumber        `json:"ttydPort"`
-	Terminal     bool              `json:"terminal"`
-	Known        map[string]string `json:"known"`
-	Hide         []portNumber      `json:"hide"`
-	Quick        []shortcut        `json:"quick"`
-	ReportRoots  []string          `json:"reportRoots"`
-	RepoRoots    []string          `json:"repoRoots"`
-	ReportDays   int               `json:"reportDays"`
-	AgentPattern string            `json:"agentPattern"`
-	Title        string            `json:"title"`
-	Mirror       any               `json:"mirror"`
-	MirrorBind   string            `json:"mirrorBind"`
-	Tokens       []string          `json:"tokens"`
-	FleetToken   string            `json:"fleetToken"`
-	Boxes        []boxConfig       `json:"boxes"`
-	AllowRun     bool              `json:"allowRun"`
-	Pricing      pricingConfig     `json:"pricing"`
-	Apps         []appRecipe       `json:"apps"`
-	home, path   string
-	agentRE      *regexp.Regexp
+	Port               portNumber        `json:"port"`
+	Bind               string            `json:"bind"`
+	Host               string            `json:"host"`
+	User               string            `json:"user"`
+	Password           string            `json:"password"`
+	FilesPort          portNumber        `json:"filesPort"`
+	FilesRoot          string            `json:"filesRoot"`
+	FilesAuth          bool              `json:"filesAuth"` // Accepted for migration; the unified origin always authenticates.
+	TTYDPort           portNumber        `json:"ttydPort"`
+	Terminal           bool              `json:"terminal"`
+	Known              map[string]string `json:"known"`
+	Hide               []portNumber      `json:"hide"`
+	Quick              []shortcut        `json:"quick"`
+	ReportRoots        []string          `json:"reportRoots"`
+	RepoRoots          []string          `json:"repoRoots"`
+	ReportDays         int               `json:"reportDays"`
+	AgentPattern       string            `json:"agentPattern"`
+	Title              string            `json:"title"`
+	Mirror             any               `json:"mirror"`
+	MirrorBind         string            `json:"mirrorBind"`
+	Tokens             []string          `json:"tokens"`
+	FleetToken         string            `json:"fleetToken"`
+	Boxes              []boxConfig       `json:"boxes"`
+	AllowRun           bool              `json:"allowRun"`
+	Pricing            pricingConfig     `json:"pricing"`
+	Apps               []appRecipe       `json:"apps"`
+	Alerts             alertConfig       `json:"alerts"`
+	AlertRules         alertRules        `json:"alertRules"`
+	AlertRulesComplete bool              `json:"alertRulesComplete"`
+	Probes             []alertProbe      `json:"probes"`
+	Quiet              alertQuiet        `json:"quiet"`
+	QuietAllowCritical bool              `json:"quietAllowCritical"`
+	Sinks              []alertSink       `json:"sinks"`
+	WatchPIDs          []int             `json:"watchPids"`
+	WatchApps          []string          `json:"watchApps"`
+	home, path         string
+	agentRE            *regexp.Regexp
 }
 
 func configPath(home string) string {

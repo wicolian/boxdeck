@@ -243,6 +243,60 @@ macOS uses the native SwiftUI BoxdeckBar app. Linux and Windows use the Go
 boxdeck-bar app. The macOS app is ad hoc signed. Gatekeeper may require
 right-click Open the first time until a notarized build is available.
 
+## Alerts and phone delivery
+
+Alerts watch agent input waits, stuck terminal panes, usage limits, quotas, box
+health, watched processes, app exits and shell probes. They are recorded locally
+even during quiet hours. Notifications are off by default. Alerts are deduplicated
+for 15 minutes and the inbox is capped at 5000 records kept for 30 days.
+
+To reach an iPhone and Apple Watch today, install the ntfy app, subscribe to a
+private topic, then add this to the boxdeck config:
+
+```json
+{
+  "sinks": [{
+    "name": "phone",
+    "type": "ntfy",
+    "url": "https://ntfy.sh",
+    "topic": "replace-with-a-private-random-topic",
+    "token": "",
+    "deckURL": "https://your-private-boxdeck-host"
+  }]
+}
+```
+
+Open the ntfy app, tap Subscribe, enter the same private topic, and done. The
+Alerts view can test the sink. Critical alerts carry the highest ntfy priority,
+the deck link, and action buttons for Approve, Yes, No, Interrupt and Snooze 2h.
+The buttons use the fleet token through the existing alert action endpoints.
+Keep the topic private and expose boxdeck only on a private tailnet or VPN.
+
+Alerts view captures:
+
+| Existing overview | Overview with open alert count |
+|:---:|:---:|
+| ![Alerts before](./captures/alerts/overview-before.png) | ![Alerts overview](./captures/alerts/overview-after.png) |
+
+| Alerts list | Rules | Delivery |
+|:---:|:---:|:---:|
+| ![Alerts list](./captures/alerts/list.png) | ![Alert rules](./captures/alerts/rules.png) | ![Alert delivery](./captures/alerts/delivery.png) |
+
+Phone layout:
+
+![Alerts on a phone](./captures/alerts/phone-list-cards.png)
+
+Shell probes use `bash -lc`, with exit 0 healthy and nonzero or timeout as one
+incident. A recovery emits one info event:
+
+```json
+{"probes":[{"name":"ci","cmd":"gh run list ...","every":"5m","timeout":"30s"}]}
+```
+
+The loopback-only inbox shortcut accepts `POST /api/alerts` with
+`X-Boxdeck-Local: 1` only when the TCP peer is 127.0.0.1 or ::1. Other clients
+must use the normal deck cookie, Basic authentication or bearer token.
+
 ## One login
 
 The sign-in page sets a signed, HttpOnly, SameSite=Lax cookie for 30 days. Its

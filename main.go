@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -26,6 +27,12 @@ var appsJS []byte
 
 //go:embed views-apps.css
 var appsCSS []byte
+
+//go:embed alerts.js
+var alertsJS []byte
+
+//go:embed alerts.css
+var alertsCSS []byte
 var version = "dev"
 
 type app struct {
@@ -46,6 +53,7 @@ type app struct {
 	gitStatusMu   sync.Mutex
 	gitStatusMemo map[string]gitStatusCache
 	apps          *appManager
+	alerts        *alertManager
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -69,6 +77,13 @@ func newApp(cfg config, secret []byte) *app {
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
 	a.usage = newUsageService(cfg)
 	a.apps = newAppsManager(ctx, cfg)
+	a.alerts = newAlertManager(cfg)
+	for i := range a.alerts.cfg.Sinks {
+		if a.alerts.cfg.Sinks[i].DeckURL == "" {
+			a.alerts.cfg.Sinks[i].DeckURL = "http://" + cfg.Host + ":" + strconv.Itoa(int(cfg.Port))
+		}
+		a.alerts.cfg.Sinks[i].AuthToken = cfg.FleetToken
+	}
 	a.boxesMemo.failures = map[string]time.Time{}
 	return a
 }
@@ -119,7 +134,7 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.healthAPI(w, r)
 		return
 	}
-	if !a.authed(r) {
+	if !a.authed(r) && !(r.Method == http.MethodPost && r.URL.Path == "/api/alerts" && isLoopbackAlertRequest(r)) {
 		a.unauthorized(w, r)
 		return
 	}
@@ -144,6 +159,12 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", 303)
 	case r.URL.Path == "/api/stream":
 		a.stream(w, r)
+	case r.URL.Path == "/api/events":
+		a.alertEventsAPI(w, r)
+	case r.URL.Path == "/api/alerts" || r.URL.Path == "/api/alerts/rules" || r.URL.Path == "/api/alerts/snooze-all" || r.URL.Path == "/api/alerts/disarm" || r.URL.Path == "/api/alerts/sinks/test":
+		a.alertsAPI(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/alerts/"):
+		a.alertActionAPI(w, r)
 	case r.URL.Path == "/api/proc/kill":
 		a.killProc(w, r)
 	case r.URL.Path == "/api/ui/procs":
@@ -233,6 +254,24 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			_, _ = w.Write(appsCSS)
 		}
+	case r.URL.Path == "/assets/alerts.js" || r.URL.Path == "/assets/alerts.css":
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "Use GET for an alert asset", http.StatusMethodNotAllowed)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, ".js") {
+			w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			if r.Method == http.MethodGet {
+				_, _ = w.Write(alertsJS)
+			}
+		} else {
+			w.Header().Set("Content-Type", "text/css; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			if r.Method == http.MethodGet {
+				_, _ = w.Write(alertsCSS)
+			}
+		}
 	case r.URL.Path == "/" || r.URL.Path == "/index.html":
 		if r.Method != "GET" && r.Method != "HEAD" {
 			http.Error(w, "Use GET to open the deck", 405)
@@ -314,6 +353,7 @@ func serve(cfg config) error {
 		listeners = append(listeners, l)
 	}
 	a.health.sample()
+	a.startAlerts()
 	a.startTerminal()
 	a.workers.Add(2)
 	go func() { defer a.workers.Done(); a.health.run() }()
