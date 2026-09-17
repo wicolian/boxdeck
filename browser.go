@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -781,6 +782,7 @@ func (a *app) screenPipe(client net.Conn, clientReader *bufio.ReadWriter, upstre
 		for {
 			opcode, payload, err := readWebSocketFrame(upstreamReader)
 			if err != nil {
+				log.Printf("screen: upstream read: %v", err)
 				return
 			}
 			if opcode == 0x9 {
@@ -817,6 +819,7 @@ func (a *app) screenPipe(client net.Conn, clientReader *bufio.ReadWriter, upstre
 		for {
 			opcode, payload, err := readWebSocketFrame(clientReader.Reader)
 			if err != nil {
+				log.Printf("screen: client read: %v", err)
 				return
 			}
 			if opcode == 0x9 {
