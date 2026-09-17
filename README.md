@@ -91,6 +91,14 @@ Go service, so boxdeck can own port 7681:
 systemctl --user disable --now ttyd.service
 ```
 
+If the old `files-web.service` owns 8090 and `filesPort` is enabled, stop it too:
+
+```sh
+systemctl --user disable --now files-web.service
+```
+
+The Go installer replaces `boxdeck.service`. It leaves other services alone.
+
 ## Herdr
 
 Requires [herdr](https://github.com/herdrdev/herdr) 0.9 or newer. Boxdeck reads its
@@ -155,7 +163,8 @@ using plain TCP for HTTP, WebSockets and HMR. It needs no sudo or `tailscale ser
 `mirror:auto` enables it when that interface exists; use `false` to disable it or
 `mirrorBind` to choose another private address. Hidden ports and the ttyd upstream
 are excluded. Other mirrored apps keep their own authentication; the tailnet is
-their access boundary. A failed bind shows the port and reason below Berths.
+their access boundary. The mirror rescans listeners every 5 seconds even when the
+deck is closed. A failed bind shows the port and reason below Berths.
 
 The viewer has a URL, loading state, reload, pop-out and close. Esc closes it.
 Files and Terminal use the shared login; other dev servers keep their own origins.
