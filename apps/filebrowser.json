@@ -1,0 +1,12 @@
+{
+  "id": "filebrowser",
+  "name": "File Browser",
+  "tag": "web file manager",
+  "detect": {"bin": "filebrowser"},
+  "install": {"hint": "Install filebrowser on the box", "url": "https://filebrowser.org/installation"},
+  "start": {"cmd": ["filebrowser", "-a", "127.0.0.1", "-p", "{port}", "-r", "{home}"], "port": 0},
+  "stop": "signal",
+  "open": {"url": "http://{host}:{port}", "embed": true},
+  "health": {"http": "http://127.0.0.1:{port}/"},
+  "docs": "https://filebrowser.org/"
+}

@@ -79,7 +79,12 @@ func parseCtlArgs(argv []string) (ctlArgs, error) {
 			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl %s VALUE", parsed.Command)
 		}
 		parsed.Args = commandArgs
-	case "state", "ports", "procs", "agents", "tmux", "usage":
+	case "app":
+		if len(commandArgs) != 2 || (commandArgs[0] != "start" && commandArgs[0] != "stop" && commandArgs[0] != "restart" && commandArgs[0] != "log") {
+			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl app start|stop|restart|log ID")
+		}
+		parsed.Args = commandArgs
+	case "apps", "state", "ports", "procs", "agents", "tmux", "usage":
 		if len(commandArgs) != 0 {
 			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl %s", parsed.Command)
 		}
@@ -242,6 +247,14 @@ func ctlRequest(args ctlArgs) (string, string, any, error) {
 		return http.MethodGet, "/api/tmux", nil, nil
 	case "usage":
 		return http.MethodGet, "/api/usage", nil, nil
+	case "apps":
+		return http.MethodGet, "/api/apps", nil, nil
+	case "app":
+		path := "/api/apps/" + url.PathEscape(args.Args[1]) + "/" + args.Args[0]
+		if args.Args[0] == "log" {
+			return http.MethodGet, path + "?lines=200", nil, nil
+		}
+		return http.MethodPost, path, nil, nil
 	case "focus":
 		return http.MethodPost, "/api/herdr/focus", object{"pane_id": args.Args[0]}, nil
 	case "prompt":
@@ -326,6 +339,29 @@ func printCtlTable(command string, data []byte) error {
 				fmt.Printf("%s\t%.0f\t$%.4f\t%v\n", provider, total, cost, cell(row["sessions"]))
 			}
 			fmt.Println("estimate at list price")
+			return nil
+		}
+	}
+	if command == "apps" {
+		fmt.Println("STATUS\tAPP\tPID\tPORT\tURL")
+		for _, row := range arrayObjects(value) {
+			fmt.Printf("%v\t%v\t%v\t%v\t%v\n", cell(row["status"]), cell(row["name"]), cell(row["pid"]), cell(row["port"]), cell(row["url"]))
+		}
+		return nil
+	}
+	if command == "app" {
+		if row, ok := value.(map[string]any); ok {
+			if lines, ok := row["lines"].([]any); ok {
+				for _, line := range lines {
+					fmt.Println(line)
+				}
+				return nil
+			}
+			for _, key := range []string{"status", "name", "pid", "port", "url", "message"} {
+				if v, exists := row[key]; exists {
+					fmt.Printf("%s\t%v\n", key, v)
+				}
+			}
 			return nil
 		}
 	}

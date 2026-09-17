@@ -20,6 +20,12 @@ import (
 
 //go:embed index.html
 var page []byte
+
+//go:embed views-apps.js
+var appsJS []byte
+
+//go:embed views-apps.css
+var appsCSS []byte
 var version = "dev"
 
 type app struct {
@@ -39,6 +45,7 @@ type app struct {
 	peers         *peerDiscovery
 	gitStatusMu   sync.Mutex
 	gitStatusMemo map[string]gitStatusCache
+	apps          *appManager
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -61,6 +68,7 @@ func newApp(cfg config, secret []byte) *app {
 	a.health = &healthSampler{ctx: ctx, hist: map[string][]float64{"cpu": {}, "mem": {}, "swap": {}, "load": {}}}
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
 	a.usage = newUsageService(cfg)
+	a.apps = newAppsManager(ctx, cfg)
 	a.boxesMemo.failures = map[string]time.Time{}
 	return a
 }
@@ -154,6 +162,12 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.edit(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/git/"):
 		a.gitAPI(w, r)
+	case r.URL.Path == "/api/apps":
+		a.appsAPI(w, r)
+	case r.URL.Path == "/api/apps/reload":
+		a.appsReloadAPI(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/apps/"):
+		a.appActionAPI(w, r)
 	case r.URL.Path == "/api/state":
 		if r.Method != "GET" {
 			jsonReply(w, 405, object{"error": "Use GET to read state"})
@@ -199,6 +213,26 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.files(w, r)
 	case strings.HasPrefix(r.URL.Path, "/term/"):
 		a.terminal(w, r)
+	case r.URL.Path == "/assets/views-apps.js":
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "Use GET for an app asset", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method == http.MethodGet {
+			_, _ = w.Write(appsJS)
+		}
+	case r.URL.Path == "/assets/views-apps.css":
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "Use GET for an app asset", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "text/css; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		if r.Method == http.MethodGet {
+			_, _ = w.Write(appsCSS)
+		}
 	case r.URL.Path == "/" || r.URL.Path == "/index.html":
 		if r.Method != "GET" && r.Method != "HEAD" {
 			http.Error(w, "Use GET to open the deck", 405)
@@ -262,6 +296,7 @@ func serve(cfg config) error {
 	a := newApp(cfg, secret)
 	a.usage.start(a.ctx)
 	defer a.cancel()
+	defer a.apps.stopAll()
 	defer a.mirrors.close()
 	defer a.browser.stop()
 	listener, err := net.Listen("tcp", cfg.address(cfg.Port))
@@ -360,8 +395,10 @@ func main() {
 				err = serve(cfg)
 			}
 		}
+	} else if command == "app" {
+		err = appCommand(os.Args[2:])
 	} else {
-		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl|usage]")
+		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl|usage|app]")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "boxdeck:", err)

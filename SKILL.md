@@ -77,6 +77,28 @@ codex	0	$0.0000	0
 estimate at list price
 ```
 
+Apps can be managed through the local deck or a bearer-token client:
+
+```sh
+boxdeck app list
+boxdeck app start t3code
+boxdeck app stop t3code
+boxdeck app restart t3code
+boxdeck app log t3code
+boxdeck ctl apps
+boxdeck ctl --table apps
+boxdeck ctl app start t3code
+boxdeck ctl app stop t3code
+boxdeck ctl app restart t3code
+boxdeck ctl app log t3code
+```
+
+An app is a JSON recipe. Built-in recipes are embedded in `apps/`. Config
+recipes in the `apps` array override built-ins, and files in
+`~/.config/boxdeck/apps` override both. Detection can use a binary, a port, or
+a file. See [apps/README.md](apps/README.md) for the full shape and how to
+contribute a recipe.
+
 Usage is also available without a running deck. `boxdeck usage --days 7
 --table` reads local Claude and Codex ledgers directly, while `--json` prints
 the same provider response used by the Usage view. The deck's `/api/usage`

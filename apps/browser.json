@@ -1,0 +1,9 @@
+{
+  "id": "browser",
+  "name": "Chromium",
+  "tag": "managed browser",
+  "detect": {"bin": "chromium"},
+  "install": {"hint": "Install Chromium or Google Chrome on the box", "url": "https://www.chromium.org/getting-involved/download-chromium/"},
+  "open": {"path": "#/browser", "embed": true},
+  "docs": "https://www.chromium.org/"
+}

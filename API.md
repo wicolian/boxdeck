@@ -12,7 +12,8 @@ The additive config fields are:
   "tokens": [],
   "fleetToken": "same-private-token-on-every-box",
   "boxes": [{"name":"old-thinkpad","url":"http://thinkpad:8100","token":"..."}],
-  "allowRun": false
+  "allowRun": false,
+  "apps": []
 }
 ```
 
@@ -31,6 +32,7 @@ curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/docker"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/boxes"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage?days=7"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage/all"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/files?path=reports"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/repos"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/status?repo=$REPO"
@@ -117,6 +119,17 @@ Saves are atomic, files over 1 MB are read-only, and deletes move files under
 `~/.local/share/boxdeck/trash/` instead of unlinking them. Paths stay inside
 `filesRoot`.
 
+`apps` returns the embedded and user recipes in running, detected, then
+missing order. Each item includes `id`, `name`, `tag`, `status`, `detected`,
+`running`, `pid`, `port`, `url`, `health`, a 20 line `log` tail, install hint,
+docs, and the open target. A managed app survives a page reload but is stopped
+when boxdeck itself shuts down.
+
+Recipes load in this order: embedded `apps/*.json`, the config `apps` array,
+then `~/.config/boxdeck/apps/*.json`. A later recipe with the same id overrides
+the earlier recipe. See [apps/README.md](apps/README.md) for the shape and
+contribution guide.
+
 ## Actions
 
 ```sh
@@ -132,6 +145,11 @@ curl -sS -X POST -H "Authorization: Bearer $TOKEN" \
 curl -sS -X POST -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' -d '{"cmd":"go test ./...","cwd":"~/src/app","timeoutMs":60000}' \
   "$BOXDECK_TO/api/run"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps/t3code/start"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps/t3code/stop"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps/t3code/restart"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps/t3code/log?lines=200"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps/reload"
 ```
 
 `proc/kill` accepts a PID and signal. The live stream and process guard are
