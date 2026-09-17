@@ -13,6 +13,9 @@ and terminal through one login. The same stream follows you between views.
   Herdr sessions also show their title, status, context use and five-hour limit.
 - **herdr**, **tmux**, **browsers** and **Docker** show what is running on the box.
 - **Fresh reports** link recent Markdown, HTML, images and PDFs through `/files/`.
+- **Files** is a small inbuilt editor with a lazy tree, syntax-aware source view,
+  atomic saves, conflict detection and a recoverable trash folder.
+- **Git** shows changed files, capped diffs, a client-drawn commit graph and worktrees.
 
 <!-- before-and-after:start -->
 | Before: ssh and a terminal | After: boxdeck, live on the same box |
@@ -42,6 +45,24 @@ The Herd and Browser views also have phone layouts in
 [`captures/`](./captures/). The Browser view uses the same managed Chromium
 process for agent CDP clients and the human canvas.
 
+## Files and Git
+
+| Files before: folder viewer | Files after: editor and tree |
+|:---:|:---:|
+| ![Files before](./captures/files-open-before.png) | ![Files after](./captures/files-root-after.png) |
+
+Open file editor preview:
+
+![Files open file](./captures/files-open-after.png)
+
+| Git before: existing deck | Git after: Changes with diff |
+|:---:|:---:|
+| ![Git before](./captures/git-before.png) | ![Git Changes](./captures/git-changes-after.png) |
+
+| Git Graph | Files on a phone |
+|:---:|:---:|
+| ![Git Graph](./captures/git-graph-after.png) | ![Files phone](./captures/files-phone-after.png) |
+
 No Node runtime, npm packages or Go dependencies. Linux is the target; macOS
 builds provide partial health data. `ss`, `ps`, `tmux`, `docker` and `find` supply
 optional machine details. Their results are cached. The shared SSE sampler reads
@@ -54,12 +75,16 @@ from 3 to 30 seconds after 15 seconds without a poll.
 
 Use the collapsible left rail for Overview, Ports, Processes, Agents, Herd,
 Browser, Network, Terminal, Files, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
+
+Use the collapsible left rail for Overview, Ports, Processes, Agents, Terminal,
+Files, Git, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
 changing views keeps the page and stream alive. On phones, four direct links and
 More form a five-item bottom bar. More opens the remaining views.
 
 Each board has a filter with a clear action when nothing matches. Ports, Processes,
-Agents and Docker also have sort controls. Terminal and Files fill the view; Files
-has a path bar. Settings shows the running config, masks passwords and box tokens,
+Agents and Docker also have sort controls. Terminal fills the view. Files has a
+two-pane editor and tree; Git opens on Changes with Graph and Worktrees tabs.
+Settings shows the running config, masks passwords and box tokens,
 and reports only the token count. It also shows the binary version and update hint.
 
 ## Usage
@@ -257,6 +282,7 @@ is accepted. Peers without boxdeck include the one-line install command.
   "fleetToken": "same-private-token-on-every-box",
   "quick": [["App", 3001]],
   "reportRoots": ["~/reports", "~/box"],
+  "repoRoots": ["~", "~/codes", "~/src", "~/projects"],
   "reportDays": 3,
   "mirror": "auto",
   "mirrorBind": "",
@@ -275,6 +301,8 @@ is accepted. Peers without boxdeck include the one-line install command.
   migration; all files now use the deck login.
 - `terminal` defaults to true when ttyd is on PATH. `ttydPort` defaults to 7681.
 - `known` labels ports. Other listeners get an HTTP title or a process name.
+- `repoRoots` limits Git discovery to depth three. `node_modules` is skipped, and
+  report roots plus `~/codes` remain available for discovery.
 - Reports outside `filesRoot` remain listed without a link. Title probes cache for
   2 minutes, Docker for 10 seconds and reports for 20 seconds.
 - `BOXDECK_CONFIG` chooses a different config file. Existing overrides remain:
