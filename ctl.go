@@ -224,6 +224,13 @@ func ctlRequest(args ctlArgs) (string, string, any, error) {
 	}
 }
 
+// cell renders a JSON value for a table: missing or null values print as blank, never <nil>.
+func cell(v any) string {
+	if v == nil {
+		return ""
+	}
+	return fmt.Sprint(v)
+}
 func printCtlTable(command string, data []byte) error {
 	var value any
 	if err := json.Unmarshal(data, &value); err != nil {
@@ -233,21 +240,21 @@ func printCtlTable(command string, data []byte) error {
 	if command == "ports" {
 		fmt.Println("PORT\tPROC\tPID\tURL")
 		for _, row := range arrayObjects(value) {
-			fmt.Printf("%v\t%v\t%v\t%v\n", row["port"], row["proc"], row["pid"], row["url"])
+			fmt.Printf("%v\t%v\t%v\t%v\n", cell(row["port"]), cell(row["proc"]), cell(row["pid"]), cell(row["url"]))
 		}
 		return nil
 	}
 	if command == "procs" {
 		fmt.Println("PID\tCPU\tRSS\tARGS")
 		for _, row := range arrayObjects(value) {
-			fmt.Printf("%v\t%v\t%v\t%v\n", row["pid"], row["cpu"], row["rss"], row["args"])
+			fmt.Printf("%v\t%v\t%v\t%v\n", cell(row["pid"]), cell(row["cpu"]), cell(row["rss"]), cell(row["args"]))
 		}
 		return nil
 	}
 	if command == "agents" {
 		fmt.Println("PID\tKIND\tSTATUS\tPANE\tCWD")
 		for _, row := range arrayObjects(value) {
-			fmt.Printf("%v\t%v\t%v\t%v\t%v\n", row["pid"], row["kind"], row["agent_status"], row["pane_id"], row["cwd"])
+			fmt.Printf("%v\t%v\t%v\t%v\t%v\n", cell(row["pid"]), cell(row["kind"]), cell(row["agent_status"]), cell(row["pane_id"]), cell(row["cwd"]))
 		}
 		return nil
 	}
@@ -268,7 +275,7 @@ func printCtlTable(command string, data []byte) error {
 			if stderr, ok := row["stderr"].(string); ok && stderr != "" {
 				fmt.Fprint(os.Stderr, stderr)
 			}
-			fmt.Printf("exit %v\n", row["exitCode"])
+			fmt.Printf("exit %v\n", cell(row["exitCode"]))
 			return nil
 		}
 	}
