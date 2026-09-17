@@ -226,7 +226,7 @@ func validateAppRecipe(recipe appRecipe) error {
 
 func detectApp(recipe appRecipe, home string) bool {
 	if recipe.Detect.Bin != "" {
-		if _, err := exec.LookPath(recipe.Detect.Bin); err == nil {
+		if _, err := lookPathWide(recipe.Detect.Bin); err == nil {
 			return true
 		}
 	}
@@ -382,6 +382,9 @@ func (m *appManager) start(id string) (appView, error) {
 	if err != nil {
 		m.mu.Unlock()
 		return appView{}, fmt.Errorf("open app log: %w", err)
+	}
+	if p, err := lookPathWide(args[0]); err == nil {
+		args[0] = p
 	}
 	cmd := exec.CommandContext(m.ctx, args[0], args[1:]...)
 	cmd.Dir = m.cfg.home
@@ -799,4 +802,20 @@ func tailAppLog(path string, lines int) ([]string, error) {
 		parts = parts[len(parts)-lines:]
 	}
 	return parts, nil
+}
+
+// lookPathWide finds a binary on PATH or in the usual per-user and package manager bin folders,
+// because a systemd user service starts with a short PATH that misses ~/.local/bin and friends.
+func lookPathWide(name string) (string, error) {
+	if p, err := exec.LookPath(name); err == nil {
+		return p, nil
+	}
+	home, _ := os.UserHomeDir()
+	for _, dir := range []string{filepath.Join(home, ".local", "bin"), filepath.Join(home, "go", "bin"), filepath.Join(home, ".cargo", "bin"), filepath.Join(home, "bin"), "/usr/local/bin", "/opt/homebrew/bin", "/snap/bin"} {
+		p := filepath.Join(dir, name)
+		if st, err := os.Stat(p); err == nil && !st.IsDir() && st.Mode()&0o111 != 0 {
+			return p, nil
+		}
+	}
+	return "", exec.ErrNotFound
 }
