@@ -30,7 +30,7 @@ struct MenuPopover: View {
             }
             .padding(16)
         }
-        .frame(width: 390, idealHeight: 520)
+        .frame(width: 390, height: 520)
     }
 
     private var header: some View {

@@ -155,7 +155,7 @@ enum FleetLoader {
         let usageAll = try? await seed.fetchUsageAll()
         for var card in discovered where card.discovered && !configured.contains(where: { sameBox($0.url, card.url) || ($0.name == card.name && !card.name.isEmpty) }) {
             if let usageAll, let match = usageAll.boxes.first(where: { sameBox($0.url, card.url) || ($0.name == card.name && !card.name.isEmpty) }) {
-                card.usage = match.usage
+                card.usage = BoxSnapshot(card: match).usage
             }
             card.tag = "tailnet"
             result.append(card)

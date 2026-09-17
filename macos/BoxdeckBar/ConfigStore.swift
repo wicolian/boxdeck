@@ -35,7 +35,7 @@ struct ConfigStore {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let data = encoder.encode(config)
+        let data = try encoder.encode(config)
         let temporary = directory.appendingPathComponent(".bar.json.\(UUID().uuidString).tmp")
         try data.write(to: temporary, options: .atomic)
         try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: temporary.path)

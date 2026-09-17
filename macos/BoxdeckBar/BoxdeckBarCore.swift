@@ -441,6 +441,10 @@ struct AlertAction: Codable, Equatable, Identifiable {
     var method: String = "POST"
 
     enum CodingKeys: String, CodingKey {
+        case id, title, path, method
+    }
+
+    private enum DecodeKeys: String, CodingKey {
         case id, title, label, path, url, method, action
     }
 
@@ -452,7 +456,7 @@ struct AlertAction: Codable, Equatable, Identifiable {
     }
 
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let container = try decoder.container(keyedBy: DecodeKeys.self)
         id = try container.decodeIfPresent(String.self, forKey: .id)
             ?? (try container.decodeIfPresent(String.self, forKey: .action))
             ?? "action"
@@ -475,6 +479,10 @@ struct Alert: Codable, Equatable, Identifiable {
     var actions: [AlertAction]
 
     enum CodingKeys: String, CodingKey {
+        case id, title, message, severity, boxName, boxURL, actions
+    }
+
+    private enum DecodeKeys: String, CodingKey {
         case id, key, title, message, body, severity, boxName, boxURL, box, url, actions
     }
 
@@ -489,7 +497,7 @@ struct Alert: Codable, Equatable, Identifiable {
     }
 
     init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let container = try decoder.container(keyedBy: DecodeKeys.self)
         id = try container.decodeIfPresent(String.self, forKey: .id)
             ?? (try container.decodeIfPresent(String.self, forKey: .key))
             ?? UUID().uuidString
