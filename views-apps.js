@@ -56,7 +56,7 @@
     if (app.id === 'herdr') details += '<p class="apps-message">Reach herdr through <a href="#/terminal">Terminal</a> and <a href="#/agents">Agents</a>.</p>';
     var install = !app.detected && app.installHint ? '<p class="apps-install-copy">' + esc(app.installHint) + '</p>' : '';
     var link = app.docs ? '<a href="' + esc(app.docs) + '" target="_blank" rel="noopener">Docs</a>' : '';
-    var meta = app.running && app.pid ? '<span class="mono">PID ' + app.pid + '</span>' : app.port ? '<span class="mono">port ' + app.port + '</span>' : '<span>ready on this box</span>';
+    var meta = app.running && app.pid ? '<span class="mono">PID ' + app.pid + '</span>' : app.port ? '<span class="mono">port ' + app.port + '</span>' : (app.detected ? '<span>ready on this box</span>' : '<span>not installed</span>');
     return '<article class="apps-card" data-app-card="' + esc(app.id) + '">' +
       '<header class="apps-card-head"><span class="apps-badge" aria-hidden="true">' + esc(badge) + '</span><div class="apps-card-title"><h3>' + esc(app.name) + '</h3><p>' + esc(app.tag || 'box tool') + '</p></div>' + statusHTML(app) + '</header>' +
       '<div class="apps-card-meta">' + meta + (app.health ? '<span class="apps-health">healthy</span>' : '') + '</div>' +
