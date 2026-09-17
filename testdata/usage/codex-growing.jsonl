@@ -1,0 +1,2 @@
+{"timestamp":"2026-09-17T02:00:00Z","type":"session_meta","payload":{"model":"gpt-5.6-terra"}}
+{"timestamp":"2026-09-17T02:01:00Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":7,"cached_input_tokens":2,"output_tokens":3}}}}
