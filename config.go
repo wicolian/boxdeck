@@ -70,6 +70,9 @@ type config struct {
 	Title        string            `json:"title"`
 	Mirror       any               `json:"mirror"`
 	MirrorBind   string            `json:"mirrorBind"`
+	Tokens       []string          `json:"tokens"`
+	Boxes        []boxConfig       `json:"boxes"`
+	AllowRun     bool              `json:"allowRun"`
 	home, path   string
 	agentRE      *regexp.Regexp
 }
@@ -103,7 +106,7 @@ func normalizeHost(host string) (string, error) {
 func loadConfig(path, home string) (config, error) {
 	host, _ := os.Hostname()
 	_, ttyErr := exec.LookPath("ttyd")
-	c := config{Port: 8100, Bind: "127.0.0.1", Host: host, User: "admin", FilesRoot: home, FilesAuth: true, TTYDPort: 7681, Terminal: ttyErr == nil, ReportDays: 3, Title: "Deck", Mirror: "auto", ReportRoots: []string{"~/reports", "~/box"}, Hide: []portNumber{22, 53, 111, 139, 445}, Quick: []shortcut{}, Known: map[string]string{"3000": "App", "3001": "App", "4000": "API", "5173": "Vite", "4173": "Vite preview", "8080": "HTTP", "8000": "HTTP", "6006": "Storybook", "5432": "Postgres", "6379": "Redis", "27017": "MongoDB", "9222": "Chrome CDP", "7681": "Terminal (ttyd)", "8384": "Syncthing", "3773": "T3 Code"}, AgentPattern: `^(\S*/)?(claude|codex|aider|opencode|goose)(\s|$)`, home: home, path: path}
+	c := config{Port: 8100, Bind: "127.0.0.1", Host: host, User: "admin", FilesRoot: home, FilesAuth: true, TTYDPort: 7681, Terminal: ttyErr == nil, ReportDays: 3, Title: "Deck", Mirror: "auto", ReportRoots: []string{"~/reports", "~/box"}, Hide: []portNumber{22, 53, 111, 139, 445}, Quick: []shortcut{}, Known: map[string]string{"3000": "App", "3001": "App", "4000": "API", "5173": "Vite", "4173": "Vite preview", "8080": "HTTP", "8000": "HTTP", "6006": "Storybook", "5432": "Postgres", "6379": "Redis", "27017": "MongoDB", "9222": "Chrome CDP", "7681": "Terminal (ttyd)", "8384": "Syncthing", "3773": "T3 Code"}, Tokens: []string{}, Boxes: []boxConfig{}, AgentPattern: `^(\S*/)?(claude|codex|aider|opencode|goose)(\s|$)`, home: home, path: path}
 	b, err := os.ReadFile(path)
 	if err == nil {
 		if err = json.Unmarshal(b, &c); err != nil {
@@ -175,6 +178,22 @@ func loadConfig(path, home string) (config, error) {
 	}
 	if c.Known == nil {
 		c.Known = map[string]string{}
+	}
+	if c.Tokens == nil {
+		c.Tokens = []string{}
+	}
+	if c.Boxes == nil {
+		c.Boxes = []boxConfig{}
+	}
+	for i := range c.Boxes {
+		c.Boxes[i].Name = strings.TrimSpace(c.Boxes[i].Name)
+		if c.Boxes[i].Name == "" {
+			return c, fmt.Errorf("boxes[%d].name must be nonempty", i)
+		}
+		c.Boxes[i].URL, err = normalizeBoxURL(c.Boxes[i].URL)
+		if err != nil {
+			return c, fmt.Errorf("boxes[%d].url: %w", i, err)
+		}
 	}
 	if c.Known[strconv.Itoa(int(c.Port))] == "" {
 		c.Known[strconv.Itoa(int(c.Port))] = c.Title + " (this page)"
