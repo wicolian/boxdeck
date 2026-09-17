@@ -15,21 +15,19 @@ and terminal through one login. The same stream follows you between views.
 - **Fresh reports** link recent Markdown, HTML, images and PDFs through `/files/`.
 
 <!-- before-and-after:start -->
-| Previous deck | Live console |
+| Before: ssh and a terminal | After: boxdeck, live on the same box |
 |:---:|:---:|
-| ![Previous single-page deck](./captures/after.png) | ![Overview with real live history](./captures/phase2-overview.png) |
+| ![Before](./captures/before.png) | ![After](./captures/ba/after-overview.png) |
 
-| Processes | Agents |
+| Processes, sortable, stop from the page | Boxes, many machines in one console |
 |:---:|:---:|
-| ![Sortable live process table](./captures/phase2-processes.png) | ![Agent sessions and status](./captures/phase2-agents.png) |
+| ![Processes](./captures/ba/after-processes.png) | ![Boxes](./captures/ba/after-boxes.png) |
 
-| Boxes | Terminal |
-|:---:|:---:|
-| ![Local and unreachable boxes](./captures/phase2-boxes.png) | ![Full-height terminal](./captures/phase2-terminal.png) |
+<details><summary>On a phone</summary>
 
-<details><summary>Phone navigation</summary>
-
-<img src="./captures/phase2-phone-overview.png" width="390" alt="Phone overview and bottom navigation"> <img src="./captures/phase2-phone-more.png" width="390" alt="Phone navigation sheet">
+| Phone |
+|:---:|
+| <img src="./captures/ba/after-phone.png" width="390" alt="boxdeck on a phone"> |
 
 </details>
 <!-- before-and-after:end -->
