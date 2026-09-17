@@ -5,7 +5,7 @@ on:
 permissions:
   contents: write
 jobs:
-  build:
+  build-server:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,7 +15,82 @@ jobs:
           cache: false
       - run: go vet ./... && go test ./...
       - run: make release VERSION="$GITHUB_REF_NAME"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: server-assets
+          path: dist/boxdeck_*
+
+  build-bar:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            asset: boxdeck-bar_linux_amd64
+            ldflags: -s -w
+          - os: ubuntu-latest
+            goos: linux
+            goarch: arm64
+            asset: boxdeck-bar_linux_arm64
+            ldflags: -s -w
+          - os: ubuntu-latest
+            goos: windows
+            goarch: amd64
+            asset: boxdeck-bar_windows_amd64.exe
+            ldflags: -s -w -H=windowsgui
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - run: go -C cmd/boxdeck-bar test ./...
+      - name: Build bar
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: mkdir -p dist && go -C cmd/boxdeck-bar build -trimpath -ldflags="${{ matrix.ldflags }}" -o "../../dist/${{ matrix.asset }}" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bar-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/${{ matrix.asset }}
+
+  build-bar-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - run: go -C cmd/boxdeck-bar test ./...
+      - name: Build universal bar app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go -C cmd/boxdeck-bar build -trimpath -ldflags='-s -w' -o "$RUNNER_TEMP/boxdeck-bar-arm64" .
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go -C cmd/boxdeck-bar build -trimpath -ldflags='-s -w' -o "$RUNNER_TEMP/boxdeck-bar-amd64" .
+          lipo -create "$RUNNER_TEMP/boxdeck-bar-arm64" "$RUNNER_TEMP/boxdeck-bar-amd64" -output "$RUNNER_TEMP/boxdeck-bar"
+          packaging/macos/build.sh "$RUNNER_TEMP/boxdeck-bar" "$RUNNER_TEMP/boxdeck-bar.app"
+          ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/boxdeck-bar.app" dist/boxdeck-bar_darwin_universal.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bar-darwin-universal
+          path: dist/boxdeck-bar_darwin_universal.zip
+
+  publish:
+    needs: [build-server, build-bar, build-bar-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
       - name: Publish binaries
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/boxdeck_* --verify-tag --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes

@@ -1,0 +1,10 @@
+{
+  "host": "box",
+  "health": {"cpu": 12, "memUsed": 3650722201, "memTotal": 16106127360, "load1": 0.4},
+  "agents": [
+    {"kind":"claude","agent_status":"working"},
+    {"kind":"codex","agent_status":"needs_you"},
+    {"kind":"claude","agent_status":"working"}
+  ],
+  "ports": [{"port":3000},{"port":3001},{"port":4000},{"port":5173},{"port":8100}]
+}

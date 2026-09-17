@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=boxdeck-bar
+Comment=Monitor boxdeck machines from the system tray
+Exec=boxdeck-bar
+Terminal=false
+Categories=Utility;System;
+StartupNotify=false
