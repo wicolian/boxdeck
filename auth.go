@@ -72,6 +72,9 @@ func (a *app) authed(r *http.Request) bool {
 	if u, p, ok := r.BasicAuth(); ok && credentialsEqual(u, p, a.cfg.User, a.cfg.Password) {
 		return true
 	}
+	if a.tokenAuthed(r) {
+		return true
+	}
 	c, err := r.Cookie("boxdeck")
 	if err != nil {
 		return false

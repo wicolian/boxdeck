@@ -23,15 +23,16 @@ var page []byte
 var version = "dev"
 
 type app struct {
-	cfg     config
-	secret  []byte
-	ctx     context.Context
-	cancel  context.CancelFunc
-	collect *collectors
-	health  *healthSampler
-	mirrors *mirrorManager
-	term    terminalManager
-	workers sync.WaitGroup
+	cfg       config
+	secret    []byte
+	ctx       context.Context
+	cancel    context.CancelFunc
+	collect   *collectors
+	health    *healthSampler
+	mirrors   *mirrorManager
+	term      terminalManager
+	boxesMemo boxCache
+	workers   sync.WaitGroup
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -50,6 +51,7 @@ func newApp(cfg config, secret []byte) *app {
 	a.collect = &collectors{ctx: ctx, cfg: cfg, titles: map[int]titleEntry{}}
 	a.health = &healthSampler{ctx: ctx, hist: map[string][]float64{"cpu": {}, "mem": {}, "swap": {}, "load": {}}}
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
+	a.boxesMemo.failures = map[string]time.Time{}
 	return a
 }
 func (a *app) state() object {
@@ -95,6 +97,10 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.login(w, r)
 		return
 	}
+	if r.URL.Path == "/api/health" {
+		a.healthAPI(w, r)
+		return
+	}
 	if !a.authed(r) {
 		a.unauthorized(w, r)
 		return
@@ -121,6 +127,8 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		jsonReply(w, 200, a.state())
 	case r.URL.Path == "/api/herdr/focus":
 		a.focusHerdr(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/"):
+		a.api(w, r)
 	case r.URL.Path == "/files" || r.URL.Path == "/term":
 		http.Redirect(w, r, r.URL.Path+"/", 302)
 	case strings.HasPrefix(r.URL.Path, "/files/"):
@@ -268,7 +276,11 @@ func main() {
 		return
 	}
 	var err error
-	if command == "install" {
+	if command == "ctl" {
+		err = ctlCommand(os.Args[2:])
+	} else if command == "token" {
+		err = tokenCommand(os.Args[2:])
+	} else if command == "install" {
 		err = install()
 	} else if command == "serve" {
 		home, e := os.UserHomeDir()
@@ -281,7 +293,7 @@ func main() {
 			}
 		}
 	} else {
-		err = fmt.Errorf("usage: boxdeck [serve|install|version]")
+		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl]")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "boxdeck:", err)

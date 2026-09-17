@@ -79,7 +79,7 @@ func install() error {
 		if err != nil {
 			return err
 		}
-		b, err := json.MarshalIndent(object{"user": user, "password": password, "host": host, "port": 8100, "filesPort": 0, "quick": []any{}, "reportRoots": []string{"~/reports", "~/box"}, "known": object{}}, "", "  ")
+		b, err := json.MarshalIndent(object{"user": user, "password": password, "host": host, "port": 8100, "filesPort": 0, "quick": []any{}, "reportRoots": []string{"~/reports", "~/box"}, "known": object{}, "tokens": []string{}, "boxes": []any{}, "allowRun": false}, "", "  ")
 		if err != nil {
 			return err
 		}
