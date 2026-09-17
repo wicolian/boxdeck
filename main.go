@@ -32,6 +32,7 @@ type app struct {
 	mirrors   *mirrorManager
 	term      terminalManager
 	boxesMemo boxCache
+	usage     *usageService
 	workers   sync.WaitGroup
 	live      *liveHub
 }
@@ -53,6 +54,7 @@ func newApp(cfg config, secret []byte) *app {
 	a.collect = &collectors{ctx: ctx, cfg: cfg, titles: map[int]titleEntry{}}
 	a.health = &healthSampler{ctx: ctx, hist: map[string][]float64{"cpu": {}, "mem": {}, "swap": {}, "load": {}}}
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
+	a.usage = newUsageService(cfg)
 	a.boxesMemo.failures = map[string]time.Time{}
 	return a
 }
@@ -128,6 +130,10 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.uiProcs(w, r)
 	case r.URL.Path == "/api/ui/settings":
 		a.uiSettings(w, r)
+	case r.URL.Path == "/api/usage":
+		a.usageAPI(w, r)
+	case r.URL.Path == "/api/usage/all":
+		a.usageAllAPI(w, r)
 	case r.URL.Path == "/api/state":
 		if r.Method != "GET" {
 			jsonReply(w, 405, object{"error": "Use GET to read state"})
@@ -206,6 +212,7 @@ func serve(cfg config) error {
 		return err
 	}
 	a := newApp(cfg, secret)
+	a.usage.start(a.ctx)
 	defer a.cancel()
 	defer a.mirrors.close()
 	listener, err := net.Listen("tcp", cfg.address(cfg.Port))
@@ -288,6 +295,8 @@ func main() {
 	var err error
 	if command == "ctl" {
 		err = ctlCommand(os.Args[2:])
+	} else if command == "usage" {
+		err = usageCommand(os.Args[2:])
 	} else if command == "token" {
 		err = tokenCommand(os.Args[2:])
 	} else if command == "install" {
@@ -303,7 +312,7 @@ func main() {
 			}
 		}
 	} else {
-		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl]")
+		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl|usage]")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "boxdeck:", err)

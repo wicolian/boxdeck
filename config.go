@@ -73,6 +73,7 @@ type config struct {
 	Tokens       []string          `json:"tokens"`
 	Boxes        []boxConfig       `json:"boxes"`
 	AllowRun     bool              `json:"allowRun"`
+	Pricing      pricingConfig     `json:"pricing"`
 	home, path   string
 	agentRE      *regexp.Regexp
 }

@@ -28,6 +28,8 @@ curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/agents"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/tmux"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/docker"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/boxes"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage?days=7"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage/all"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/files?path=reports"
 curl -sS "$BOXDECK_TO/api/health"
 ```
@@ -59,7 +61,49 @@ It is suitable for a load balancer probe.
 box is queried in parallel with its token kept on the server, a 3 second
 per-box timeout, and a 5 second cache. A failed box has `ok:false` and `since`
 set to the RFC3339 time of its first failure. Its card also includes `name`,
-`url`, `health`, `agents`, and `ports`.
+`url`, `health`, `agents`, `ports`, and a `usage` object with today's provider
+tokens, cost, and quota.
+
+`usage` reads the Claude and Codex JSONL session ledgers already stored on the
+device. It returns up to 30 UTC daily rows, a local-day label, per-model token
+breakdowns, session counts, and cost estimates labeled `estimate at list price`.
+Claude quota comes from the OAuth usage endpoint when `~/.claude/.credentials.json`
+is present. Codex quota comes from recent session rate limits when available;
+null rate limits are treated as an API-key account. `usage.json` is private,
+written atomically under the local data directory, and never contains prompts,
+credentials, or access tokens.
+
+```json
+{
+  "providers": {
+    "claude": {
+      "quota": {"fiveHour": {"pct": 20, "resetsAt": "2026-09-17T23:10:00.471440+00:00"}, "sevenDay": {"pct": 68, "resetsAt": "2026-09-19T18:59:59.471461+00:00"}, "models": null, "sampledAt": "2026-09-17T22:39:52Z"},
+      "today": {"tokens": {"in": 3062, "cachedIn": 508593677, "cacheWrite": 5809401, "out": 1247876}, "costUsd": 0},
+      "localDay": "2026-09-17",
+      "days": [{"day": "2026-09-17", "tokens": {"in": 3062, "cachedIn": 508593677, "cacheWrite": 5809401, "out": 1247876}, "costUsd": 0, "models": {"claude-opus-5": {"tokens": {"in": 2942, "cachedIn": 500597247, "cacheWrite": 5631266, "out": 1218313}, "costUsd": 0, "priceSet": false}, "claude-sonnet-5": {"tokens": {"in": 120, "cachedIn": 7996430, "cacheWrite": 178135, "out": 29563}, "costUsd": 0, "priceSet": false}}}],
+      "sessions": 124
+    },
+    "codex": {
+      "quota": null,
+      "today": {"tokens": {"in": 726500094, "cachedIn": 718548248, "cacheWrite": 7938929, "out": 1288237}, "costUsd": 636.2414239300001},
+      "localDay": "2026-09-17",
+      "days": [{"day": "2026-09-17", "tokens": {"in": 726500094, "cachedIn": 718548248, "cacheWrite": 7938929, "out": 1288237}, "costUsd": 636.2414239300001, "models": {"gpt-5.6-luna": {"tokens": {"in": 684986724, "cachedIn": 678294694, "cacheWrite": 6683693, "out": 1054965}, "costUsd": 153.50011993000004, "priceSet": true}, "gpt-6-astra": {"tokens": {"in": 41513370, "cachedIn": 40253554, "cacheWrite": 1255236, "out": 233272}, "costUsd": 482.74130399999996, "priceSet": true}}}],
+      "sessions": 115
+    },
+  },
+  "device": "box",
+  "updatedAt": "2026-09-17T22:39:52Z"
+}
+```
+
+The JSON above is a trimmed real response from the isolated port 8103 QA run on
+2026-09-17. It shows provider totals and the latest daily row while omitting
+older daily rows.
+
+`usage/all` returns the same provider shape with sums from the local box and
+reachable configured boxes, plus a `boxes` array containing each box's
+provider breakdown. Unreachable boxes remain in that array with `ok:false` and
+are not included in sums.
 
 ## Actions
 
@@ -114,6 +158,14 @@ boxdeck ctl --box old-thinkpad prompt w1:p1 "check the failing test"
 boxdeck ctl --box old-thinkpad kill 1234
 boxdeck ctl --box old-thinkpad files reports/latest.md
 boxdeck ctl --box old-thinkpad run "go test ./..."
+boxdeck ctl --box old-thinkpad usage --table
+```
+
+The standalone command does not need a running deck:
+
+```sh
+boxdeck usage --days 7 --table
+boxdeck usage --days 30 --json
 ```
 
 The 8103 QA run produced this real table output (the process and port rows are
