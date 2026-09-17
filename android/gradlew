@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+APP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+GRADLE_VERSION=8.13
+DIST_DIR="$APP_HOME/.gradle-dist/gradle-$GRADLE_VERSION"
+if [ ! -x "$DIST_DIR/bin/gradle" ]; then
+    mkdir -p "$APP_HOME/.gradle-dist"
+    ARCHIVE="$APP_HOME/.gradle-dist/gradle-$GRADLE_VERSION-bin.zip"
+    if [ ! -f "$ARCHIVE" ]; then
+        curl -fsSL "https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip" -o "$ARCHIVE"
+    fi
+    rm -rf "$DIST_DIR.tmp"
+    mkdir "$DIST_DIR.tmp"
+    unzip -q "$ARCHIVE" -d "$DIST_DIR.tmp"
+    mv "$DIST_DIR.tmp/gradle-$GRADLE_VERSION" "$DIST_DIR"
+    rmdir "$DIST_DIR.tmp"
+fi
+exec "$DIST_DIR/bin/gradle" "$@"
