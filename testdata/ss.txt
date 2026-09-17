@@ -1,0 +1,8 @@
+LISTEN 0 511 127.0.0.1:3001 0.0.0.0:* users:(("MainThread",pid=120,fd=24))
+LISTEN 0 511 [::]:3001 [::]:*
+LISTEN 0 128 0.0.0.0:22 0.0.0.0:* users:(("sshd",pid=22,fd=3))
+LISTEN 0 128 100.64.0.10:3001 0.0.0.0:* users:(("boxdeck",pid=90,fd=6))
+LISTEN 0 128 [fd7a:115c:a1e0::1]:8080 [::]:*
+LISTEN 0 128 127.0.0.1:45000 0.0.0.0:*
+LISTEN 0 128 100.128.0.1:8384 0.0.0.0:* users:(("syncthing",pid=150,fd=7))
+garbage
