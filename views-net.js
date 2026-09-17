@@ -134,7 +134,17 @@
     browserScreenCanvas = canvas;
     if (!canvas) return;
     const context = canvas.getContext('2d');
-    browserScreenSocket.onopen = () => { $n('browser-screen-status').textContent = 'Watching live'; };
+    browserScreenSocket.onopen = () => {
+      $n('browser-screen-status').textContent = 'Watching live';
+      browserScreenSend({ method: 'Page.enable', params: {} });
+    };
+    // Chrome drops the screencast on a cross-process navigation (new tab page to a site, for
+    // example), so restart it whenever the frame navigates or frames go quiet.
+    const restartScreencast = () => browserScreenSend({ method: 'Page.startScreencast', params: { format: 'jpeg', quality: 60, maxWidth: 1280, everyNthFrame: 1 } });
+    const quietTimer = setInterval(() => {
+      if (browserScreenSocket?.readyState !== WebSocket.OPEN) { clearInterval(quietTimer); return; }
+      if (Date.now() - browserScreenLastImage > 3000) restartScreencast();
+    }, 2000);
     browserScreenSocket.onclose = () => {
       const wanted = browserScreenPage;
       browserScreenSocket = null;
@@ -145,6 +155,7 @@
     browserScreenSocket.onmessage = async (event) => {
       let message;
       try { message = JSON.parse(event.data); } catch { return; }
+      if (message.method === 'Page.frameNavigated' && !message.params?.frame?.parentId) { restartScreencast(); return; }
       if (message.method !== 'Page.screencastFrame' || !message.params?.data) return;
       const now = Date.now();
       if (now - browserScreenLastImage < 100) return;
