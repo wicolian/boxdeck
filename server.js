@@ -4,7 +4,7 @@
 // Zero dependencies. Reads /proc; shells out only when a client is watching.
 'use strict';
 const http = require('http'), fs = require('fs'), path = require('path'), os = require('os');
-const { execFileSync } = require('child_process'), crypto = require('crypto');
+const { execFileSync } = require('child_process'), crypto = require('crypto'), net = require('net');
 
 // ---------- config: env > ~/.config/boxdeck/config.json > defaults ----------
 const HOME = os.homedir();
@@ -24,6 +24,8 @@ const cfg = {
   reportDays: +(file.reportDays || 3),
   agentPattern: new RegExp(file.agentPattern || '^(\\S*/)?(claude|codex|aider|opencode|goose)(\\s|$)'),
   title: file.title || 'Deck',
+  mirror: process.env.BOXDECK_MIRROR ? process.env.BOXDECK_MIRROR !== '0' : (file.mirror ?? 'auto'),   // re-publish every local port on the tailnet IP
+  mirrorBind: process.env.BOXDECK_MIRROR_BIND || file.mirrorBind || '',                                  // the private IP to publish on (auto: tailscale 100.x)
 };
 if (!cfg.password) { console.error(`boxdeck: set a password (BOXDECK_PASSWORD or "password" in ${CONFIG_PATH})`); process.exit(1); }
 function DEFAULT_KNOWN() { return { 3000: 'App', 3001: 'App', 4000: 'API', 5173: 'Vite', 4173: 'Vite preview', 8080: 'HTTP', 8000: 'HTTP', 6006: 'Storybook', 5432: 'Postgres', 6379: 'Redis', 27017: 'MongoDB', 9222: 'Chrome CDP', 7681: 'Terminal (ttyd)', 8384: 'Syncthing', 3773: 'T3 Code' }; }
@@ -127,11 +129,29 @@ const reports = memo(20000, () => {
     .sort((a, b) => b.t - a.t).slice(0, 25)
     .map(r => ({ t: r.t, size: r.size, rel: tilde(r.path), url: cfg.filesPort ? `http://${cfg.host}:${cfg.filesPort}${r.path.startsWith(HOME) ? r.path.slice(HOME.length) : r.path}` : '' }));
 });
+// ---------- mirror: publish every local port on the private (tailscale) IP, plain TCP, so
+// http://box:3001 reaches 127.0.0.1:3001 from any device on the tailnet. No sudo, no tailscale serve.
+const mirrors = new Map();
+const isTailnetIp = a => /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(a);
+function mirrorIp() { if (cfg.mirrorBind) return cfg.mirrorBind; for (const addrs of Object.values(os.networkInterfaces())) for (const a of addrs) if (a.family === 'IPv4' && isTailnetIp(a.address)) return a.address; return ''; }
+function syncMirrors() {
+  const ip = mirrorIp(); if (!ip) return;
+  const want = new Set(ports().filter(p => !p.ephemeral).map(p => p.port)); want.add(cfg.port);
+  for (const port of want) if (!mirrors.has(port)) {
+    const srv = net.createServer(sock => { const up = net.connect(port, '127.0.0.1'); const kill = () => { sock.destroy(); up.destroy(); };
+      sock.on('error', kill); up.on('error', kill); sock.pipe(up); up.pipe(sock); });
+    srv.on('error', () => { srv.close(); mirrors.set(port, null); setTimeout(() => mirrors.delete(port), 60000); }); // taken (tailscale serve?) - retry in a minute
+    srv.listen(port, ip); mirrors.set(port, srv);
+  }
+  for (const [port, srv] of mirrors) if (!want.has(port)) { srv && srv.close(); mirrors.delete(port); }
+}
+if (cfg.mirror === true || (cfg.mirror === 'auto' && mirrorIp())) { syncMirrors(); setInterval(syncMirrors, 5000); console.log(`mirroring local ports on ${mirrorIp()}`); }
+
 function state() {
   const all = procs(), panes = tmuxPanes(), sessions = {};
   for (const p of panes) { (sessions[p.session] ||= { name: p.session, windows: new Set(), attached: p.attached }).windows.add(p.win); }
   return { title: cfg.title, health, hist, ports: ports(), agents: agents(all, panes), tmux: Object.values(sessions).map(s => ({ ...s, windows: s.windows.size })),
-    browsers: browsers(all), docker: docker(), reports: reports(), quick: cfg.quick, host: cfg.host, now: Date.now() };
+    browsers: browsers(all), docker: docker(), reports: reports(), quick: cfg.quick, host: cfg.host, mirror: [...mirrors.keys()].filter(p => mirrors.get(p)), now: Date.now() };
 }
 
 // ---------- http ----------

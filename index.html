@@ -57,6 +57,16 @@ a{color:inherit;text-decoration:none}
 .meter svg polyline{fill:none;stroke:var(--ink-4);stroke-width:1.2;stroke-linejoin:round}
 .meter.warn svg polyline{stroke:var(--lamp)} .meter.bad svg polyline{stroke:var(--rust)}
 .meter .sub{font:12px/1 var(--mono);color:var(--ink-3);margin-top:8px;font-variant-numeric:tabular-nums}
+/* viewer: a localhost app inside the deck */
+.viewer{border:1px solid var(--seam);border-radius:8px;background:var(--deck);overflow:hidden;margin-bottom:28px;display:none}
+.viewer.on{display:block}
+.viewer .bar{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--seam);background:var(--plate)}
+.viewer .bar .url{font:12.5px var(--mono);color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer .bar .led{background:var(--lamp)}
+.viewer .bar button,.viewer .bar a{font:500 12px/1 var(--sans);padding:6px 9px;border-radius:5px;border:1px solid var(--seam);background:var(--deck);color:var(--ink-2);cursor:pointer}
+.viewer .bar button:hover,.viewer .bar a:hover{border-color:var(--lamp);color:var(--ink)}
+.viewer iframe{display:block;width:100%;height:70vh;min-height:420px;border:0;background:#fff}
+.ports .row.live.cur{background:var(--lamp-dim)}
 /* sections */
 section{margin-bottom:28px}
 h2{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
@@ -105,6 +115,11 @@ h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0
   </div>
 
   <div class="meters" id="meters"></div>
+
+  <div class="viewer" id="viewer">
+    <div class="bar"><i class="led"></i><span class="url" id="vurl"></span><span class="dim" id="vhint" style="font-size:12px"></span><button id="vreload" title="Reload">↻</button><a id="vopen" target="_blank" rel="noopener" title="Open in a new tab">↗</a><button id="vclose" title="Close">✕</button></div>
+    <iframe id="vframe" src="about:blank" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"></iframe>
+  </div>
 
   <section class="ports">
     <h2>Berths <b id="portcount"></b></h2>
@@ -155,8 +170,8 @@ function meters(h, hist) {
 function ports(list, host) {
   const real = list.filter(p => !p.ephemeral), eph = list.filter(p => p.ephemeral);
   $('portcount').textContent = real.length + ' open';
-  const row = p => { const name = p.label || p.title || p.proc || 'unknown'; const sub = p.label ? (p.title && p.title !== p.label && p.title !== 'needs login' ? p.title : (p.proc && p.proc !== name ? p.proc : '')) : (p.proc && p.proc !== name ? p.proc : '');
-    return `<a class="row ${p.ephemeral ? 'ephemeral' : 'live'}" href="${p.url}" target="_blank" rel="noopener"><span class="port"><i class="led"></i>${p.port}</span><span class="name ellip">${esc(name)}${sub ? `<small class="ellip">${esc(sub)}</small>` : ''}</span><span class="cwd dim mono ellip">${esc(p.cwd || '')}</span><span class="arrow">↗</span></a>`; };
+  const row = p => { const cur = p.url === curUrl ? ' cur' : ''; const name = p.label || p.title || p.proc || 'unknown'; const sub = p.label ? (p.title && p.title !== p.label && p.title !== 'needs login' ? p.title : (p.proc && p.proc !== name ? p.proc : '')) : (p.proc && p.proc !== name ? p.proc : '');
+    return `<a class="row ${p.ephemeral ? 'ephemeral' : 'live'}${cur}" href="${p.url}" target="_blank" rel="noopener" data-port="${p.port}"${p.title === 'needs login' ? ' data-login="1"' : ''}><span class="port"><i class="led"></i>${p.port}</span><span class="name ellip">${esc(name)}${sub ? `<small class="ellip">${esc(sub)}</small>` : ''}</span><span class="cwd dim mono ellip">${esc(p.cwd || '')}</span><span class="arrow">↗</span></a>`; };
   $('ports').innerHTML = list.length ? `<div class="row head"><span>Port</span><span>What</span><span class="cwd">Where</span><span></span></div>` + real.map(row).join('') + (eph.length ? `<div class="empty" style="padding:8px 14px;border-top:1px solid var(--seam-soft)">${eph.length} helper socket${eph.length > 1 ? 's' : ''}: ${eph.map(p => p.port + (p.proc ? ' ' + esc(p.proc) : '')).join(', ')}</div>` : '') : `<div class="empty">Nothing is listening. Start a dev server and it shows here within 10 s as http://${host}:PORT.</div>`;
 }
 function quick(q, list, host) {
@@ -175,6 +190,11 @@ function reports(list) {
   $('reports').innerHTML = list.length ? list.map(r => { const i = r.rel.lastIndexOf('/'); return `<a class="row" ${r.url ? `href="${r.url}" target="_blank" rel="noopener"` : ''}><span class="rel ellip"><span class="dim">${esc(r.rel.slice(0, i + 1))}</span><b>${esc(r.rel.slice(i + 1))}</b></span><span class="age hide-sm">${(r.size / 1024).toFixed(0)} KB</span><span class="age">${ago(r.t)}</span></a>`; }).join('') : `<div class="empty">No report written in the last 3 days.</div>`;
 }
 
+let curUrl = '';
+function view(url, hint) { curUrl = url; $('vhint').textContent = hint || ''; $('vurl').textContent = url; $('vopen').href = url; $('vframe').src = url; $('viewer').classList.add('on'); document.querySelectorAll('.ports .row').forEach(r => r.classList.toggle('cur', r.getAttribute('href') === url)); }
+$('ports').addEventListener('click', e => { const a = e.target.closest('a.row.live'); if (!a || window.innerWidth < 820) return; e.preventDefault(); view(a.getAttribute('href'), a.dataset.login ? 'asks for a login: open ↗ once, sign in, come back' : ''); });
+$('vclose').onclick = () => { curUrl = ''; $('vframe').src = 'about:blank'; $('viewer').classList.remove('on'); document.querySelectorAll('.ports .row.cur').forEach(r => r.classList.remove('cur')); };
+$('vreload').onclick = () => { $('vframe').src = $('vframe').src; };
 async function tick() {
   try {
     const r = await fetch(location.origin + '/api/state', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status);

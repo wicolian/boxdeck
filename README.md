@@ -3,7 +3,8 @@
 A one-page cockpit for your ssh dev box. Open it from your laptop, phone or iPad
 and see, live:
 
-- **Berths** – every port something is listening on, what it is, where it runs, one tap to open it
+- **Berths** – every port something is listening on, what it is, where it runs. Tap one and the app
+  opens **inside the deck** (or in a new tab on a phone). Your `localhost:3001` on your iPad.
 - **Health** – CPU, memory, swap, disk, load, with a sparkline history
 - **Agents** – running `claude` / `codex` / `aider` / `opencode` / `goose` processes, their folder, tmux pane, model, age
 - **tmux** sessions, **browsers** (headless Chrome count and memory), **docker** containers
@@ -13,6 +14,10 @@ and see, live:
 | Before | After |
 |:---:|:---:|
 | ![Before: ss, free, ps, tmux ls in a terminal](./captures/before.png) | ![After: boxdeck](./captures/after.png) |
+
+| A dev server, viewed inside the deck |
+|:---:|
+| ![boxdeck viewer showing a localhost app](./captures/viewer.png) |
 
 <details><summary>On a phone</summary>
 
@@ -31,6 +36,20 @@ Idle cost is a few MB of RAM and ~0 CPU.
 Basic-auth protected. Binds to `127.0.0.1` by default: put it on your tailnet (or an ssh tunnel),
 never on the public internet.
 
+## Your localhost, from any device
+
+Two things make `http://box:3001` work from your laptop, phone or iPad:
+
+1. **Mirror.** boxdeck finds your Tailscale IP (`100.x.y.z`) and, for every port that is open on
+   `127.0.0.1`, opens the same port on that IP and pipes bytes across. Plain TCP, so websockets,
+   HMR and anything else just work. No sudo, no `tailscale serve`. On by default when a Tailscale
+   interface exists (`"mirror": "auto"`); `true` / `false` to force; `"mirrorBind"` to use another
+   private IP. Ports in `hide` are never mirrored. Mirrored ports carry no password of their own,
+   same as `tailscale serve` — the tailnet is the wall.
+2. **Viewer.** Click a berth and the app loads in a panel on the deck itself, with reload, pop-out
+   and close. Apps that ask for a login (basic auth) cannot prompt inside a frame: open them once
+   with ↗, sign in, come back.
+
 ## Install
 
 ```bash
@@ -40,11 +59,9 @@ cd ~/boxdeck && ./install.sh      # asks for a user, a password, and the hostnam
 
 That writes `~/.config/boxdeck/config.json` and starts a user systemd service on port 8100.
 
-Expose it on your tailnet (plain TCP is fine, WireGuard already encrypts it):
-
-```bash
-sudo tailscale serve --bg --tcp=8100 tcp://127.0.0.1:8100
-```
+With Tailscale on the box, the mirror publishes the deck itself on your tailnet IP too, so you are done.
+Without it, expose port 8100 the way you like (`tailscale serve`, an ssh tunnel, a WireGuard peer),
+never on the public internet.
 
 Then bookmark `http://<your-box>:8100`. Your browser remembers the password.
 
@@ -63,6 +80,8 @@ Then bookmark `http://<your-box>:8100`. Your browser remembers the password.
   "quick": [["Files", 8090], ["Terminal", 7681], ["App", 3001]],
   "reportRoots": ["~/reports", "~/box"],
   "reportDays": 3,
+  "mirror": "auto",
+  "mirrorBind": "",
   "known": { "3001": "My app", "5173": "Vite demo" },
   "hide": [22, 53, 111, 139, 445],
   "agentPattern": "^(\\S*/)?(claude|codex|aider|opencode|goose)(\\s|$)"
