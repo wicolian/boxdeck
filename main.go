@@ -33,6 +33,7 @@ type app struct {
 	term      terminalManager
 	boxesMemo boxCache
 	workers   sync.WaitGroup
+	live      *liveHub
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -48,6 +49,7 @@ func fileURL(relative string) string {
 func newApp(cfg config, secret []byte) *app {
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &app{cfg: cfg, secret: secret, ctx: ctx, cancel: cancel}
+	a.live = newLiveHub(ctx, cfg.home)
 	a.collect = &collectors{ctx: ctx, cfg: cfg, titles: map[int]titleEntry{}}
 	a.health = &healthSampler{ctx: ctx, hist: map[string][]float64{"cpu": {}, "mem": {}, "swap": {}, "load": {}}}
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
@@ -118,6 +120,14 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		http.SetCookie(w, &http.Cookie{Name: "boxdeck", Value: "", Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, MaxAge: -1, Expires: time.Unix(1, 0)})
 		http.Redirect(w, r, "/login", 303)
+	case r.URL.Path == "/api/stream":
+		a.stream(w, r)
+	case r.URL.Path == "/api/proc/kill":
+		a.killProc(w, r)
+	case r.URL.Path == "/api/ui/procs":
+		a.uiProcs(w, r)
+	case r.URL.Path == "/api/ui/settings":
+		a.uiSettings(w, r)
 	case r.URL.Path == "/api/state":
 		if r.Method != "GET" {
 			jsonReply(w, 405, object{"error": "Use GET to read state"})
