@@ -48,6 +48,7 @@ final class BoxdeckBarCoreTests: XCTestCase {
             "codex api key"
         ])
         XCTAssertTrue(MenuModelBuilder.renderText(model).contains("Refresh"))
+        print("\nSwift menu model after (text, not pixels):\n\(MenuModelBuilder.renderText(model))\n")
     }
 
     func testMarksUnreachableAndTailnetBoxes() {
