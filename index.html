@@ -36,12 +36,12 @@ a{color:inherit;text-decoration:none}
 .mast .host{font-family:var(--mono);color:var(--ink-2)}
 .mast .clock{margin-left:auto;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:12px}
 .pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lamp);margin-right:8px;vertical-align:1px;box-shadow:0 0 0 0 rgba(232,163,61,.5);animation:pulse 2.4s ease-out infinite}
-.pulse.stale{background:var(--rust);animation:none}
+.pulse.stale{background:var(--lamp);animation:none}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,163,61,.45)}70%{box-shadow:0 0 0 7px rgba(232,163,61,0)}100%{box-shadow:0 0 0 0 rgba(232,163,61,0)}}
 .quick{display:flex;gap:6px;flex-wrap:wrap}
 .quick a{font:500 12px/1 var(--sans);padding:7px 10px;border-radius:6px;border:1px solid var(--seam);background:var(--deck);color:var(--ink-2);transition:border-color .12s,color .12s}
 .quick a:hover{border-color:var(--lamp);color:var(--ink)}
-.quick a.off{opacity:.4;pointer-events:none}
+.quick a.off{opacity:.4;cursor:help}
 /* meters */
 .meters{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--seam);border:1px solid var(--seam);border-radius:8px;overflow:hidden;margin-bottom:28px}
 .meter{background:var(--deck);padding:14px 16px 12px;position:relative}
@@ -51,11 +51,11 @@ a{color:inherit;text-decoration:none}
 .meter .v small{font-size:13px;color:var(--ink-3);margin-left:4px;letter-spacing:0}
 .meter .bar{height:3px;background:var(--plate);border-radius:2px;overflow:hidden}
 .meter .bar i{display:block;height:100%;background:var(--ink-3);transition:width .6s ease}
-.meter.warn .bar i{background:var(--lamp)} .meter.bad .bar i{background:var(--rust)}
-.meter.warn .v{color:var(--lamp)} .meter.bad .v{color:var(--rust)}
+.meter.warn .bar i{background:var(--lamp)} .meter.bad .bar i{background:var(--lamp)}
+.meter.warn .v{color:var(--lamp)} .meter.bad .v{color:var(--lamp)}
 .meter svg{position:absolute;right:12px;top:30px;width:88px;height:30px;opacity:.7}
 .meter svg polyline{fill:none;stroke:var(--ink-4);stroke-width:1.2;stroke-linejoin:round}
-.meter.warn svg polyline{stroke:var(--lamp)} .meter.bad svg polyline{stroke:var(--rust)}
+.meter.warn svg polyline{stroke:var(--lamp)} .meter.bad svg polyline{stroke:var(--lamp)}
 .meter .sub{font:12px/1 var(--mono);color:var(--ink-3);margin-top:8px;font-variant-numeric:tabular-nums}
 /* viewer: a localhost app inside the deck */
 .viewer{border:1px solid var(--seam);border-radius:8px;background:var(--deck);overflow:hidden;margin-bottom:28px;display:none}
@@ -72,20 +72,20 @@ section{margin-bottom:28px}
 h2{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
 h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0;text-transform:none}
 .board{border:1px solid var(--seam);border-radius:8px;background:var(--deck);overflow:hidden}
-.row{display:grid;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--seam-soft);min-height:42px}
+.row{display:grid;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--seam-soft);min-height:44px}
 .row:first-child{border-top:0}
-.row.head{color:var(--ink-4);font:500 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;min-height:32px;padding-top:9px;padding-bottom:8px;background:var(--plate)}
+.row.head{color:var(--ink-4);font:500 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;min-height:44px;padding-top:9px;padding-bottom:8px;background:var(--plate)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .dim{color:var(--ink-3)} .ghost{color:var(--ink-4)}
 .ellip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.empty{padding:18px 14px;color:var(--ink-4);font-size:13px}
+.empty{padding:18px 14px;color:var(--ink-3);font-size:13px}
 /* berths (ports) */
-.ports .row{grid-template-columns:64px minmax(0,1.4fr) minmax(0,1fr) 20px}
+.ports .row{grid-template-columns:64px minmax(0,1.4fr) minmax(0,1fr) 44px}
 .ports .row.live{cursor:pointer}
 .ports .row.live:hover{background:var(--lamp-dim)}
 .ports .row.live:hover .arrow{color:var(--lamp)}
 .port{font:500 14px/1 var(--mono);color:var(--ink)}
-.led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--moss);margin-right:8px;vertical-align:1px}
+.led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lamp);margin-right:8px;vertical-align:1px}
 .ephemeral .led{background:var(--ink-4)}
 .ephemeral{color:var(--ink-4)} .ephemeral .port{color:var(--ink-4)}
 .name{font-weight:500} .name small{display:block;color:var(--ink-3);font-weight:400;font-size:12px}
@@ -94,7 +94,7 @@ h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0
 .cols{display:grid;grid-template-columns:3fr 2fr;gap:20px}
 .agents .row{grid-template-columns:64px minmax(0,1fr) 56px 56px 64px}
 .kind{font:500 11px/1 var(--mono);padding:4px 6px;border-radius:4px;border:1px solid var(--seam-hard);color:var(--ink-2);display:inline-block}
-.kind.codex{border-color:rgba(95,181,122,.35);color:var(--moss)}
+.kind.codex{border-color:var(--seam-hard);color:var(--ink-2)}
 .stack{display:flex;flex-direction:column;gap:20px}
 .list .row{grid-template-columns:minmax(0,1fr) auto}
 .reports .row{grid-template-columns:minmax(0,1fr) 80px 56px}
@@ -102,7 +102,25 @@ h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0
 .reports .rel{font-family:var(--mono);font-size:12.5px}
 .reports .rel b{font-weight:500;color:var(--ink)}
 .age{color:var(--ink-3);font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
-@media(max-width:820px){.mast .clock{display:none}.meters{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}.ports .row{grid-template-columns:56px minmax(0,1fr) 20px}.ports .row>.cwd{display:none}.agents .row{grid-template-columns:56px minmax(0,1fr) 64px}.agents .row>.hide-sm{display:none}.reports .row{grid-template-columns:minmax(0,1fr) 56px}.reports .row>.hide-sm{display:none}.meter svg{display:none}}
+@media(max-width:820px){.mast .clock{display:none}.meters{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}.ports .row{grid-template-columns:56px minmax(0,1fr) 44px}.ports .row>.cwd{display:none}.agents .row{grid-template-columns:56px minmax(0,1fr) 64px}.agents .row>.hide-sm{display:none}.reports .row{grid-template-columns:minmax(0,1fr) 56px}.reports .row>.hide-sm{display:none}.meter svg{display:none}}
+/* Same bridge tokens; larger controls and explicit feedback. */
+button{font:500 12px/1.4 var(--sans);border:1px solid var(--seam);border-radius:6px;background:var(--deck);color:var(--ink-2);cursor:pointer}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+button:hover{border-color:var(--seam-hard);color:var(--ink)}
+.quick a{display:inline-flex;align-items:center;min-height:44px}
+.berth{position:relative;border-top:1px solid var(--seam-soft)}.berth .row{min-height:64px}.popout{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;color:var(--ink-3)}
+.viewer .bar button,.viewer .bar a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
+.viewer .content{position:relative}.loading{display:none;position:absolute;inset:0;place-content:center;background:var(--deck);color:var(--ink-2);font-family:var(--mono)}
+.viewer.loading-frame .loading{display:grid}.viewer.loading-frame iframe{visibility:hidden}
+.agents .row{grid-template-columns:64px minmax(0,1fr) 72px;min-height:64px}
+.agents .row.head{min-height:44px}.agents button.row{width:100%;text-align:left;border-radius:0;border:0;border-top:1px solid var(--seam-soft);font:inherit;color:inherit}
+.agents button.row:hover{background:var(--lamp-dim)}.agent-meta{display:block;font:12px/1.7 var(--mono);color:var(--ink-3)}
+.details{display:flex;flex-wrap:wrap;gap:0 8px;white-space:normal}.details span{white-space:nowrap}.status{font:12px/1.4 var(--mono);color:var(--ink-3)}.status.working,.status.blocked{color:var(--lamp)}
+.focus-pending .status{animation:focus-pulse .7s ease-in-out infinite alternate}@keyframes focus-pulse{to{opacity:.35}}
+.notice{color:var(--ink-3);font-size:12px;margin:8px 0}.notice:empty{display:none}.session-counts{color:var(--ink-3);font:12px/1.6 var(--mono);padding:12px 14px;border-top:1px solid var(--seam-soft)}
+footer{display:flex;justify-content:space-between;align-items:center;gap:16px;color:var(--ink-3);font-size:12px}footer button{min-height:44px;padding:8px 12px}
+@media(max-width:820px){.quick{width:100%}.quick a{min-height:56px}.row,.row.head,.agents .row,.agents .row.head{min-height:56px}.popout{width:56px;height:56px;right:0}.ports .row{grid-template-columns:56px minmax(0,1fr) 44px;padding-right:12px}.agents .row{grid-template-columns:52px minmax(0,1fr) 64px;gap:8px;padding:12px}.agent-meta{font-size:11px}.mast{gap:12px}.viewer{display:none!important}footer button{min-height:56px}.reports .row{min-height:56px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -114,24 +132,27 @@ h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0
     <span class="clock" id="clock"></span>
   </div>
 
-  <div class="meters" id="meters"></div>
+  <div class="meters" id="meters" aria-label="Machine health"></div>
+  <p class="notice" id="connection" role="status">Connecting to the box…</p>
 
   <div class="viewer" id="viewer">
-    <div class="bar"><i class="led"></i><span class="url" id="vurl"></span><span class="dim" id="vhint" style="font-size:12px"></span><button id="vreload" title="Reload">↻</button><a id="vopen" target="_blank" rel="noopener" title="Open in a new tab">↗</a><button id="vclose" title="Close">✕</button></div>
-    <iframe id="vframe" src="about:blank" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"></iframe>
+    <div class="bar"><i class="led"></i><span class="url" id="vurl"></span><span class="dim" id="vhint" style="font-size:12px" role="status"></span><button id="vreload" title="Reload">↻</button><a id="vopen" target="_blank" rel="noopener" title="Open in a new tab">↗</a><button id="vclose" title="Close">✕</button></div>
+    <div class="content"><iframe id="vframe" title="Deck viewer" src="about:blank" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"></iframe><div class="loading" role="status"><span><i class="pulse"></i>Loading…</span></div></div>
   </div>
 
   <section class="ports">
     <h2>Berths <b id="portcount"></b></h2>
-    <div class="board" id="ports"></div>
+    <div class="board" id="ports"><div class="empty">Finding listeners. Start a dev server to add a berth.</div></div>
+    <p class="notice" id="mirror-errors" role="status"></p>
   </section>
 
   <div class="cols">
     <section class="agents">
       <h2>Agents <b id="agentcount"></b></h2>
-      <div class="board" id="agents"></div>
+      <div class="board" id="agents"></div><p class="notice" id="focus-status" role="status"></p>
     </section>
     <div class="stack">
+      <section class="list" id="herdrsec" hidden><h2>herdr <b id="herdrcount"></b></h2><div class="board" id="herdr"></div></section>
       <section class="list"><h2>tmux</h2><div class="board" id="tmux"></div></section>
       <section class="list"><h2>Browsers <b id="brcount"></b></h2><div class="board" id="browsers"></div></section>
       <section class="list" id="dockersec"><h2>Docker</h2><div class="board" id="docker"></div></section>
@@ -139,9 +160,10 @@ h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0
   </div>
 
   <section class="reports">
-    <h2>Fresh reports <b>last 3 days</b></h2>
+    <h2>Fresh reports <b id="reportdays">last 3 days</b></h2>
     <div class="board" id="reports"></div>
   </section>
+  <footer><span>One door to your box.</span><form action="/logout" method="post"><button>Sign out</button></form></footer>
 </div>
 
 <script>
@@ -157,56 +179,114 @@ const grade = (pct, warn, bad) => pct >= bad ? 'bad' : pct >= warn ? 'warn' : ''
 let last = 0;
 
 function meters(h, hist) {
-  const memPct = Math.round(100 * h.memUsed / h.memTotal), swapPct = h.swapTotal ? Math.round(100 * h.swapUsed / h.swapTotal) : 0, loadPct = Math.round(100 * h.load1 / h.cores);
+  const memPct = (h.memTotal ? Math.round(100 * h.memUsed / h.memTotal) : 0), swapPct = h.swapTotal ? Math.round(100 * h.swapUsed / h.swapTotal) : 0, loadPct = Math.round(100 * h.load1 / h.cores);
   const m = [
-    { k: 'CPU', hint: h.cores + ' cores', v: h.cpu, unit: '%', pct: h.cpu, cls: grade(h.cpu, 70, 90), sub: `load ${h.load1.toFixed(2)} · ${h.load5.toFixed(2)} · ${h.load15.toFixed(2)}`, sp: spark(hist.cpu, 100) },
+    { k: 'CPU', hint: h.cores + ' cores', v: h.cpu, unit: '%', pct: h.cpu, cls: grade(h.cpu, 70, 90), sub: `load ${h.load1.toFixed(2)} / ${h.load5.toFixed(2)} / ${h.load15.toFixed(2)}`, sp: spark(hist.cpu, 100) },
     { k: 'Memory', hint: gb(h.memTotal) + ' GB', v: gb(h.memUsed), unit: 'GB', pct: memPct, cls: grade(memPct, 80, 92), sub: `${gb(h.memAvail)} GB free`, sp: spark(hist.mem, 100) },
     { k: 'Swap', hint: gb(h.swapTotal) + ' GB', v: gb(h.swapUsed), unit: 'GB', pct: swapPct, cls: grade(swapPct, 75, 90), sub: `${gb(h.swapFree)} GB free`, sp: spark(hist.swap, 100) },
-    { k: 'Disk', hint: '/', v: h.diskPct, unit: '%', pct: h.diskPct, cls: grade(h.diskPct, 80, 92), sub: `${gb(h.diskTotal - h.diskUsed)} GB free · up ${dur(Math.floor(h.uptime))}`, sp: '' },
+    { k: 'Disk', hint: '/', v: h.diskPct, unit: '%', pct: h.diskPct, cls: grade(h.diskPct, 80, 92), sub: `${gb(h.diskTotal - h.diskUsed)} GB free / up ${dur(Math.floor(h.uptime))}`, sp: '' },
   ];
   $('meters').innerHTML = m.map(x => `<div class="meter ${x.cls}"><div class="k">${x.k}<span>${x.hint}</span></div><div class="v">${x.v}<small>${x.unit}</small></div>${x.sp}<div class="bar"><i style="width:${Math.min(100, x.pct)}%"></i></div><div class="sub">${x.sub}</div></div>`).join('');
 }
 
+function rememberFocus() { const el=document.activeElement; if (!el || !el.closest('#ports,#agents,#quick,#reports')) return null; return {board:el.closest('[id]').id, pane:el.dataset.pane, href:el.getAttribute('href'), url:el.dataset.url}; }
+function restoreFocus(saved) { if (!saved) return; const board=$(saved.board); const el=[...board.querySelectorAll('a,button')].find(el => saved.pane ? el.dataset.pane===saved.pane : saved.url ? el.dataset.url===saved.url : el.getAttribute('href')===saved.href); if (el) el.focus({preventScroll:true}); }
 function ports(list, host) {
   const real = list.filter(p => !p.ephemeral), eph = list.filter(p => p.ephemeral);
   $('portcount').textContent = real.length + ' open';
-  const row = p => { const cur = p.url === curUrl ? ' cur' : ''; const name = p.label || p.title || p.proc || 'unknown'; const sub = p.label ? (p.title && p.title !== p.label && p.title !== 'needs login' ? p.title : (p.proc && p.proc !== name ? p.proc : '')) : (p.proc && p.proc !== name ? p.proc : '');
-    return `<a class="row ${p.ephemeral ? 'ephemeral' : 'live'}${cur}" href="${p.url}" target="_blank" rel="noopener" data-port="${p.port}"${p.title === 'needs login' ? ' data-login="1"' : ''}><span class="port"><i class="led"></i>${p.port}</span><span class="name ellip">${esc(name)}${sub ? `<small class="ellip">${esc(sub)}</small>` : ''}</span><span class="cwd dim mono ellip">${esc(p.cwd || '')}</span><span class="arrow">↗</span></a>`; };
-  $('ports').innerHTML = list.length ? `<div class="row head"><span>Port</span><span>What</span><span class="cwd">Where</span><span></span></div>` + real.map(row).join('') + (eph.length ? `<div class="empty" style="padding:8px 14px;border-top:1px solid var(--seam-soft)">${eph.length} helper socket${eph.length > 1 ? 's' : ''}: ${eph.map(p => p.port + (p.proc ? ' ' + esc(p.proc) : '')).join(', ')}</div>` : '') : `<div class="empty">Nothing is listening. Start a dev server and it shows here within 10 s as http://${host}:PORT.</div>`;
+  const row = p => { const cur = p.url === curUrl ? ' cur' : ''; const name = p.label || p.title || p.proc || 'Listener'; const sub = p.label ? (p.title && p.title !== p.label && p.title !== 'needs login' ? p.title : (p.proc && p.proc !== name ? p.proc : '')) : (p.proc && p.proc !== name ? p.proc : '');
+    return `<div class="berth"><a class="row live${cur}" href="${esc(p.url)}" target="_blank" rel="noopener" data-port="${p.port}"${p.title === 'needs login' ? ' data-login="1"' : ''}><span class="port"><i class="led"></i>${p.port}</span><span class="name ellip">${esc(name)}${sub ? `<small class="ellip">${esc(sub)}</small>` : ''}</span><span class="cwd dim mono ellip">${esc(p.cwd || '')}</span><span></span></a><button class="popout" data-url="${esc(p.url)}" title="Open ${esc(name)} in a new tab" aria-label="Open ${esc(name)} in a new tab">↗</button></div>`; };
+  $('ports').innerHTML = real.length ? `<div class="row head"><span>Port</span><span>What</span><span class="cwd">Where</span><span></span></div>` + real.map(row).join('') : `<div class="empty">No apps are listening. Start a dev server to add a berth.</div>`;
+  if (eph.length) $('ports').insertAdjacentHTML('beforeend', `<div class="empty">${eph.length} helper socket${eph.length > 1 ? 's' : ''} / ${eph.map(p => p.port).join(', ')}</div>`);
 }
-function quick(q, list, host) {
+function quick(q, list, host, terminal) {
   const open = new Set(list.map(p => p.port));
-  $('quick').innerHTML = (q || []).map(([n, p]) => `<a href="http://${host}:${p}" target="_blank" rel="noopener" class="${open.has(p) ? '' : 'off'}">${esc(n)}</a>`).join('');
+  const links = (q || []).map(([name, port]) => ({name, port: Number(port)}));
+  if (!links.some(l => l.name.toLowerCase() === 'files')) links.unshift({name:'Files', port:0});
+  if (!links.some(l => l.name.toLowerCase() === 'terminal')) links.push({name:'Terminal', port:7681});
+  $('quick').innerHTML = links.map(({name,port}) => {
+    const files = name.toLowerCase() === 'files', term = name.toLowerCase() === 'terminal';
+    const href = files ? '/files/' : term ? '/term/' : `http://${host.includes(':') ? '['+host+']' : host}:${port}`;
+    const enabled = files || (term ? terminal.available : open.has(port));
+    const hint = enabled ? `Open ${name}` : term ? terminal.error || (terminal.installed ? 'start ttyd' : 'install ttyd') : 'Start this server on the box';
+    return `<a ${enabled ? `href="${esc(href)}" target="_blank" rel="noopener"` : 'aria-disabled="true" tabindex="0"'} class="${enabled ? '' : 'off'}" title="${esc(hint)}">${esc(name)}</a>`;
+  }).join('');
 }
-
+const pendingFocus = new Set();
 function agents(list) {
-  $('agentcount').textContent = list.length ? list.length + ' running' : '';
-  $('agents').innerHTML = list.length ? `<div class="row head"><span>Kind</span><span>Where</span><span class="hide-sm">CPU</span><span class="hide-sm">Mem</span><span>Age</span></div>` + list.map(a => `<div class="row"><span><span class="kind ${a.kind}">${a.kind}</span></span><span class="ellip"><span class="mono">${esc(a.cwd)}</span><small class="dim" style="display:block;font-size:12px">${a.pane ? 'tmux ' + esc(a.pane) + (a.win ? ' · ' + esc(a.win) : '') : 'pid ' + a.pid}${a.model ? ' · ' + esc(a.model) : ''}</small></span><span class="mono dim hide-sm">${a.cpu.toFixed(0)}%</span><span class="mono dim hide-sm">${Math.round(a.rss / 1048576)}M</span><span class="mono dim">${dur(a.secs)}</span></div>`).join('') : `<div class="empty">No claude or codex process is running.</div>`;
+  $('agentcount').textContent = list.length ? list.length + ' sessions' : '';
+  $('agents').innerHTML = list.length ? `<div class="row head"><span>Kind</span><span>Session</span><span>State</span></div>` + list.map(a => {
+    const tag = a.pane_id ? 'button' : 'div';
+    const title = a.terminal_title_stripped || a.cwd || 'pid ' + a.pid;
+    const context = a.tokens?.context ? 'ctx ' + (a.tokens.context.match(/[\d.]+%/)?.[0] || a.tokens.context) : '';
+    const meta = a.pane_id ? [a.pane_id,context,a.tokens?.limit].filter(Boolean).join(' / ') : [a.pane ? 'tmux '+a.pane : 'pid '+a.pid,a.model,`${a.cpu.toFixed(0)}% CPU`,`${Math.round(a.rss/1048576)}M`,dur(a.secs)].filter(Boolean).join(' / ');
+    return `<${tag} class="row${pendingFocus.has(a.pane_id) ? ' focus-pending' : ''}" ${a.pane_id ? `type="button" data-pane="${esc(a.pane_id)}" title="Focus ${esc(title)} in herdr"` : ''}><span><span class="kind">${esc(a.kind)}</span></span><span class="ellip"><span title="${esc(title)}">${esc(title)}</span><small class="agent-meta details" title="${esc(meta)}">${meta.split(' / ').map(part => `<span>${esc(part)}</span>`).join('')}</small>${a.pane_id ? `<small class="agent-meta ellip">${esc(a.cwd)}</small>` : ''}</span><span class="status ${['working','blocked'].includes(a.agent_status) ? a.agent_status : ''}">${esc(a.agent_status || 'running')}</span></${tag}>`;
+  }).join('') : `<div class="empty">No agents are running. Start claude or codex on the box.</div>`;
 }
-function tmux(list) { $('tmux').innerHTML = list.length ? list.map(s => `<div class="row"><span class="ellip"><span class="mono">${esc(s.name)}</span> <span class="dim">· ${s.windows} window${s.windows > 1 ? 's' : ''}</span></span><span class="mono dim">${s.attached ? 'attached' : 'detached'}</span></div>`).join('') : `<div class="empty">No tmux session.</div>`; }
-function browsers(list) { $('brcount').textContent = list.length ? list.length + ' of 2' : ''; $('browsers').innerHTML = list.length ? list.map(b => `<div class="row"><span class="ellip">Chrome${b.headless ? ' headless' : ''} <span class="dim mono">${b.port && b.port !== '0' ? 'cdp ' + b.port : 'pid ' + b.pid}</span></span><span class="mono dim">${Math.round(b.rss / 1048576)}M · ${dur(b.secs)}</span></div>`).join('') : `<div class="empty">No browser open.</div>`; }
-function docker(list) { $('docker').innerHTML = list.length ? list.map(c => `<div class="row"><span class="ellip"><span class="mono">${esc(c.name)}</span> <span class="dim">${esc(c.image)}</span></span><span class="mono dim ellip">${esc(c.status)}</span></div>`).join('') : `<div class="empty">No container running.</div>`; }
+function herdr(h) {
+  $('herdrsec').hidden = !h.running;
+  if (!h.running) return;
+  $('herdrcount').textContent = h.workspaces.length + ' workspaces';
+  const counts = {}; for (const a of h.agents) counts[a.agent_status] = (counts[a.agent_status] || 0) + 1;
+  $('herdr').innerHTML = (h.workspaces.length ? h.workspaces.map(w => `<div class="row"><span class="ellip mono">${esc(w.name || w.id)}</span><span class="dim mono">${w.tabs} tab${w.tabs === 1 ? '' : 's'}</span></div>`).join('') : `<div class="empty">No workspaces open. Open herdr on the box to start one.</div>`) + `<div class="session-counts">${h.agents.length ? Object.entries(counts).map(([status,n]) => `${n} ${esc(status)}`).join(' / ') : 'No agents yet. Start an agent in a herdr pane.'}</div>`;
+}
+function tmux(list) { $('tmux').innerHTML = list.length ? list.map(s => `<div class="row"><span class="ellip"><span class="mono">${esc(s.name)}</span> <span class="dim">/ ${s.windows} window${s.windows > 1 ? 's' : ''}</span></span><span class="mono dim">${s.attached ? 'attached' : 'detached'}</span></div>`).join('') : `<div class="empty">No tmux session. Run tmux on the box to start one.</div>`; }
+function browsers(list) { $('brcount').textContent = list.length ? list.length + ' open' : ''; $('browsers').innerHTML = list.length ? list.map(b => `<div class="row"><span class="ellip">Chrome${b.headless ? ' headless' : ''} <span class="dim mono">${b.port && b.port !== '0' ? 'cdp ' + b.port : 'pid ' + b.pid}</span></span><span class="mono dim">${Math.round(b.rss / 1048576)}M / ${dur(b.secs)}</span></div>`).join('') : `<div class="empty">No browser is open. Start a browser task when you need one.</div>`; }
+function docker(list) { $('docker').innerHTML = list.length ? list.map(c => `<div class="row"><span class="ellip"><span class="mono">${esc(c.name)}</span> <span class="dim">${esc(c.image)}</span></span><span class="mono dim ellip">${esc(c.status)}</span></div>`).join('') : `<div class="empty">No containers visible. Start one in Docker.</div>`; }
 function reports(list) {
-  $('reports').innerHTML = list.length ? list.map(r => { const i = r.rel.lastIndexOf('/'); return `<a class="row" ${r.url ? `href="${r.url}" target="_blank" rel="noopener"` : ''}><span class="rel ellip"><span class="dim">${esc(r.rel.slice(0, i + 1))}</span><b>${esc(r.rel.slice(i + 1))}</b></span><span class="age hide-sm">${(r.size / 1024).toFixed(0)} KB</span><span class="age">${ago(r.t)}</span></a>`; }).join('') : `<div class="empty">No report written in the last 3 days.</div>`;
+  $('reports').innerHTML = list.length ? list.map(r => { const i = r.rel.lastIndexOf('/'); return `<a class="row" ${r.url ? `href="${esc(r.url)}" target="_blank" rel="noopener"` : ''}><span class="rel ellip"><span class="dim">${esc(r.rel.slice(0, i + 1))}</span><b>${esc(r.rel.slice(i + 1))}</b></span><span class="age hide-sm">${(r.size / 1024).toFixed(0)} KB</span><span class="age">${ago(r.t)}</span></a>`; }).join('') : `<div class="empty">No recent reports here. Save a report under a configured report folder.</div>`;
 }
 
-let curUrl = '';
-function view(url, hint) { curUrl = url; $('vhint').textContent = hint || ''; $('vurl').textContent = url; $('vopen').href = url; $('vframe').src = url; $('viewer').classList.add('on'); document.querySelectorAll('.ports .row').forEach(r => r.classList.toggle('cur', r.getAttribute('href') === url)); }
-$('ports').addEventListener('click', e => { const a = e.target.closest('a.row.live'); if (!a || window.innerWidth < 820) return; e.preventDefault(); view(a.getAttribute('href'), a.dataset.login ? 'asks for a login: open ↗ once, sign in, come back' : ''); });
-$('vclose').onclick = () => { curUrl = ''; $('vframe').src = 'about:blank'; $('viewer').classList.remove('on'); document.querySelectorAll('.ports .row.cur').forEach(r => r.classList.remove('cur')); };
-$('vreload').onclick = () => { $('vframe').src = $('vframe').src; };
-async function tick() {
-  try {
-    const r = await fetch(location.origin + '/api/state', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status);
-    const s = await r.json(); last = Date.now();
-    document.title = s.title + ' · ' + s.host; $('title').textContent = s.title;
-    $('host').textContent = s.host; $('host').title = s.health.host;
-    meters(s.health, s.hist); ports(s.ports, s.host); quick(s.quick, s.ports, s.host); agents(s.agents); tmux(s.tmux); browsers(s.browsers); docker(s.docker); reports(s.reports);
-    $('pulse').classList.remove('stale');
-  } catch (e) { $('pulse').classList.add('stale'); }
+let curUrl = '', returnFocus = null, viewerTimer;
+function loading() { $('viewer').classList.add('loading-frame'); $('vframe').setAttribute('aria-busy','true'); $('vhint').textContent = 'Loading…'; clearTimeout(viewerTimer); viewerTimer = setTimeout(() => { $('vhint').textContent = 'Still loading / try reload or open in a new tab'; }, 8000); }
+function view(url) {
+  if (window.innerWidth <= 820) { window.open(url, '_blank', 'noopener'); return; }
+  returnFocus = document.activeElement; curUrl = url; $('vurl').textContent = new URL(url,location.origin).href;
+  $('vopen').href = url; $('viewer').classList.add('on'); loading(); $('vframe').src = url;
+  $('viewer').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  $('vclose').focus({preventScroll:true});
+  document.querySelectorAll('.ports .row').forEach(r => r.classList.toggle('cur', r.getAttribute('href') === url));
 }
-setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (last && Date.now() - last > 10000 ? ' · stale' : ''); }, 1000);
-tick(); setInterval(() => { if (!document.hidden) tick(); }, 3000);
+function closeViewer() { clearTimeout(viewerTimer); curUrl = ''; $('vframe').src = 'about:blank'; $('viewer').classList.remove('on','loading-frame'); document.querySelectorAll('.ports .row.cur').forEach(r => r.classList.remove('cur')); if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true}); }
+$('vframe').addEventListener('load', () => { if (!curUrl) return; clearTimeout(viewerTimer); $('viewer').classList.remove('loading-frame'); $('vframe').setAttribute('aria-busy','false'); $('vhint').textContent = ''; try { $('vframe').contentDocument?.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeViewer(); } }); } catch {} });
+for (const id of ['ports','quick','reports']) $(id).addEventListener('click', e => {
+  const pop = e.target.closest('button.popout'); if (pop) { window.open(pop.dataset.url,'_blank','noopener'); return; }
+  const a = e.target.closest('a[href]'); if (!a || window.innerWidth <= 820 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  e.preventDefault(); view(a.getAttribute('href'));
+});
+$('agents').addEventListener('click', async e => {
+  const row = e.target.closest('button[data-pane]'); if (!row || pendingFocus.has(row.dataset.pane)) return;
+  const pane = row.dataset.pane; pendingFocus.add(pane); row.classList.add('focus-pending'); $('focus-status').textContent = 'Focusing pane…';
+  try { const r = await fetch('/api/herdr/focus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pane_id:pane})}); const result = await r.json(); if (!r.ok) throw new Error(result.error); $('focus-status').textContent = `Focused ${pane} in herdr on the box.`; }
+  catch (error) { $('focus-status').textContent = error.message || 'Could not focus the pane. Try again.'; }
+  finally { pendingFocus.delete(pane); row.classList.remove('focus-pending'); }
+});
+$('vclose').onclick = closeViewer;
+$('vreload').onclick = () => { if (curUrl) { loading(); $('vframe').src = curUrl; } };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
+window.addEventListener('resize', () => { if (window.innerWidth <= 820 && curUrl) closeViewer(); });
+let polling = false;
+async function tick() {
+  if (polling) return; polling = true;
+  try {
+    const r = await fetch('/api/state', {cache:'no-store'});
+    if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); return; }
+    if (!r.ok) throw new Error(r.status);
+    const s = await r.json(); last = Date.now();
+    document.title = s.title + ' / ' + s.host; $('title').textContent = s.title;
+    $('host').textContent = s.host; $('host').title = s.health.host;
+    const savedFocus=rememberFocus();
+    meters(s.health,s.hist); ports(s.ports,s.host); quick(s.quick,s.ports,s.host,s.terminal); agents(s.agents); herdr(s.herdr); tmux(s.tmux); browsers(s.browsers); docker(s.docker); reports(s.reports);
+    restoreFocus(savedFocus);
+    $('reportdays').textContent = 'last ' + s.reportDays + ' days';
+    $('mirror-errors').textContent = s.mirrorErrors.join(' / ');
+    $('connection').textContent = s.terminal.error || '';
+    $('pulse').classList.remove('stale');
+  } catch (e) { $('pulse').classList.add('stale'); $('connection').textContent = 'Connection lost. Check the box; retrying in 3 seconds.'; }
+  finally { polling = false; }
+}
+setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) + (last && Date.now() - last > 10000 ? ' / stale' : ''); },1000);
+tick(); setInterval(() => { if (!document.hidden) tick(); },3000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 </script>
 </body>
