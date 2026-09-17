@@ -20,14 +20,29 @@ type boxConfig struct {
 }
 
 type boxCard struct {
-	Name   string `json:"name"`
-	URL    string `json:"url"`
-	Local  bool   `json:"local"`
-	OK     bool   `json:"ok"`
-	Since  string `json:"since"`
-	Health object `json:"health"`
-	Agents int    `json:"agents"`
-	Ports  int    `json:"ports"`
+	Name   string   `json:"name"`
+	URL    string   `json:"url"`
+	Local  bool     `json:"local"`
+	OK     bool     `json:"ok"`
+	Since  string   `json:"since"`
+	Health object   `json:"health"`
+	Agents int      `json:"agents"`
+	Ports  int      `json:"ports"`
+	Usage  boxUsage `json:"usage"`
+}
+
+type boxUsage struct {
+	Today map[string]usageSummary `json:"today"`
+	Quota map[string]*usageQuota  `json:"quota"`
+}
+
+func boxUsageFromResponse(response usageResponse) boxUsage {
+	usage := boxUsage{Today: map[string]usageSummary{}, Quota: map[string]*usageQuota{}}
+	for provider, value := range response.Providers {
+		usage.Today[provider] = value.Today
+		usage.Quota[provider] = value.Quota
+	}
+	return usage
 }
 
 type boxCache struct {
@@ -80,6 +95,7 @@ func (a *app) boxes(ctx context.Context) []boxCard {
 		Health: mapObject(state["health"]),
 		Agents: collectionLength(state["agents"]),
 		Ports:  collectionLength(state["ports"]),
+		Usage:  boxUsageFromResponse(a.usage.snapshot(ctx, 30)),
 	}
 	value := make([]boxCard, len(configs)+1)
 	value[0] = local
@@ -173,5 +189,8 @@ func (a *app) fetchBox(ctx context.Context, cfg boxConfig) boxCard {
 	}
 	card.Agents = len(state.Agents)
 	card.Ports = len(state.Ports)
+	if usage, usageErr := fetchRemoteUsage(ctx, cfg, 30); usageErr == nil {
+		card.Usage = boxUsageFromResponse(usage)
+	}
 	return card
 }

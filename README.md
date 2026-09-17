@@ -52,6 +52,40 @@ Agents and Docker also have sort controls. Terminal and Files fill the view; Fil
 has a path bar. Settings shows the running config, masks passwords and box tokens,
 and reports only the token count. It also shows the binary version and update hint.
 
+## Usage
+
+The Usage view is inspired by CodexBar's local provider and quota cards. It reads
+Claude OAuth quota when a Claude login is already present, and reads Claude and
+Codex session ledgers stored on each device. Session content never leaves the
+device, and the displayed cost is an estimate at list price, not an invoice.
+
+Use it from a laptop without starting the deck:
+
+```sh
+boxdeck usage --days 7 --table
+boxdeck usage --days 30 --json
+```
+
+Example local table output from the 8103 QA device:
+
+```text
+PROVIDER	TODAY TOKENS	TODAY COST	SESSIONS
+claude	515654016	$0.0000	355
+codex	1454275508	$636.2414	160
+estimate at list price
+```
+
+Pricing defaults cover the model names recognized by this build. Override one
+with the config shape below, using USD per million tokens:
+
+```json
+{"pricing":{"model":{"gpt-6-astra":{"in":10,"cachedIn":1,"cacheWrite":12.5,"out":50}}}}
+```
+
+![Usage view on desktop](./captures/usage-desktop.png)
+![Usage view on a phone](./captures/usage-phone.png)
+![Quota pills on Overview](./captures/usage-overview-pills.png)
+
 Keyboard shortcuts:
 
 | Keys | Action |

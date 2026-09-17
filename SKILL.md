@@ -55,7 +55,21 @@ killed	338018
 boxdeck ctl run "printf ready"
 ready
 exit 0
+
+boxdeck ctl --table usage
+PROVIDER	TODAY TOKENS	TODAY COST	SESSIONS
+claude	0	$0.0000	0
+codex	0	$0.0000	0
+estimate at list price
 ```
+
+Usage is also available without a running deck. `boxdeck usage --days 7
+--table` reads local Claude and Codex ledgers directly, while `--json` prints
+the same provider response used by the Usage view. The deck's `/api/usage`
+endpoint accepts `days=1` through `days=30`; `/api/usage/all` adds the local
+box and configured remote boxes. Costs are estimates at list price, and a
+config entry such as `"pricing":{"model":{"gpt-6-astra":{"in":10,
+"cachedIn":1,"cacheWrite":12.5,"out":50}}}` overrides a model's rates.
 
 Use `boxdeck ctl --box NAME ...` for a machine in the local `boxes` config.
 The remote box token stays server-side when the Boxes view fetches health.

@@ -78,7 +78,7 @@ func parseCtlArgs(argv []string) (ctlArgs, error) {
 			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl %s VALUE", parsed.Command)
 		}
 		parsed.Args = commandArgs
-	case "state", "ports", "procs", "agents", "tmux":
+	case "state", "ports", "procs", "agents", "tmux", "usage":
 		if len(commandArgs) != 0 {
 			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl %s", parsed.Command)
 		}
@@ -205,6 +205,8 @@ func ctlRequest(args ctlArgs) (string, string, any, error) {
 		return http.MethodGet, "/api/agents", nil, nil
 	case "tmux":
 		return http.MethodGet, "/api/tmux", nil, nil
+	case "usage":
+		return http.MethodGet, "/api/usage", nil, nil
 	case "focus":
 		return http.MethodPost, "/api/herdr/focus", object{"pane_id": args.Args[0]}, nil
 	case "prompt":
@@ -257,6 +259,27 @@ func printCtlTable(command string, data []byte) error {
 			fmt.Printf("%v\t%v\t%v\t%v\t%v\n", cell(row["pid"]), cell(row["kind"]), cell(row["agent_status"]), cell(row["pane_id"]), cell(row["cwd"]))
 		}
 		return nil
+	}
+	if command == "usage" {
+		if root, ok := value.(map[string]any); ok {
+			fmt.Println("PROVIDER\tTODAY TOKENS\tTODAY COST\tSESSIONS")
+			providers, _ := root["providers"].(map[string]any)
+			for _, provider := range []string{"claude", "codex"} {
+				row, _ := providers[provider].(map[string]any)
+				today, _ := row["today"].(map[string]any)
+				tokens, _ := today["tokens"].(map[string]any)
+				var total float64
+				for _, key := range []string{"in", "cachedIn", "cacheWrite", "out"} {
+					if n, ok := tokens[key].(float64); ok {
+						total += n
+					}
+				}
+				cost, _ := today["costUsd"].(float64)
+				fmt.Printf("%s\t%.0f\t$%.4f\t%v\n", provider, total, cost, cell(row["sessions"]))
+			}
+			fmt.Println("estimate at list price")
+			return nil
+		}
 	}
 	if command == "tmux" || command == "boxes" {
 		for _, row := range arrayObjects(value) {
