@@ -76,7 +76,7 @@ const ports = memo(3000, () => {
     const local = c[3], i = local.lastIndexOf(':'), port = +local.slice(i + 1), addr = local.slice(0, i);
     if (!port || cfg.hide.has(port)) continue;
     if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(addr) || addr.startsWith('[fd7a:115c:a1e0')) continue; // tailscale serve mirrors of a local port
-    const pm = ln.match(/users:\(\("([^"]+)",pid=(\d+)/); const proc = pm ? pm[1] : '', pid = pm ? +pm[2] : 0;
+    const pm = ln.match(/users:\(\("([^"]+)",pid=(\d+)/); const proc = pm ? (pm[1] === 'MainThread' ? 'node' : pm[1]) : '', pid = pm ? +pm[2] : 0;
     if (!seen.has(port) || (proc && !seen.get(port).proc)) seen.set(port, { port, addr, proc, pid });
   }
   const list = [...seen.values()].sort((a, b) => a.port - b.port);
