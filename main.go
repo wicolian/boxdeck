@@ -210,6 +210,9 @@ func serve(cfg config) error {
 	go func() { defer a.workers.Done(); a.health.run() }()
 	go func() {
 		defer a.workers.Done()
+		if cfg.Mirror == false || mirrorIP(cfg) == "" {
+			return
+		}
 		ticker := time.NewTicker(5 * time.Second)
 		defer ticker.Stop()
 		a.mirrors.sync(a.collect.getPorts())
@@ -218,9 +221,8 @@ func serve(cfg config) error {
 			case <-a.ctx.Done():
 				return
 			case <-ticker.C:
-				if a.health.watching() {
-					a.mirrors.sync(a.collect.getPorts())
-				}
+				// Like the Node mirror, discover listeners even with no deck open.
+				a.mirrors.sync(a.collect.getPorts())
 			}
 		}
 	}()

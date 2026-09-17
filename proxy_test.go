@@ -155,3 +155,37 @@ func TestFocusRequiresAuthAndHerdr(t *testing.T) {
 		t.Fatal(w.Code)
 	}
 }
+
+func TestMirrorForwardsTCP(t *testing.T) {
+	upstream, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer upstream.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	port := upstream.Addr().(*net.TCPAddr).Port
+	m := mirrorManager{ctx: ctx, cfg: config{Port: portNumber(port), TTYDPort: 7682, Mirror: true, MirrorBind: "127.0.0.2"}, entries: map[int]mirrorEntry{}}
+	defer m.close()
+	m.sync(nil)
+	go func() {
+		conn, err := upstream.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		conn.SetDeadline(time.Now().Add(time.Second))
+		io.Copy(conn, conn)
+	}()
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.2:%d", port), time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	conn.SetDeadline(time.Now().Add(time.Second))
+	io.WriteString(conn, "mirror works")
+	b := make([]byte, len("mirror works"))
+	if _, err = io.ReadFull(conn, b); err != nil || string(b) != "mirror works" {
+		t.Fatalf("mirror: %q %v", b, err)
+	}
+}
