@@ -361,6 +361,19 @@ the phone and subscribe to the same topic configured in the deck's ntfy sink.
 The Boxdeck app listens to the ntfy JSON stream while it is in the foreground.
 The future APNs relay contract is in [PUSH.md](PUSH.md).
 
+## Android and Wear OS
+
+The Android phone and Wear OS apps put Needs you first, then show every deck and
+every Tailscale peer. The Boxes tab merges `/api/boxes` with `/api/net/peers`, so
+plain phones and machines appear even when boxdeck is not installed. See
+[`docs/android.md`](docs/android.md) for the screen list and debug APK sideload
+steps.
+
+For background alerts, install the ntfy Android app, choose it as the UnifiedPush
+distributor when Android asks, and configure the same ntfy topic in boxdeck's
+ntfy sink. The app renders the alert actions from the server and calls the deck
+when one is tapped. See [`android/PUSH.md`](android/PUSH.md).
+
 ## One login
 
 The sign-in page sets a signed, HttpOnly, SameSite=Lax cookie for 30 days. Its

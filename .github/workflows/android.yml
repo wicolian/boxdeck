@@ -1,0 +1,43 @@
+name: Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - phase5-android
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Test, lint, and build
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug :wear:assembleDebug :core:test :app:lint :wear:lint
+      - name: Upload phone APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-phone-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Upload Wear APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-wear-debug
+          path: android/wear/build/outputs/apk/debug/wear-debug.apk

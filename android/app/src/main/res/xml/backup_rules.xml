@@ -1,0 +1,8 @@
+<backup-rules>
+    <data-extraction-rules>
+        <cloud-backup disableIfNoEncryptionCapabilities="true" />
+        <device-transfer>
+            <exclude domain="sharedpref" path="." />
+        </device-transfer>
+    </data-extraction-rules>
+</backup-rules>

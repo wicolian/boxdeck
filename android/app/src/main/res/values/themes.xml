@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.Boxdeck" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#e8a33d</item>
+        <item name="android:navigationBarColor">#0b0e13</item>
+        <item name="android:statusBarColor">#0b0e13</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
