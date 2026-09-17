@@ -32,6 +32,10 @@ curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/boxes"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage?days=7"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage/all"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/files?path=reports"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/repos"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/status?repo=$REPO"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/log?repo=$REPO&n=60"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/diff?repo=$REPO&path=README.md"
 curl -sS "$BOXDECK_TO/api/health"
 ```
 
@@ -105,6 +109,13 @@ older daily rows.
 reachable configured boxes, plus a `boxes` array containing each box's
 provider breakdown. Unreachable boxes remain in that array with `ok:false` and
 are not included in sums.
+
+The authenticated editor uses `GET /api/edit?path=`, `PUT /api/edit?path=` with
+an `If-Match` mtime, `POST /api/edit/new?path=`, `POST /api/edit/rename` with
+`{"path":"old.md","newPath":"new.md"}`, and `DELETE /api/edit?path=`.
+Saves are atomic, files over 1 MB are read-only, and deletes move files under
+`~/.local/share/boxdeck/trash/` instead of unlinking them. Paths stay inside
+`filesRoot`.
 
 ## Actions
 
@@ -209,6 +220,11 @@ with a one second timeout. A peer that answers the unauthenticated health check
 is marked `boxdeck:true` with its version. When `fleetToken` is set, the same
 token must be present in every device's `tokens`; discovered devices are then
 read through `/api/state` and `/api/usage` and include today's usage.
+
+Git commands are authenticated and limited to repositories discovered under
+`repoRoots`, `reportRoots` and `~/codes`. Every command has a 10 second timeout
+and `GIT_TERMINAL_PROMPT=0`. Git status is cached for 5 seconds. Diffs are capped
+at 500 KB. The phase does not expose push, pull, reset or force operations.
 
 ## Remote client
 
