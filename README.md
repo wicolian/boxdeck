@@ -1,38 +1,89 @@
 # boxdeck
 
-One bookmark for your remote dev box. A single Go binary serves the deck, files
-and terminal through one login.
+A live console for your remote dev box. A single Go binary serves the deck, files
+and terminal through one login. The same stream follows you between views.
 
 - **Berths** show listening ports, page titles and working folders. Click a row to
   open the app inside the deck, or use its pop-out button. On a phone, links open a tab.
-- **Health** shows CPU, memory, swap, disk, load and recent history.
+- **Live health** shows each CPU core, total CPU, memory, swap, load, network rates
+  and disk I/O. The browser keeps 120 samples per series.
+- **Processes** shows CPU, memory, age, user and folder. Filter the list, sort by
+  CPU or memory, then stop a process with an inline confirmation.
 - **Agents** show running coding tools, their folders, model and tmux pane.
   Herdr sessions also show their title, status, context use and five-hour limit.
 - **herdr**, **tmux**, **browsers** and **Docker** show what is running on the box.
 - **Fresh reports** link recent Markdown, HTML, images and PDFs through `/files/`.
 
 <!-- before-and-after:start -->
-| Before | After |
+| Previous deck | Live console |
 |:---:|:---:|
-| ![Before: machine status in a terminal](./captures/before.png) | ![After: Go deck with one login and herdr sessions](./captures/after.png) |
+| ![Previous single-page deck](./captures/after.png) | ![Overview with real live history](./captures/phase2-overview.png) |
 
-| Files inside the deck | Herdr sessions |
+| Processes | Agents |
 |:---:|:---:|
-| ![Files viewer behind the shared login](./captures/viewer.png) | ![Herdr titles, statuses and workspaces](./captures/herdr.png) |
+| ![Sortable live process table](./captures/phase2-processes.png) | ![Agent sessions and status](./captures/phase2-agents.png) |
 
-<details><summary>On a phone</summary>
-
-| Deck | Sessions |
+| Boxes | Terminal |
 |:---:|:---:|
-| <img src="./captures/after-phone.png" width="390" alt="Deck at 390 pixels wide"> | <img src="./captures/herdr-phone.png" width="390" alt="Agent details and herdr on a phone"> |
+| ![Local and unreachable boxes](./captures/phase2-boxes.png) | ![Full-height terminal](./captures/phase2-terminal.png) |
+
+<details><summary>Phone navigation</summary>
+
+<img src="./captures/phase2-phone-overview.png" width="390" alt="Phone overview and bottom navigation"> <img src="./captures/phase2-phone-more.png" width="390" alt="Phone navigation sheet">
 
 </details>
 <!-- before-and-after:end -->
 
 No Node runtime, npm packages or Go dependencies. Linux is the target; macOS
 builds provide partial health data. `ss`, `ps`, `tmux`, `docker` and `find` supply
-optional machine details. Their results are cached. Browser polling stops in a
-hidden tab; health sampling slows from 3 to 30 seconds after 15 seconds without a poll.
+optional machine details. Their results are cached. The shared SSE sampler reads
+Linux `/proc` once per second while connected and stops when no stream clients
+remain. It reads process counters directly, with no `ps` in the one-second loop.
+Browser connections stop in a hidden tab. The older state health sample slows
+from 3 to 30 seconds after 15 seconds without a poll.
+
+## Navigate the console
+
+Use the collapsible left rail for Overview, Ports, Processes, Agents, Terminal,
+Files, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
+changing views keeps the page and stream alive. On phones, four direct links and
+More form a five-item bottom bar. More opens the remaining views.
+
+Each board has a filter with a clear action when nothing matches. Ports, Processes,
+Agents and Docker also have sort controls. Terminal and Files fill the view; Files
+has a path bar. Settings shows the running config, masks passwords and box tokens,
+and reports only the token count. It also shows the binary version and update hint.
+
+Keyboard shortcuts:
+
+| Keys | Action |
+| --- | --- |
+| `g o` | Overview |
+| `g p` | Ports |
+| `g a` | Agents |
+| `g t` | Terminal |
+| `g f` | Files |
+| `/` | Focus the current filter |
+| `Esc` | Close the viewer or sheet |
+| `?` | Show shortcuts |
+
+The Processes table tags agents, browsers and servers. Stop first offers an inline
+SIGTERM confirmation. If the process remains, Force stop offers SIGKILL. PID 1,
+process groups and the serving boxdeck process are protected. The page also sends
+the process start counter so a reused PID cannot redirect a pending action.
+
+The live band uses in-place SVG updates batched with `requestAnimationFrame`.
+Per-core bars fit 4 to 64 cores. Process CPU is a percentage of one core; total
+CPU is a percentage of the whole machine. Network sums non-loopback interfaces.
+Disk rates use whole physical block devices and exclude partitions and virtual
+stacking devices. New or reset counters start at zero instead of producing a spike.
+Linux supplies these live counters; other platforms keep their existing partial
+health support and can use `boxdeck ctl` to control a Linux box.
+
+The UI reads `/api/stream`, `/api/ui/procs` and `/api/ui/settings` and sends process
+signals to `/api/proc/kill`. The public token and CLI API is documented in [API.md](./API.md).
+Boxes uses the real `/api/boxes` response. It keeps the local box first and shows
+an unreachable timestamp and a next step when another box does not respond.
 
 ## Install
 

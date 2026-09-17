@@ -25,269 +25,155 @@
   --mono:ui-monospace,"SF Mono",Menlo,"JetBrains Mono",Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;
 }
-*{box-sizing:border-box}
-html{background:var(--hull)}
-body{margin:0;background:var(--hull);color:var(--ink);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
-a{color:inherit;text-decoration:none}
-.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 64px}
-/* masthead */
-.mast{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding:4px 0 20px}
-.mast h1{font:600 15px/1 var(--sans);letter-spacing:.01em;margin:0}
-.mast .host{font-family:var(--mono);color:var(--ink-2)}
-.mast .clock{margin-left:auto;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:12px}
-.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lamp);margin-right:8px;vertical-align:1px;box-shadow:0 0 0 0 rgba(232,163,61,.5);animation:pulse 2.4s ease-out infinite}
-.pulse.stale{background:var(--lamp);animation:none}
-@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,163,61,.45)}70%{box-shadow:0 0 0 7px rgba(232,163,61,0)}100%{box-shadow:0 0 0 0 rgba(232,163,61,0)}}
-.quick{display:flex;gap:6px;flex-wrap:wrap}
-.quick a{font:500 12px/1 var(--sans);padding:7px 10px;border-radius:6px;border:1px solid var(--seam);background:var(--deck);color:var(--ink-2);transition:border-color .12s,color .12s}
-.quick a:hover{border-color:var(--lamp);color:var(--ink)}
-.quick a.off{opacity:.4;cursor:help}
-/* meters */
-.meters{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--seam);border:1px solid var(--seam);border-radius:8px;overflow:hidden;margin-bottom:28px}
-.meter{background:var(--deck);padding:14px 16px 12px;position:relative}
-.meter .k{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
-.meter .k span{letter-spacing:0;text-transform:none;color:var(--ink-4);font-family:var(--mono)}
-.meter .v{font:500 26px/1.1 var(--mono);font-variant-numeric:tabular-nums;margin:10px 0 8px;letter-spacing:-.02em}
-.meter .v small{font-size:13px;color:var(--ink-3);margin-left:4px;letter-spacing:0}
-.meter .bar{height:3px;background:var(--plate);border-radius:2px;overflow:hidden}
-.meter .bar i{display:block;height:100%;background:var(--ink-3);transition:width .6s ease}
-.meter.warn .bar i{background:var(--lamp)} .meter.bad .bar i{background:var(--lamp)}
-.meter.warn .v{color:var(--lamp)} .meter.bad .v{color:var(--lamp)}
-.meter svg{position:absolute;right:12px;top:30px;width:88px;height:30px;opacity:.7}
-.meter svg polyline{fill:none;stroke:var(--ink-4);stroke-width:1.2;stroke-linejoin:round}
-.meter.warn svg polyline{stroke:var(--lamp)} .meter.bad svg polyline{stroke:var(--lamp)}
-.meter .sub{font:12px/1 var(--mono);color:var(--ink-3);margin-top:8px;font-variant-numeric:tabular-nums}
-/* viewer: a localhost app inside the deck */
-.viewer{border:1px solid var(--seam);border-radius:8px;background:var(--deck);overflow:hidden;margin-bottom:28px;display:none}
-.viewer.on{display:block}
-.viewer .bar{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--seam);background:var(--plate)}
-.viewer .bar .url{font:12.5px var(--mono);color:var(--ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.viewer .bar .led{background:var(--lamp)}
-.viewer .bar button,.viewer .bar a{font:500 12px/1 var(--sans);padding:6px 9px;border-radius:5px;border:1px solid var(--seam);background:var(--deck);color:var(--ink-2);cursor:pointer}
-.viewer .bar button:hover,.viewer .bar a:hover{border-color:var(--lamp);color:var(--ink)}
-.viewer iframe{display:block;width:100%;height:70vh;min-height:420px;border:0;background:#fff}
-.ports .row.live.cur{background:var(--lamp-dim)}
-/* sections */
-section{margin-bottom:28px}
-h2{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
-h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0;text-transform:none}
-.board{border:1px solid var(--seam);border-radius:8px;background:var(--deck);overflow:hidden}
-.row{display:grid;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--seam-soft);min-height:44px}
-.row:first-child{border-top:0}
-.row.head{color:var(--ink-4);font:500 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;min-height:44px;padding-top:9px;padding-bottom:8px;background:var(--plate)}
-.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.dim{color:var(--ink-3)} .ghost{color:var(--ink-4)}
-.ellip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.empty{padding:18px 14px;color:var(--ink-3);font-size:13px}
-/* berths (ports) */
-.ports .row{grid-template-columns:64px minmax(0,1.4fr) minmax(0,1fr) 44px}
-.ports .row.live{cursor:pointer}
-.ports .row.live:hover{background:var(--lamp-dim)}
-.ports .row.live:hover .arrow{color:var(--lamp)}
-.port{font:500 14px/1 var(--mono);color:var(--ink)}
-.led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lamp);margin-right:8px;vertical-align:1px}
-.ephemeral .led{background:var(--ink-4)}
-.ephemeral{color:var(--ink-4)} .ephemeral .port{color:var(--ink-4)}
-.name{font-weight:500} .name small{display:block;color:var(--ink-3);font-weight:400;font-size:12px}
-.arrow{color:var(--ink-4);text-align:right}
-/* two-up */
-.cols{display:grid;grid-template-columns:3fr 2fr;gap:20px}
-.agents .row{grid-template-columns:64px minmax(0,1fr) 56px 56px 64px}
-.kind{font:500 11px/1 var(--mono);padding:4px 6px;border-radius:4px;border:1px solid var(--seam-hard);color:var(--ink-2);display:inline-block}
-.kind.codex{border-color:var(--seam-hard);color:var(--ink-2)}
-.stack{display:flex;flex-direction:column;gap:20px}
-.list .row{grid-template-columns:minmax(0,1fr) auto}
-.reports .row{grid-template-columns:minmax(0,1fr) 80px 56px}
-.reports .row:hover{background:var(--lamp-dim)}
-.reports .rel{font-family:var(--mono);font-size:12.5px}
-.reports .rel b{font-weight:500;color:var(--ink)}
-.age{color:var(--ink-3);font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
-@media(max-width:820px){.mast .clock{display:none}.meters{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}.ports .row{grid-template-columns:56px minmax(0,1fr) 44px}.ports .row>.cwd{display:none}.agents .row{grid-template-columns:56px minmax(0,1fr) 64px}.agents .row>.hide-sm{display:none}.reports .row{grid-template-columns:minmax(0,1fr) 56px}.reports .row>.hide-sm{display:none}.meter svg{display:none}}
-/* Same bridge tokens; larger controls and explicit feedback. */
-button{font:500 12px/1.4 var(--sans);border:1px solid var(--seam);border-radius:6px;background:var(--deck);color:var(--ink-2);cursor:pointer}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
-button:hover{border-color:var(--seam-hard);color:var(--ink)}
-.quick a{display:inline-flex;align-items:center;min-height:44px}
-.berth{position:relative;border-top:1px solid var(--seam-soft)}.berth .row{min-height:64px}.popout{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;color:var(--ink-3)}
-.viewer .bar button,.viewer .bar a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
-.viewer .content{position:relative}.loading{display:none;position:absolute;inset:0;place-content:center;background:var(--deck);color:var(--ink-2);font-family:var(--mono)}
-.viewer.loading-frame .loading{display:grid}.viewer.loading-frame iframe{visibility:hidden}
-.agents .row{grid-template-columns:64px minmax(0,1fr) 72px;min-height:64px}
-.agents .row.head{min-height:44px}.agents button.row{width:100%;text-align:left;border-radius:0;border:0;border-top:1px solid var(--seam-soft);font:inherit;color:inherit}
-.agents button.row:hover{background:var(--lamp-dim)}.agent-meta{display:block;font:12px/1.7 var(--mono);color:var(--ink-3)}
-.details{display:flex;flex-wrap:wrap;gap:0 8px;white-space:normal}.details span{white-space:nowrap}.status{font:12px/1.4 var(--mono);color:var(--ink-3)}.status.working,.status.blocked{color:var(--lamp)}
-.focus-pending .status{animation:focus-pulse .7s ease-in-out infinite alternate}@keyframes focus-pulse{to{opacity:.35}}
-.notice{color:var(--ink-3);font-size:12px;margin:8px 0}.notice:empty{display:none}.session-counts{color:var(--ink-3);font:12px/1.6 var(--mono);padding:12px 14px;border-top:1px solid var(--seam-soft)}
-footer{display:flex;justify-content:space-between;align-items:center;gap:16px;color:var(--ink-3);font-size:12px}footer button{min-height:44px;padding:8px 12px}
-@media(max-width:820px){.quick{width:100%}.quick a{min-height:56px}.row,.row.head,.agents .row,.agents .row.head{min-height:56px}.popout{width:56px;height:56px;right:0}.ports .row{grid-template-columns:56px minmax(0,1fr) 44px;padding-right:12px}.agents .row{grid-template-columns:52px minmax(0,1fr) 64px;gap:8px;padding:12px}.agent-meta{font-size:11px}.mast{gap:12px}.viewer{display:none!important}footer button{min-height:56px}.reports .row{min-height:56px}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+*{box-sizing:border-box}html,body{margin:0;background:var(--hull);color:var(--ink);font:13px/1.5 var(--sans);-webkit-font-smoothing:antialiased}button,input,select{font:inherit}a{color:inherit;text-decoration:none}button,a,input,select{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button,input,select{border:1px solid var(--seam-hard);border-radius:4px;background:var(--plate);color:var(--ink-2);min-height:44px;padding:8px 12px}button:hover,a:hover{color:var(--ink)}button:hover{background:var(--deck)}button:disabled{opacity:.4;cursor:default}:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}button:focus:not(:focus-visible){outline:none}[hidden]{display:none!important}.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}.dim{color:var(--ink-3)}.muted{color:var(--ink-2)}.ellip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sr-only{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden}.lamp{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lamp);flex-shrink:0}.live-label{display:flex;align-items:center;gap:8px;color:var(--ink-3);font:11px var(--mono)}.live-label.stale .lamp{background:var(--ink-3)}
+.rail{position:fixed;inset:0 auto 0 0;width:200px;border-right:1px solid var(--seam);background:var(--hull);padding:24px 12px;display:flex;flex-direction:column;z-index:20}.brand{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;margin-bottom:32px;font-size:15px;font-weight:500}.rail nav{display:flex;flex-direction:column;gap:4px}.rail a{display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;color:var(--ink-2);border-radius:4px}.rail a:hover{background:var(--deck)}.rail a[aria-current="page"]{background:var(--deck);color:var(--ink)}.nav-icon{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}.rail-bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px}.rail-bottom button{display:flex;align-items:center;gap:12px;background:none;border-color:transparent;padding:10px 12px;text-align:left}.rail-bottom form button{width:100%}.rail-collapsed .rail{width:64px;padding:24px 8px}.rail-collapsed .nav-label,.rail-collapsed .brand-name{display:none}.rail-collapsed .brand{padding:0;justify-content:center}.rail-collapsed .rail a,.rail-collapsed .rail-bottom button{justify-content:center;padding:10px}.rail-collapsed main{margin-left:64px}
+main{margin-left:200px;min-width:0;padding:28px 32px 48px;max-width:1900px}.mast{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:48px;margin-bottom:24px}.mast h1{font-size:18px;line-height:1.3;font-weight:500;margin:0}.mast .context{display:flex;align-items:baseline;gap:12px;min-width:0}.mast .host{font:12px var(--mono);color:var(--ink-3)}.mast-actions{display:flex;align-items:center;gap:16px}.shortcut-hint{border:0;background:none;color:var(--ink-3);padding:8px;min-width:44px}.quick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}.quick a{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;border:1px solid var(--seam);border-radius:4px;color:var(--ink-2);background:var(--deck)}.quick a:hover{border-color:var(--seam-hard)}.quick a[aria-disabled]{opacity:.45;cursor:help}
+.live-band{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--seam);border-radius:6px;overflow:hidden;background:var(--deck);margin-bottom:24px}.live-cell{padding:16px;border-right:1px solid var(--seam);min-width:0;min-height:164px}.live-cell:last-child{border-right:0}.live-top{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--ink-2);gap:8px}.live-top .mono{color:var(--ink-3)}.live-number{display:flex;align-items:baseline;gap:6px;height:36px;margin-top:8px;white-space:nowrap;font:22px/1.2 var(--mono);letter-spacing:-.03em}.live-number small{font-size:11px;color:var(--ink-3);letter-spacing:0}.live-chart{display:block;width:100%;height:32px;overflow:visible;margin:4px 0}.live-chart polyline{fill:none;stroke:var(--ink-2);stroke-width:1.3;vector-effect:non-scaling-stroke;stroke-linejoin:round}.live-chart .secondary{stroke:var(--ink-3);stroke-dasharray:3 3}.live-chart.cpu polyline{stroke:var(--lamp)}.live-foot{height:16px;font:11px/16px var(--mono);color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.core-bars{display:flex;gap:2px;height:16px;align-items:flex-end}.core{height:100%;flex:1;min-width:1px;background:var(--plate);position:relative}.core i{position:absolute;bottom:0;left:0;right:0;background:var(--ink-3);height:0;transition:height .25s linear}.core i.hot{background:var(--lamp)}.rates{display:flex;align-items:baseline;gap:5px;white-space:nowrap;font:15px/1.6 var(--mono);height:28px}.rates .direction{color:var(--ink-3);font-size:11px;min-width:14px}.io-chart{height:36px;margin-top:4px}.notice{font-size:12px;color:var(--ink-3);margin:8px 0 16px}.notice:empty{display:none}.notice.attention{color:var(--lamp)}
+.toolbar{display:flex;gap:12px;align-items:center;margin:0 0 20px}.filter-wrap{flex:1;max-width:420px;position:relative}.filter-wrap input{width:100%;padding-right:48px}.filter-wrap button{position:absolute;right:1px;top:1px;border:0;background:none;min-height:42px;width:42px;padding:4px}.sort-wrap{display:flex;align-items:center;gap:8px;color:var(--ink-3);margin-left:auto;font-size:12px}.sort-wrap select{min-width:128px}.view-summary{color:var(--ink-3);font:11px var(--mono)}section{min-width:0;margin-bottom:24px}h2{font-size:13px;font-weight:500;line-height:1.4;color:var(--ink-2);margin:0 0 12px;display:flex;gap:10px;align-items:baseline}h2 small{font:11px var(--mono);color:var(--ink-3)}.board{border:1px solid var(--seam);border-radius:6px;overflow:hidden;background:var(--deck)}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;table-layout:fixed;text-align:left}th{height:36px;color:var(--ink-3);font-size:11px;font-weight:400;border-bottom:1px solid var(--seam);padding:8px 12px;background:var(--plate);white-space:nowrap}td{height:48px;padding:10px 12px;border-top:1px solid var(--seam-soft);vertical-align:middle}tr:first-child td{border-top:0}tbody tr:hover{background:rgba(255,255,255,.015)}.empty{padding:24px 16px;color:var(--ink-3);font-size:13px}.empty button{margin-left:8px;border:0;background:none;color:var(--ink-2);text-decoration:underline}.row-title{font-weight:400;color:var(--ink)}.row-sub{font:11px/1.7 var(--mono);color:var(--ink-3);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row-details{display:flex;gap:8px;flex-wrap:wrap;font:11px/1.7 var(--mono);color:var(--ink-3)}.row-details span{white-space:nowrap}.status{font:11px var(--mono);color:var(--ink-3)}.status.working,.status.blocked{color:var(--lamp)}.pending .status{animation:pending .7s ease-in-out infinite alternate}@keyframes pending{to{opacity:.35}}
+.port-row{display:flex;position:relative;border-top:1px solid var(--seam-soft);min-height:56px}.port-row:first-child{border-top:0}.port-main{display:grid;grid-template-columns:64px minmax(0,1fr) minmax(0,1fr);align-items:center;gap:16px;flex:1;min-width:0;padding:10px 64px 10px 16px}.port-main:hover{background:rgba(255,255,255,.02)}.port-id{font:13px var(--mono);display:flex;align-items:center;gap:8px}.port-row .popout{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-color:transparent;background:none;padding:8px;color:var(--ink-3)}.port-row .popout:hover{border-color:var(--seam-hard)}.columns{display:grid;grid-template-columns:minmax(0,3fr) minmax(280px,2fr);gap:24px}.compact-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;min-height:48px;border-top:1px solid var(--seam-soft)}.compact-row:first-child{border-top:0}.compact-row>span:first-child{min-width:0}.agent-row{width:100%;display:grid;grid-template-columns:60px minmax(0,1fr) 72px;gap:12px;align-items:center;min-height:64px;padding:12px 16px;text-align:left;border-radius:0;border:0;border-top:1px solid var(--seam-soft);background:var(--deck);font:13px var(--sans);color:var(--ink)}.agent-row:first-child{border-top:0}.agent-row:hover{background:rgba(255,255,255,.02)}.agent-kind{color:var(--ink-3);font:11px var(--mono)}.report-row{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--seam-soft);min-height:44px}.report-row:first-child{border-top:0}.report-row:hover{background:rgba(255,255,255,.02)}.report-row .path{font:12px var(--mono);min-width:0}.age{font:11px var(--mono);color:var(--ink-3);white-space:nowrap}.proc-table .num{font:12px var(--mono);white-space:nowrap}.proc-table th button{border:0;background:none;color:inherit;font:inherit;min-height:24px;padding:0}.proc-table .kill{font-size:11px;min-height:36px;padding:6px 10px;min-width:60px;background:none;border-color:var(--seam);color:var(--ink-3)}.proc-table .confirm{color:var(--lamp);border-color:var(--lamp);white-space:nowrap}.proc-table .proc-actions{display:flex;align-items:center;gap:4px}.proc-table .cancel{border:0;background:none;min-width:32px;padding:4px}.proc-table{min-width:820px}.tag{color:var(--ink-3);font-size:11px}.overview-top{display:grid;grid-template-columns:1fr 1fr;gap:24px}.overview-top .compact-row{font-size:12px;min-height:44px}
+.viewer{margin-bottom:24px;border:1px solid var(--seam);border-radius:6px;background:var(--deck);overflow:hidden}.viewer-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--plate);border-bottom:1px solid var(--seam)}.viewer-url{flex:1;min-width:0;font:12px var(--mono);color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.viewer-bar button,.viewer-bar a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:44px;border:1px solid var(--seam);background:var(--deck);border-radius:4px;color:var(--ink-2);padding:8px}.viewer-body{position:relative}.viewer iframe{display:block;width:100%;height:65vh;min-height:360px;border:0;background:var(--plate)}.viewer.full iframe{height:calc(100vh - 208px);min-height:400px}.viewer-loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:var(--deck);color:var(--ink-3);font:12px var(--mono)}.viewer.loading .viewer-loading{display:flex}.viewer.loading iframe{visibility:hidden}.path-form{display:flex;gap:8px;align-items:center;margin-bottom:16px}.path-form label{color:var(--ink-3);font-size:12px}.path-form input{flex:1;min-width:0;font-family:var(--mono)}.box-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.box-card{border:1px solid var(--seam);border-radius:6px;padding:20px;background:var(--deck);min-width:0}.box-head{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}.box-head h2{margin:0;color:var(--ink)}.box-card .box-url{display:block;font:12px var(--mono);color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.box-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:28px}.box-stats strong{display:block;font:18px var(--mono);font-weight:400}.box-stats small{color:var(--ink-3);font-size:11px}.box-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;border-top:1px solid var(--seam);padding-top:12px;color:var(--ink-3);font-size:12px}.box-footer a{display:inline-flex;align-items:center;min-height:44px;color:var(--ink-2)}.box-message{min-height:88px;display:flex;align-items:center;color:var(--ink-3);font-size:13px}.settings-row{display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;padding:12px 16px;border-top:1px solid var(--seam-soft);min-height:44px}.settings-row:first-child{border-top:0}.settings-row dt{color:var(--ink-3)}.settings-row dd{margin:0;font:12px/1.7 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere}.settings-meta{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;color:var(--ink-3);font-size:12px}
+.bottom-nav{display:none}.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;display:flex;align-items:center;justify-content:center;padding:24px}.sheet{width:420px;max-width:100%;background:var(--deck);border:1px solid var(--seam-hard);border-radius:6px;padding:20px}.sheet header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.sheet h2{margin:0;color:var(--ink)}.sheet header button{min-width:44px}.sheet-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sheet-nav a{display:flex;align-items:center;min-height:48px;padding:12px;border:1px solid var(--seam);border-radius:4px;color:var(--ink-2)}.key-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--seam)}kbd{font:12px var(--mono);padding:2px 6px;background:var(--plate);border:1px solid var(--seam-hard);border-radius:3px}.section-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.section-top>a{font-size:11px;color:var(--ink-3);min-height:32px}
+@media(max-width:1100px){main{padding:24px}.columns{grid-template-columns:minmax(0,1.25fr) minmax(260px,1fr);gap:20px}.live-cell{padding:12px}.live-number{font-size:20px}.live-foot{font-size:10px}.port-main{grid-template-columns:56px minmax(0,1fr)}.port-cwd{display:none}.box-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.rail{display:none}.rail-collapsed main,main{margin-left:0;padding:20px 16px 100px}.mast{margin-bottom:20px;gap:8px}.mast .context{flex-wrap:wrap;gap:4px 10px}.mast h1{font-size:18px}.mast .host{font-size:11px}.mast-actions{gap:4px}.quick{gap:8px;margin-bottom:16px}.quick a[aria-disabled]{display:none}.quick a{min-height:56px;padding:8px 12px}.live-band{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:20px}.live-cell{padding:12px;min-height:164px}.live-cell:nth-child(2){border-right:0}.live-cell:nth-child(n+3){border-top:1px solid var(--seam)}.live-number{font-size:20px}.core-bars{gap:1px}.live-foot{font-size:10px}.rates{font-size:13px}.columns,.overview-top{grid-template-columns:1fr;gap:0}.toolbar{flex-wrap:wrap;gap:8px}.filter-wrap{max-width:none;flex-basis:100%}.filter-wrap input{min-height:56px}.filter-wrap button{min-height:54px;width:54px}.sort-wrap{margin-left:0}.sort-wrap select{min-height:44px}.view-summary{margin-left:auto}.port-main{padding:12px 56px 12px 12px;gap:8px;grid-template-columns:56px minmax(0,1fr)}.port-row{min-height:64px}.port-row .popout{width:56px;height:56px;right:0}.agent-row{grid-template-columns:48px minmax(0,1fr) 58px;padding:12px;gap:8px;min-height:72px}.row-details{font-size:10px;gap:0 8px}.agent-kind,.status{font-size:10px}.compact-row,.report-row{min-height:56px;padding:12px}.settings-row{grid-template-columns:1fr;gap:4px;min-height:56px}.settings-meta{align-items:flex-start;flex-direction:column;gap:8px}.viewer.full iframe{height:calc(100dvh - 278px);min-height:360px}.viewer-bar{gap:4px;padding:8px}.viewer-bar button,.viewer-bar a{min-width:44px}.path-form label{display:none}.path-form input,.path-form button{min-height:56px}.box-card{padding:16px}.box-stats{gap:12px}.box-footer a{min-height:56px}.bottom-nav{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;padding:4px 8px max(4px,env(safe-area-inset-bottom));background:var(--hull);border-top:1px solid var(--seam-hard);z-index:30}.bottom-nav a,.bottom-nav button{border:0;background:none;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;color:var(--ink-3);font-size:10px;padding:8px 2px;min-height:60px;min-width:0}.bottom-nav [aria-current="page"]{color:var(--ink)}.bottom-nav .nav-icon{width:18px;height:18px}.sheet-backdrop{align-items:flex-end;padding:0}.sheet{width:100%;border-radius:6px 6px 0 0;padding:20px 16px max(24px,env(safe-area-inset-bottom));max-height:85dvh;overflow:auto}.sheet-nav a{min-height:56px}.proc-table td{height:56px}.proc-table .kill{min-height:44px}.shortcut-hint{min-height:44px}.overview-top .compact-row{min-height:56px}}
+input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.section-top>a{min-height:44px;display:inline-flex;align-items:center}
+@media(max-width:760px){button,.sort-wrap select,.shortcut-hint,.viewer-bar button,.viewer-bar a,.sheet header button,.proc-table .kill,.proc-table .cancel{min-height:56px}.viewer-bar button,.viewer-bar a{min-width:56px;height:56px}.filter-wrap button{min-height:56px}.section-top>a{min-height:56px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="mast">
-    <h1><span class="pulse" id="pulse"></span><span id="title">Deck</span></h1>
-    <span class="host" id="host">box</span>
-    <span class="quick" id="quick"></span>
-    <span class="clock" id="clock"></span>
-  </div>
-
-  <div class="meters" id="meters" aria-label="Machine health"></div>
-  <p class="notice" id="connection" role="status">Connecting to the box…</p>
-
-  <div class="viewer" id="viewer">
-    <div class="bar"><i class="led"></i><span class="url" id="vurl"></span><span class="dim" id="vhint" style="font-size:12px" role="status"></span><button id="vreload" title="Reload">↻</button><a id="vopen" target="_blank" rel="noopener" title="Open in a new tab">↗</a><button id="vclose" title="Close">✕</button></div>
-    <div class="content"><iframe id="vframe" title="Deck viewer" src="about:blank" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"></iframe><div class="loading" role="status"><span><i class="pulse"></i>Loading…</span></div></div>
-  </div>
-
-  <section class="ports">
-    <h2>Berths <b id="portcount"></b></h2>
-    <div class="board" id="ports"><div class="empty">Finding listeners. Start a dev server to add a berth.</div></div>
-    <p class="notice" id="mirror-errors" role="status"></p>
-  </section>
-
-  <div class="cols">
-    <section class="agents">
-      <h2>Agents <b id="agentcount"></b></h2>
-      <div class="board" id="agents"></div><p class="notice" id="focus-status" role="status"></p>
-    </section>
-    <div class="stack">
-      <section class="list" id="herdrsec" hidden><h2>herdr <b id="herdrcount"></b></h2><div class="board" id="herdr"></div></section>
-      <section class="list"><h2>tmux</h2><div class="board" id="tmux"></div></section>
-      <section class="list"><h2>Browsers <b id="brcount"></b></h2><div class="board" id="browsers"></div></section>
-      <section class="list" id="dockersec"><h2>Docker</h2><div class="board" id="docker"></div></section>
-    </div>
-  </div>
-
-  <section class="reports">
-    <h2>Fresh reports <b id="reportdays">last 3 days</b></h2>
-    <div class="board" id="reports"></div>
-  </section>
-  <footer><span>One door to your box.</span><form action="/logout" method="post"><button>Sign out</button></form></footer>
+<aside class="rail" aria-label="Main navigation"><a class="brand" href="#/overview" aria-label="Boxdeck overview"><span class="lamp"></span><span class="brand-name">boxdeck</span></a><nav id="rail-nav"></nav><div class="rail-bottom"><button id="rail-toggle" title="Collapse navigation" aria-label="Collapse navigation"><span class="nav-label">Collapse</span><span aria-hidden="true">‹</span></button><form method="post" action="/logout"><button title="Sign out"><span aria-hidden="true">↪</span><span class="nav-label">Sign out</span></button></form></div></aside>
+<main>
+<header class="mast"><div class="context"><h1 id="view-title" tabindex="-1">Overview</h1><span class="host" id="host">Connecting</span></div><div class="mast-actions"><span id="live-status" class="live-label stale"><span class="lamp"></span><span id="live-status-text">Connecting</span></span><button class="shortcut-hint" id="help-open" aria-label="Keyboard shortcuts" title="Keyboard shortcuts">?</button></div></header>
+<p id="connection" class="notice" role="status"></p>
+<div id="overview-quick" class="quick"></div>
+<div class="live-band" id="live-band" aria-label="Live machine health">
+ <div class="live-cell"><div class="live-top"><span>CPU</span><span class="mono" id="core-count">...</span></div><div class="live-number"><span id="cpu-number">...</span><small>%</small></div><svg class="live-chart cpu" viewBox="0 0 240 32" preserveAspectRatio="none" aria-label="CPU history"><polyline id="cpu-line" points=""/></svg><div class="core-bars" id="core-bars" aria-label="Per-core CPU usage"></div><div class="live-foot" id="load-number">Waiting for a sample</div></div>
+ <div class="live-cell"><div class="live-top"><span>Memory</span><span class="mono" id="mem-total">...</span></div><div class="live-number"><span id="mem-number">...</span><small>GB</small></div><svg class="live-chart" viewBox="0 0 240 32" preserveAspectRatio="none" aria-label="Memory history"><polyline id="mem-line" points=""/></svg><div class="live-foot" id="mem-free">Waiting for a sample</div><div class="live-foot" id="swap-number"></div></div>
+ <div class="live-cell"><div class="live-top"><span>Network</span><span class="mono">per second</span></div><div class="rates"><span class="direction">↓</span><span id="net-rx">...</span></div><div class="rates"><span class="direction">↑</span><span id="net-tx">...</span></div><svg class="live-chart io-chart" viewBox="0 0 240 32" preserveAspectRatio="none" aria-label="Network receive and transmit history"><polyline id="net-rx-line" points=""/><polyline class="secondary" id="net-tx-line" points=""/></svg><div class="live-foot">Receive / send</div></div>
+ <div class="live-cell"><div class="live-top"><span>Disk I/O</span><span class="mono">per second</span></div><div class="rates"><span class="direction">↓</span><span id="disk-read">...</span></div><div class="rates"><span class="direction">↑</span><span id="disk-write">...</span></div><svg class="live-chart io-chart" viewBox="0 0 240 32" preserveAspectRatio="none" aria-label="Disk read and write history"><polyline id="disk-read-line" points=""/><polyline class="secondary" id="disk-write-line" points=""/></svg><div class="live-foot" id="disk-foot">Read / write</div></div>
 </div>
-
+<div class="toolbar" id="toolbar"><div class="filter-wrap"><label class="sr-only" for="view-filter">Filter this view</label><input id="view-filter" type="search" placeholder="Filter overview" autocomplete="off"><button id="clear-filter" aria-label="Clear filter" title="Clear filter" hidden>×</button></div><span id="view-summary" class="view-summary"></span><label class="sort-wrap" id="sort-wrap">Sort <select id="view-sort" aria-label="Sort this view"></select></label></div>
+<div class="viewer" id="viewer" hidden><div class="viewer-bar"><span class="viewer-url" id="viewer-url"></span><button id="viewer-reload" title="Reload" aria-label="Reload viewer">↻</button><a id="viewer-popout" target="_blank" rel="noopener" title="Open in a new tab" aria-label="Open viewer in a new tab">↗</a><button id="viewer-close" title="Close" aria-label="Close viewer">×</button></div><div class="viewer-body"><iframe id="viewer-frame" title="Deck viewer" src="about:blank" sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-modals allow-downloads"></iframe><div class="viewer-loading" role="status">Loading...</div></div></div>
+<div id="overview-view" class="view">
+ <section><div class="section-top"><h2>Berths <small id="overview-port-count"></small></h2><a href="#/ports">All ports</a></div><div class="board" id="overview-ports"></div><p class="notice" id="mirror-errors"></p></section>
+ <div class="columns"><section><div class="section-top"><h2>Agents <small id="overview-agent-count"></small></h2><a href="#/agents">All agents</a></div><div class="board" id="overview-agents"></div></section><div><section id="herdr-section" hidden><h2>herdr <small id="herdr-count"></small></h2><div class="board" id="herdr-board"></div></section><section><h2>tmux</h2><div class="board" id="tmux-board"></div></section><section><h2>Browsers</h2><div class="board" id="browsers-board"></div></section></div></div>
+ <div class="overview-top"><section><h2>Top CPU <small>one core = 100%</small></h2><div class="board" id="top-cpu-board"></div></section><section><h2>Top memory</h2><div class="board" id="top-mem-board"></div></section></div>
+ <section><div class="section-top"><h2>Fresh reports <small id="report-days"></small></h2><a href="#/files">Browse files</a></div><div class="board" id="reports-board"></div></section>
+</div>
+<div id="ports-view" class="view" hidden><div class="board" id="ports-board"></div></div>
+<div id="processes-view" class="view" hidden><p class="notice">CPU is measured per core. Stop sends SIGTERM; force stop is available after that.</p><div class="board table-scroll"><table class="proc-table"><colgroup><col style="width:76px"><col style="width:18%"><col style="width:80px"><col style="width:90px"><col style="width:74px"><col style="width:90px"><col><col style="width:170px"></colgroup><thead><tr><th>PID</th><th>Process</th><th><button data-sort="cpu">CPU ↓</button></th><th><button data-sort="mem">Memory ↓</button></th><th>Age</th><th>User</th><th>Folder</th><th>Action</th></tr></thead><tbody id="processes-rows"></tbody></table><div class="empty" id="processes-empty" hidden></div></div></div>
+<div id="agents-view" class="view" hidden><div class="board" id="agents-board"></div></div>
+<div id="terminal-view" class="view" hidden><p id="terminal-hint" class="notice"></p></div>
+<div id="files-view" class="view" hidden><form class="path-form" id="path-form"><label for="file-path">Path</label><input id="file-path" value="/" aria-label="File path" autocomplete="off"><button>Open</button></form></div>
+<div id="docker-view" class="view" hidden><div class="board" id="docker-board"></div></div>
+<div id="boxes-view" class="view" hidden><p class="notice" id="boxes-hint"></p><div class="box-grid" id="boxes-grid"></div></div>
+<div id="settings-view" class="view" hidden><div class="settings-meta"><span id="settings-version"></span><span id="settings-update"></span></div><dl class="board" id="settings-board"></dl></div>
+<p id="action-status" class="notice" role="status" aria-live="polite"></p>
+</main>
+<nav class="bottom-nav" id="bottom-nav" aria-label="Mobile navigation"></nav>
+<div class="sheet-backdrop" id="more-sheet" hidden><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="more-title"><header><h2 id="more-title">More</h2><button data-close-sheet aria-label="Close more menu">×</button></header><nav class="sheet-nav" id="more-nav"></nav><form method="post" action="/logout"><button style="width:100%;margin-top:16px">Sign out</button></form></section></div>
+<div class="sheet-backdrop" id="help-sheet" hidden><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="help-title"><header><h2 id="help-title">Keyboard shortcuts</h2><button data-close-sheet aria-label="Close keyboard shortcuts">×</button></header><div class="key-row"><span>Overview</span><span><kbd>g</kbd> <kbd>o</kbd></span></div><div class="key-row"><span>Ports</span><span><kbd>g</kbd> <kbd>p</kbd></span></div><div class="key-row"><span>Agents</span><span><kbd>g</kbd> <kbd>a</kbd></span></div><div class="key-row"><span>Terminal</span><span><kbd>g</kbd> <kbd>t</kbd></span></div><div class="key-row"><span>Files</span><span><kbd>g</kbd> <kbd>f</kbd></span></div><div class="key-row"><span>Filter this view</span><kbd>/</kbd></div><div class="key-row"><span>Close viewer or sheet</span><kbd>Esc</kbd></div><div class="key-row"><span>This help</span><kbd>?</kbd></div></section></div>
 <script>
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const gb = b => (b / 1073741824).toFixed(1);
-const dur = s => s < 60 ? s + 's' : s < 3600 ? Math.floor(s/60) + 'm' : s < 86400 ? Math.floor(s/3600) + 'h ' + Math.floor(s%3600/60) + 'm' : Math.floor(s/86400) + 'd ' + Math.floor(s%86400/3600) + 'h';
-const ago = t => { const s = Math.max(0, (Date.now() - t) / 1000); return s < 60 ? 'now' : s < 3600 ? Math.floor(s/60) + ' min' : s < 86400 ? Math.floor(s/3600) + ' h' : Math.floor(s/86400) + ' d'; };
-const spark = (arr, max) => { if (!arr.length) return ''; const w = 88, h = 30, n = Math.max(arr.length - 1, 1);
-  const pts = arr.map((v, i) => `${(i / n * w).toFixed(1)},${(h - 2 - Math.min(v, max) / max * (h - 4)).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}"/></svg>`; };
-const grade = (pct, warn, bad) => pct >= bad ? 'bad' : pct >= warn ? 'warn' : '';
-let last = 0;
-
-function meters(h, hist) {
-  const memPct = (h.memTotal ? Math.round(100 * h.memUsed / h.memTotal) : 0), swapPct = h.swapTotal ? Math.round(100 * h.swapUsed / h.swapTotal) : 0, loadPct = Math.round(100 * h.load1 / h.cores);
-  const m = [
-    { k: 'CPU', hint: h.cores + ' cores', v: h.cpu, unit: '%', pct: h.cpu, cls: grade(h.cpu, 70, 90), sub: `load ${h.load1.toFixed(2)} / ${h.load5.toFixed(2)} / ${h.load15.toFixed(2)}`, sp: spark(hist.cpu, 100) },
-    { k: 'Memory', hint: gb(h.memTotal) + ' GB', v: gb(h.memUsed), unit: 'GB', pct: memPct, cls: grade(memPct, 80, 92), sub: `${gb(h.memAvail)} GB free`, sp: spark(hist.mem, 100) },
-    { k: 'Swap', hint: gb(h.swapTotal) + ' GB', v: gb(h.swapUsed), unit: 'GB', pct: swapPct, cls: grade(swapPct, 75, 90), sub: `${gb(h.swapFree)} GB free`, sp: spark(hist.swap, 100) },
-    { k: 'Disk', hint: '/', v: h.diskPct, unit: '%', pct: h.diskPct, cls: grade(h.diskPct, 80, 92), sub: `${gb(h.diskTotal - h.diskUsed)} GB free / up ${dur(Math.floor(h.uptime))}`, sp: '' },
-  ];
-  $('meters').innerHTML = m.map(x => `<div class="meter ${x.cls}"><div class="k">${x.k}<span>${x.hint}</span></div><div class="v">${x.v}<small>${x.unit}</small></div>${x.sp}<div class="bar"><i style="width:${Math.min(100, x.pct)}%"></i></div><div class="sub">${x.sub}</div></div>`).join('');
+const $=id=>document.getElementById(id);
+const clean=s=>String(s??'').replace(/[\u00b7\u2013\u2014]/g,' / ');
+const esc=s=>clean(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const text=(id,value)=>{const node=$(id),s=clean(value);if(node&&node.textContent!==s)node.textContent=s;};
+const gb=n=>(Number(n||0)/1073741824).toFixed(1);
+const rate=n=>n>=1048576?(n/1048576).toFixed(1)+' MB/s':n>=1024?(n/1024).toFixed(1)+' KB/s':Math.round(n||0)+' B/s';
+const mem=n=>n>=1073741824?gb(n)+'G':Math.round((n||0)/1048576)+'M';
+const age=n=>n<60?Math.floor(n)+'s':n<3600?Math.floor(n/60)+'m':n<86400?Math.floor(n/3600)+'h '+Math.floor(n%3600/60)+'m':Math.floor(n/86400)+'d';
+const ago=t=>age(Math.max(0,(Date.now()-t)/1000));
+const nav=[['overview','Overview','M3 3h6v6H3z M13 3h6v6h-6z M3 13h6v6H3z M13 13h6v6h-6z'],['ports','Ports','M4 8h14v10H4z M8 8V4 M14 8V4 M8 13h6'],['processes','Processes','M3 16h3l3-10 4 13 3-8h4'],['agents','Agents','M8 7a3 3 0 1 0 6 0a3 3 0 1 0-6 0 M4 20v-3a7 7 0 0 1 14 0v3'],['terminal','Terminal','M4 6l5 5-5 5 M12 17h6'],['files','Files','M3 6h7l2 3h7v10H3z'],['docker','Docker','M3 10h16v8H3z M6 10V6h4v4 M12 10V6h4v4 M8 18v3 M14 18v3'],['boxes','Boxes','M3 4h16v6H3z M3 14h16v6H3z M6 7h1 M6 17h1'],['settings','Settings','M4 6h14 M4 12h14 M4 18h14 M8 3v6 M14 9v6 M8 15v6']];
+const icon=path=>`<svg class="nav-icon" viewBox="0 0 22 24" aria-hidden="true"><path d="${path}"/></svg>`;
+$('rail-nav').innerHTML=nav.map(([id,label,path])=>`<a href="#/${id}" data-nav="${id}" title="${label}">${icon(path)}<span class="nav-label">${label}</span></a>`).join('');
+$('bottom-nav').innerHTML=['overview','ports','agents','terminal'].map(id=>{const item=nav.find(n=>n[0]===id);return `<a href="#/${id}" data-nav="${id}">${icon(item[2])}<span>${item[1]}</span></a>`;}).join('')+`<button id="more-open" aria-haspopup="dialog">${icon('M4 12h1 M10 12h1 M16 12h1')}<span>More</span></button>`;
+$('more-nav').innerHTML=nav.map(([id,label])=>`<a href="#/${id}">${label}</a>`).join('');
+try{document.body.classList.toggle('rail-collapsed',localStorage.getItem('rail-collapsed')==='true');}catch{}
+$('rail-toggle').onclick=()=>{const on=document.body.classList.toggle('rail-collapsed');$('rail-toggle').setAttribute('aria-label',on?'Expand navigation':'Collapse navigation');try{localStorage.setItem('rail-collapsed',String(on));}catch{}};
+let state=null,metrics=null,processes=[],boxes=null,settings=null,current='overview',source=null,refreshing=false,pendingFrame=false,pendingMetrics=null,lastMetric=0,viewerURL='',viewerTimer,focusReturn=null,sheetReturn=null;
+const histories={},filters={},sorts={},kills=new Map(),pendingFocus=new Set();
+const sortOptions={overview:[['port','Port']],ports:[['port','Port'],['name','Name']],processes:[['cpu','CPU'],['mem','Memory']],agents:[['status','State'],['name','Name'],['age','Age']],docker:[['name','Name'],['status','State']],boxes:[['name','Name']],settings:[['name','Name']]};
+function points(values,max){if(!values?.length)return '';return values.map((v,i)=>`${(i/Math.max(1,values.length-1)*240).toFixed(1)},${(30-Math.min(1,v/Math.max(max,1))*28).toFixed(1)}`).join(' ');}
+function pushHistory(key,value){(histories[key]??=[]).push(value);if(histories[key].length>120)histories[key].shift();}
+function line(id,key,max){$(id).setAttribute('points',points(histories[key],max));}
+function applyMetrics(m){
+ metrics=m;lastMetric=Date.now();text('live-status-text',m.available?'Live 1s':'Limited health');$('live-status').classList.remove('stale');
+ if(!m.available){text('cpu-number','n/a');text('core-count','Linux counters');text('load-number','Live counters need Linux');return;}
+ const percent=m.memTotal?100*m.memUsed/m.memTotal:0;
+ for(const [key,value] of Object.entries({cpu:m.cpu,memory:percent,swap:m.swapTotal?100*m.swapUsed/m.swapTotal:0,load:m.load[0],netRx:m.netRx,netTx:m.netTx,diskRead:m.diskRead,diskWrite:m.diskWrite}))pushHistory(key,value);
+ m.cores.forEach((v,i)=>pushHistory('core'+i,v));text('core-count',m.cores.length+' cores');text('cpu-number',m.cpu.toFixed(0));text('mem-number',gb(m.memUsed));text('mem-total',gb(m.memTotal)+' GB');text('mem-free',gb(m.memTotal-m.memUsed)+' GB available');text('swap-number','Swap '+gb(m.swapUsed)+' / '+gb(m.swapTotal)+' GB');text('load-number','Load '+m.load.map(x=>x.toFixed(2)).join(' / '));text('net-rx',rate(m.netRx));text('net-tx',rate(m.netTx));text('disk-read',rate(m.diskRead));text('disk-write',rate(m.diskWrite));text('disk-foot','Read / write / up '+age(m.uptime));
+ line('cpu-line','cpu',100);line('mem-line','memory',100);const netMax=Math.max(1024,...histories.netRx,...histories.netTx),diskMax=Math.max(1024,...histories.diskRead,...histories.diskWrite);line('net-rx-line','netRx',netMax);line('net-tx-line','netTx',netMax);line('disk-read-line','diskRead',diskMax);line('disk-write-line','diskWrite',diskMax);
+ const cores=$('core-bars'),count=Math.min(m.cores.length,64);while(cores.children.length<count){const div=document.createElement('div');div.className='core';div.append(document.createElement('i'));cores.append(div);}while(cores.children.length>count)cores.lastChild.remove();
+ [...cores.children].forEach((bar,i)=>{bar.title=`Core ${i+1}: ${m.cores[i].toFixed(0)}%`;bar.firstChild.style.height=Math.max(2,m.cores[i])+'%';bar.firstChild.classList.toggle('hot',m.cores[i]>=70);});
+ if(current==='overview')renderTop();
 }
-
-function rememberFocus() { const el=document.activeElement; if (!el || !el.closest('#ports,#agents,#quick,#reports')) return null; return {board:el.closest('[id]').id, pane:el.dataset.pane, href:el.getAttribute('href'), url:el.dataset.url}; }
-function restoreFocus(saved) { if (!saved) return; const board=$(saved.board); const el=[...board.querySelectorAll('a,button')].find(el => saved.pane ? el.dataset.pane===saved.pane : saved.url ? el.dataset.url===saved.url : el.getAttribute('href')===saved.href); if (el) el.focus({preventScroll:true}); }
-function ports(list, host) {
-  const real = list.filter(p => !p.ephemeral), eph = list.filter(p => p.ephemeral);
-  $('portcount').textContent = real.length + ' open';
-  const row = p => { const cur = p.url === curUrl ? ' cur' : ''; const name = p.label || p.title || p.proc || 'Listener'; const sub = p.label ? (p.title && p.title !== p.label && p.title !== 'needs login' ? p.title : (p.proc && p.proc !== name ? p.proc : '')) : (p.proc && p.proc !== name ? p.proc : '');
-    return `<div class="berth"><a class="row live${cur}" href="${esc(p.url)}" target="_blank" rel="noopener" data-port="${p.port}"${p.title === 'needs login' ? ' data-login="1"' : ''}><span class="port"><i class="led"></i>${p.port}</span><span class="name ellip">${esc(name)}${sub ? `<small class="ellip">${esc(sub)}</small>` : ''}</span><span class="cwd dim mono ellip">${esc(p.cwd || '')}</span><span></span></a><button class="popout" data-url="${esc(p.url)}" title="Open ${esc(name)} in a new tab" aria-label="Open ${esc(name)} in a new tab">↗</button></div>`; };
-  $('ports').innerHTML = real.length ? `<div class="row head"><span>Port</span><span>What</span><span class="cwd">Where</span><span></span></div>` + real.map(row).join('') : `<div class="empty">No apps are listening. Start a dev server to add a berth.</div>`;
-  if (eph.length) $('ports').insertAdjacentHTML('beforeend', `<div class="empty">${eph.length} helper socket${eph.length > 1 ? 's' : ''} / ${eph.map(p => p.port).join(', ')}</div>`);
+function queueMetrics(m){pendingMetrics=m;if(pendingFrame)return;pendingFrame=true;requestAnimationFrame(()=>{pendingFrame=false;applyMetrics(pendingMetrics);});}
+function connectStream(){if(source||document.hidden)return;source=new EventSource('/api/stream');source.addEventListener('metrics',e=>{try{queueMetrics(JSON.parse(e.data));}catch{text('connection','Could not read a sample. Reconnecting.');}});source.addEventListener('auth',()=>{source.close();source=null;location.href='/login?next='+encodeURIComponent('/'+location.hash);});source.onerror=()=>{$('live-status').classList.add('stale');text('live-status-text','Reconnecting');};}
+// Patch only changed nodes. Rows retain focus and live charts retain their DOM.
+function patchNode(old,fresh){if(old.nodeType!==fresh.nodeType||old.nodeName!==fresh.nodeName){old.replaceWith(fresh);return;}if(old.nodeType===Node.TEXT_NODE){if(old.data!==fresh.data)old.data=fresh.data;return;}if(old.nodeType!==Node.ELEMENT_NODE)return;
+ for(const attr of [...old.attributes])if(!fresh.hasAttribute(attr.name))old.removeAttribute(attr.name);for(const attr of [...fresh.attributes])if(old.getAttribute(attr.name)!==attr.value)old.setAttribute(attr.name,attr.value);
+ const children=[...fresh.childNodes];for(let i=0;i<children.length;i++){if(!old.childNodes[i])old.append(children[i]);else patchNode(old.childNodes[i],children[i]);}while(old.childNodes.length>children.length)old.lastChild.remove();
 }
-function quick(q, list, host, terminal) {
-  const open = new Set(list.map(p => p.port));
-  const links = (q || []).map(([name, port]) => ({name, port: Number(port)}));
-  if (!links.some(l => l.name.toLowerCase() === 'files')) links.unshift({name:'Files', port:0});
-  if (!links.some(l => l.name.toLowerCase() === 'terminal')) links.push({name:'Terminal', port:7681});
-  $('quick').innerHTML = links.map(({name,port}) => {
-    const files = name.toLowerCase() === 'files', term = name.toLowerCase() === 'terminal';
-    const href = files ? '/files/' : term ? '/term/' : `http://${host.includes(':') ? '['+host+']' : host}:${port}`;
-    const enabled = files || (term ? terminal.available : open.has(port));
-    const hint = enabled ? `Open ${name}` : term ? terminal.error || (terminal.installed ? 'start ttyd' : 'install ttyd') : 'Start this server on the box';
-    return `<a ${enabled ? `href="${esc(href)}" target="_blank" rel="noopener"` : 'aria-disabled="true" tabindex="0"'} class="${enabled ? '' : 'off'}" title="${esc(hint)}">${esc(name)}</a>`;
-  }).join('');
+function nodeFrom(html){const t=document.createElement('template');t.innerHTML=html.trim();return t.content.firstElementChild;}
+function syncRows(id,items,key,render){const parent=$(id),existing=new Map([...parent.children].map(n=>[n.dataset.key,n]));const keep=new Set();items.forEach((item,i)=>{const k=String(key(item)),fresh=nodeFrom(render(item));fresh.dataset.key=k;let node=existing.get(k);if(node){patchNode(node,fresh);}else node=fresh;keep.add(k);if(parent.children[i]!==node)parent.insertBefore(node,parent.children[i]||null);});for(const node of [...parent.children])if(!keep.has(node.dataset.key))node.remove();}
+function query(){return (filters[current]||'').toLowerCase().trim();}
+function match(value){return !query()||clean(value).toLowerCase().includes(query());}
+function emptyHTML(message,hasItems){return hasItems&&query()?`<div class="empty">No match for &quot;${esc(filters[current])}&quot;.<button data-clear>Clear the filter</button></div>`:`<div class="empty">${esc(message)}</div>`;}
+function board(id,items,key,render,message,hasItems){if(!items.length){const html=emptyHTML(message,hasItems);if($(id).innerHTML!==html)$(id).innerHTML=html;}else syncRows(id,items,key,render);}
+const statusClass=s=>['working','blocked'].includes(s)?s:'';
+function portRows(id,all){const items=all.filter(p=>!p.ephemeral&&match([p.port,p.label,p.title,p.proc,p.cwd].join(' '))).sort((a,b)=>(sorts[current]==='name'?clean(a.label||a.title||a.proc).localeCompare(clean(b.label||b.title||b.proc)):a.port-b.port));
+ board(id,items,p=>p.port,p=>`<div class="port-row"><a class="port-main" href="${esc(p.url)}" target="_blank" rel="noopener" data-view-url="${esc(p.url)}"><span class="port-id"><span class="lamp"></span>${p.port}</span><span class="ellip"><span class="row-title">${esc(p.label||p.title||p.proc||'Listener')}</span><small class="row-sub">${esc(p.proc)}${p.title&&p.label&&p.title!==p.label?' / '+esc(p.title):''}</small></span><span class="port-cwd row-sub">${esc(p.cwd)}</span></a><button class="popout" data-popout="${esc(p.url)}" aria-label="Open port ${p.port} in a new tab" title="Open port ${p.port} in a new tab">↗</button></div>`,'No apps are listening. Start a dev server on the box.',all.some(p=>!p.ephemeral));return items.length;}
+function agentRows(id,all){const items=all.filter(a=>match([a.kind,a.cwd,a.terminal_title_stripped,a.agent_status,a.pane_id,a.model].join(' ')));const ranks={blocked:0,working:1,idle:2,done:3,unknown:4};items.sort((a,b)=>sorts[current]==='name'?clean(a.terminal_title_stripped||a.cwd).localeCompare(clean(b.terminal_title_stripped||b.cwd)):sorts[current]==='age'?b.secs-a.secs:(ranks[a.agent_status]??5)-(ranks[b.agent_status]??5));
+ board(id,items,a=>a.pane_id||a.pid,a=>{const kind=a.kind||'agent',title=a.terminal_title_stripped||a.cwd||'pid '+a.pid,ctx=a.tokens?.context?.match(/[\d.]+%/)?.[0];const details=a.pane_id?[a.pane_id,ctx?'ctx '+ctx:'',a.tokens?.limit]:[a.pane?'tmux '+a.pane:'pid '+a.pid,Math.round(a.cpu)+'% CPU',mem(a.rss),age(a.secs)];const tag=a.pane_id?'button':'div';return `<${tag} class="agent-row${pendingFocus.has(a.pane_id)?' pending':''}" ${a.pane_id?`data-focus="${esc(a.pane_id)}" title="Focus ${esc(title)} in herdr"`:''}><span class="agent-kind">${esc(kind)}</span><span style="min-width:0"><span class="row-title ellip" style="display:block" title="${esc(title)}">${esc(title)}</span><small class="row-details">${details.filter(Boolean).map(x=>'<span>'+esc(x)+'</span>').join('')}</small>${a.pane_id?`<small class="row-sub">${esc(a.cwd)}</small>`:''}</span><span class="status ${statusClass(a.agent_status)}">${esc(a.agent_status||'running')}</span></${tag}>`;},'No agents are running. Start an agent on the box.',all.length);return items.length;}
+function renderTop(){if(!metrics)return;for(const [id,list,field] of [['top-cpu-board',metrics.topCpu,'cpu'],['top-mem-board',metrics.topMem,'mem']]){const items=list.filter(p=>match(p.name+' '+p.pid));board(id,items,p=>p.pid,p=>`<a class="compact-row" href="#/processes"><span class="ellip">${esc(p.name)} <span class="dim mono">${p.pid}</span></span><span class="mono muted">${field==='cpu'?p.cpu.toFixed(1)+'%':mem(p.mem)}</span></a>`,'No processes are readable. Check permissions on this box.',list.length);}}
+function renderOverview(){if(!state)return;const n=portRows('overview-ports',state.ports);text('overview-port-count',n+' open');text('overview-agent-count',agentRows('overview-agents',state.agents)+' sessions');text('mirror-errors',(state.mirrorErrors||[]).join(' / '));
+ const h=state.herdr||{running:false,agents:[],workspaces:[]};$('herdr-section').hidden=!h.running;const workspaces=h.workspaces.filter(w=>match(w.name));text('herdr-count',h.workspaces.length+' workspaces');const counts={};h.agents.forEach(a=>counts[a.agent_status]=(counts[a.agent_status]||0)+1);board('herdr-board',workspaces,w=>w.id,w=>`<div class="compact-row"><span><span class="row-title mono">${esc(w.name||w.id)}</span><small class="row-sub">${Object.entries(counts).map(([s,n])=>n+' '+esc(s)).join(' / ')||'No agents yet. Start an agent in herdr.'}</small></span><span class="mono dim">${w.tabs} tabs</span></div>`,'No workspaces open. Start herdr on the box.',h.workspaces.length);
+ board('tmux-board',state.tmux.filter(s=>match(s.name)),s=>s.name,s=>`<div class="compact-row"><span class="ellip"><span class="mono">${esc(s.name)}</span><small class="row-sub">${s.windows} windows</small></span><span class="status">${s.attached?'attached':'detached'}</span></div>`,'No tmux sessions. Start tmux on the box.',state.tmux.length);
+ board('browsers-board',state.browsers.filter(b=>match('Chrome '+b.pid+' '+b.port)),b=>b.pid,b=>`<div class="compact-row"><span class="ellip">Chrome${b.headless?' headless':''}<small class="row-sub">pid ${b.pid}${b.port?' / port '+b.port:''}</small></span><span class="mono dim">${mem(b.rss)}</span></div>`,'No browsers are open. Start a browser task when needed.',state.browsers.length);
+ text('report-days','last '+state.reportDays+' days');board('reports-board',state.reports.filter(r=>match(r.rel)),r=>r.rel,r=>`<a class="report-row" ${r.url?`href="${esc(r.url)}" data-view-url="${esc(r.url)}" target="_blank" rel="noopener"`:''}><span class="path ellip" title="${esc(r.rel)}">${esc(r.rel)}</span><span class="age">${ago(r.t)}</span></a>`,'No recent reports. Save one in your report folders.',state.reports.length);renderTop();}
+function renderQuick(){if(!state)return;const links=(state.quick||[]).map(([name,port])=>({name,port:Number(port)}));if(!links.some(l=>l.name.toLowerCase()==='files'))links.unshift({name:'Files',port:0});if(!links.some(l=>l.name.toLowerCase()==='terminal'))links.push({name:'Terminal',port:7681});const ports=new Set(state.ports.map(p=>p.port));
+ syncRows('overview-quick',links,l=>l.name,l=>{const files=l.name.toLowerCase()==='files',term=l.name.toLowerCase()==='terminal',enabled=files||(term?state.terminal?.available:ports.has(l.port));const url=files?'#/files':term?'#/terminal':`http://${state.host.includes(':')?'['+state.host+']':state.host}:${l.port}`;return `<a ${enabled?`href="${esc(url)}"${files||term?'':` data-view-url="${esc(url)}" target="_blank" rel="noopener"`}`:'aria-disabled="true" tabindex="0"'} title="${enabled?'Open '+esc(l.name):term?(state.terminal?.installed?'Start ttyd on the box':'Install ttyd'):'Start this server on the box'}">${esc(l.name)}</a>`;});}
+function procKey(p){return p.pid+':'+p.startTicks;}
+function renderProcesses(){const all=processes.length?processes:[...new Map([...(metrics?.topCpu||[]),...(metrics?.topMem||[])].map(p=>[p.pid,p])).values()];let items=all.filter(p=>match([p.pid,p.name,p.user,p.cwd,...(p.tags||[])].join(' ')));const order=sorts.processes||'cpu';items.sort((a,b)=>order==='mem'?b.mem-a.mem:b.cpu-a.cpu||a.pid-b.pid);
+ // Keep pending targets stationary while an inline confirmation is open.
+ const armed=[...kills.values()].some(s=>s==='confirm'||s==='force-confirm');if(armed){const previous=new Map([...$('processes-rows').children].map((n,i)=>[n.dataset.key,i]));items.sort((a,b)=>(previous.get(procKey(a))??1e9)-(previous.get(procKey(b))??1e9));}
+ syncRows('processes-rows',items,procKey,p=>{const key=procKey(p),stage=kills.get(key),blocked=p.pid===1||p.pid===settings?.pid;let actions=`<button class="kill" data-kill="${key}" ${blocked?'disabled title="Protected process"':''}>${stage==='term'?'Force stop':'Stop'}</button>`;if(stage==='confirm'||stage==='force-confirm')actions=`<button class="kill confirm" data-confirm-kill="${key}">${stage==='confirm'?'Send SIGTERM':'Send SIGKILL'}</button><button class="cancel" data-cancel-kill="${key}" aria-label="Cancel stop">×</button>`;if(stage==='pending')actions='<button class="kill" disabled>Sending...</button>';return `<tr><td class="num dim">${p.pid}</td><td><span class="row-title ellip" style="display:block" title="${esc(p.name)}">${esc(p.name)}</span><small class="tag">${(p.tags||[]).map(esc).join(' / ')}</small></td><td class="num">${p.cpu.toFixed(1)}%</td><td class="num">${mem(p.mem)}</td><td class="num dim">${age(p.age)}</td><td class="ellip dim" title="${esc(p.user)}">${esc(p.user||'?')}</td><td class="ellip dim mono" style="font-size:11px" title="${esc(p.cwd)}">${esc(p.cwd||'Not readable')}</td><td><div class="proc-actions">${actions}</div></td></tr>`;});$('processes-empty').hidden=items.length>0;if(!items.length)$('processes-empty').innerHTML=emptyHTML('No processes are readable. Check permissions on the box.',all.length);text('view-summary',items.length+' of '+(metrics?.processCount||all.length)+' processes');}
+function renderDocker(){if(!state)return;const all=state.docker,items=all.filter(c=>match([c.name,c.image,c.status,c.ports].join(' '))).sort((a,b)=>clean(a[sorts.docker||'name']).localeCompare(clean(b[sorts.docker||'name'])));board('docker-board',items,c=>c.name,c=>`<div class="compact-row"><span><span class="row-title mono">${esc(c.name)}</span><small class="row-sub">${esc(c.image)}${c.ports?' / '+esc(c.ports):''}</small></span><span class="status">${esc(c.status)}</span></div>`,'No containers are visible. Start Docker and a container on the box.',all.length);text('view-summary',items.length+' containers');}
+function localBox(){return {name:state?.host||'This box',url:location.origin,local:true,ok:true,since:'',health:state?.health||{},agents:state?.agents.length||0,ports:state?.ports.filter(p=>!p.ephemeral).length||0};}
+function validBoxURL(value){try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)&&!u.username&&!u.password?u.href:'#';}catch{return '#';}}
+function renderBoxes(){const all=boxes||[localBox()],items=all.filter(b=>match(b.name+' '+b.url)).sort((a,b)=>Number(b.local)-Number(a.local)||clean(a.name).localeCompare(clean(b.name)));board('boxes-grid',items,b=>b.name,b=>{const h=b.health||{},since=b.since?new Date(b.since).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false}):'now';return `<article class="box-card"><div class="box-head"><h2>${esc(b.name)}</h2><span class="status">${b.local?'this box':b.ok?'reachable':'unreachable'}</span></div><a class="box-url" href="${esc(validBoxURL(b.url))}" target="_blank" rel="noopener">${esc(b.url)}</a>${b.ok?`<div class="box-stats"><span><strong>${Math.round(h.cpu||0)}%</strong><small>CPU</small></span><span><strong>${gb(h.memUsed)}</strong><small>GB memory</small></span><span><strong>${b.ports}</strong><small>open ports</small></span></div>`:`<div class="box-message">Unreachable since ${esc(since)}, check tailscale status on it.</div>`}<div class="box-footer"><span>${b.ok?b.agents+' agents':'Check the connection and try again'}</span><a href="${esc(validBoxURL(b.url))}" target="_blank" rel="noopener">Open deck ↗</a></div></article>`;},'No boxes match. Clear the filter to see this box.',all.length);text('view-summary',items.length+' boxes');}
+function safeSettings(value,key=''){if(/password|secret|token/i.test(key)){if(key==='tokens')return Array.isArray(value)?value.length+' tokens':String(value);return '********';}if(Array.isArray(value))return value.map(v=>safeSettings(v));if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,safeSettings(v,k)]));return value;}
+function renderSettings(){if(!settings){$('settings-board').innerHTML='<div class="empty">Reading the running config...</div>';return;}text('settings-version','boxdeck '+settings.version);text('settings-update',settings.update);const values=safeSettings(settings.config),items=Object.entries(values).filter(([key,v])=>match(key+' '+JSON.stringify(v))).sort(([a],[b])=>a.localeCompare(b));board('settings-board',items,x=>x[0],([key,value])=>`<div class="settings-row"><dt>${esc(key)}</dt><dd>${esc(typeof value==='object'?JSON.stringify(value,null,2):String(value))}</dd></div>`,'No settings found. Check the config on the box.',Object.keys(values).length);}
+function renderCurrent(){if(!state)return;text('view-summary','');switch(current){case 'overview':renderOverview();break;case 'ports':text('view-summary',portRows('ports-board',state.ports)+' ports');break;case 'agents':text('view-summary',agentRows('agents-board',state.agents)+' sessions');break;case 'processes':renderProcesses();break;case 'docker':renderDocker();break;case 'boxes':renderBoxes();break;case 'settings':renderSettings();break;}}
+async function getJSON(path){const response=await fetch(path,{cache:'no-store'});if(response.status===401){location.href='/login?next='+encodeURIComponent('/'+location.hash);throw new Error('Sign in to continue');}if(!response.ok){const error=new Error('Request failed');error.status=response.status;throw error;}return response.json();}
+async function refresh(){if(refreshing||document.hidden)return;refreshing=true;try{const result=await getJSON('/api/state');state=result;text('host',state.host);document.title=nav.find(n=>n[0]===current)[1]+' / '+clean(state.host);renderQuick();text('connection','');renderCurrent();}catch{text('connection','Connection lost. Check the box; retrying shortly.');}finally{refreshing=false;}}
+async function loadProcesses(){try{processes=await getJSON('/api/ui/procs?n=1000&sort='+(sorts.processes||'cpu'));if(current==='processes')renderProcesses();}catch{if(current==='processes')text('action-status','Showing the latest top processes. Reconnecting to the full list.');}}
+async function loadBoxes(){try{boxes=await getJSON('/api/boxes');text('boxes-hint','');}catch(e){if(e.status===404){boxes=null;text('boxes-hint','This box is available here. Open another deck directly to check it.');}else{text('boxes-hint','Could not refresh boxes. Check the connection; retrying shortly.');}}if(current==='boxes')renderBoxes();}
+async function loadSettings(){try{settings=await getJSON('/api/ui/settings');if(current==='settings')renderSettings();}catch{if(current==='settings')$('settings-board').innerHTML='<div class="empty">Could not read settings. Check the connection and reopen this view.</div>';}}
+function openViewer(url,full=false){viewerURL=url;$('viewer-url').textContent=clean(new URL(url,location.origin).href);$('viewer-popout').href=url;$('viewer').hidden=false;$('viewer').classList.toggle('full',full);$('viewer').classList.add('loading');$('viewer-frame').src=url;clearTimeout(viewerTimer);$('viewer').querySelector('.viewer-loading').textContent='Loading...';viewerTimer=setTimeout(()=>{if($('viewer').classList.contains('loading'))$('viewer').querySelector('.viewer-loading').textContent='Still loading. Try reload or open in a new tab.';},8000);}
+function closeViewer(){const wasOpen=!!viewerURL;clearTimeout(viewerTimer);viewerURL='';$('viewer-frame').src='about:blank';$('viewer').hidden=true;$('viewer').classList.remove('loading');if(focusReturn?.isConnected)focusReturn.focus({preventScroll:true});else if(wasOpen)$('view-title').focus({preventScroll:true});}
+$('viewer-frame').addEventListener('load',()=>{if(!viewerURL)return;clearTimeout(viewerTimer);$('viewer').classList.remove('loading');try{$('viewer-frame').contentDocument?.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeViewer();}},true);}catch{}});
+$('viewer-close').onclick=closeViewer;$('viewer-reload').onclick=()=>{if(viewerURL)openViewer(viewerURL,$('viewer').classList.contains('full'));};
+$('path-form').onsubmit=e=>{e.preventDefault();let path=$('file-path').value.trim();if(!path.startsWith('/'))path='/'+path;$('file-path').value=path;openViewer('/files'+path,true);};
+function closeSheets(){for(const id of ['more-sheet','help-sheet'])$(id).hidden=true;document.body.style.overflow='';if(sheetReturn?.isConnected)sheetReturn.focus({preventScroll:true});}
+function openSheet(id){sheetReturn=document.activeElement;$(id).hidden=false;document.body.style.overflow='hidden';$(id).querySelector('button').focus();}
+$('more-open').onclick=()=>openSheet('more-sheet');$('help-open').onclick=()=>openSheet('help-sheet');
+function route(){const id=location.hash.replace(/^#\/?/,'').split('?')[0];current=nav.some(n=>n[0]===id)?id:'overview';closeSheets();closeViewer();document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!==current+'-view');document.querySelectorAll('[data-nav]').forEach(a=>{if(a.dataset.nav===current)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+ text('view-title',nav.find(n=>n[0]===current)[1]);if(state)document.title=nav.find(n=>n[0]===current)[1]+' / '+clean(state.host);$('overview-quick').hidden=current!=='overview';$('live-band').hidden=['terminal','files','settings'].includes(current);$('toolbar').hidden=['terminal','files'].includes(current);$('view-filter').value=filters[current]||'';$('view-filter').placeholder='Filter '+current;$('view-filter').setAttribute('aria-label','Filter '+current);$('clear-filter').hidden=!filters[current];const options=sortOptions[current]||[];$('view-sort').innerHTML=options.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');sorts[current]??=options[0]?.[0];$('view-sort').value=sorts[current]||'';$('sort-wrap').hidden=options.length<2;text('action-status','');
+ const viewer=$('viewer');if(current==='terminal'){$('terminal-view').append(viewer);text('terminal-hint',state?.terminal?.available?'':'Terminal is not running. Install ttyd and enable it on the box.');openViewer('/term/',true);}else if(current==='files'){$('files-view').append(viewer);openViewer('/files'+($('file-path').value||'/'),true);}else{$('toolbar').after(viewer);}
+ if(current==='processes')loadProcesses();if(current==='boxes')loadBoxes();if(current==='settings')loadSettings();renderCurrent();window.scrollTo({top:0,behavior:'instant'});
 }
-const pendingFocus = new Set();
-function agents(list) {
-  $('agentcount').textContent = list.length ? list.length + ' sessions' : '';
-  $('agents').innerHTML = list.length ? `<div class="row head"><span>Kind</span><span>Session</span><span>State</span></div>` + list.map(a => {
-    const tag = a.pane_id ? 'button' : 'div';
-    const title = a.terminal_title_stripped || a.cwd || 'pid ' + a.pid;
-    const context = a.tokens?.context ? 'ctx ' + (a.tokens.context.match(/[\d.]+%/)?.[0] || a.tokens.context) : '';
-    const meta = a.pane_id ? [a.pane_id,context,a.tokens?.limit].filter(Boolean).join(' / ') : [a.pane ? 'tmux '+a.pane : 'pid '+a.pid,a.model,`${a.cpu.toFixed(0)}% CPU`,`${Math.round(a.rss/1048576)}M`,dur(a.secs)].filter(Boolean).join(' / ');
-    return `<${tag} class="row${pendingFocus.has(a.pane_id) ? ' focus-pending' : ''}" ${a.pane_id ? `type="button" data-pane="${esc(a.pane_id)}" title="Focus ${esc(title)} in herdr"` : ''}><span><span class="kind">${esc(a.kind)}</span></span><span class="ellip"><span title="${esc(title)}">${esc(title)}</span><small class="agent-meta details" title="${esc(meta)}">${meta.split(' / ').map(part => `<span>${esc(part)}</span>`).join('')}</small>${a.pane_id ? `<small class="agent-meta ellip">${esc(a.cwd)}</small>` : ''}</span><span class="status ${['working','blocked'].includes(a.agent_status) ? a.agent_status : ''}">${esc(a.agent_status || 'running')}</span></${tag}>`;
-  }).join('') : `<div class="empty">No agents are running. Start claude or codex on the box.</div>`;
-}
-function herdr(h) {
-  $('herdrsec').hidden = !h.running;
-  if (!h.running) return;
-  $('herdrcount').textContent = h.workspaces.length + ' workspaces';
-  const counts = {}; for (const a of h.agents) counts[a.agent_status] = (counts[a.agent_status] || 0) + 1;
-  $('herdr').innerHTML = (h.workspaces.length ? h.workspaces.map(w => `<div class="row"><span class="ellip mono">${esc(w.name || w.id)}</span><span class="dim mono">${w.tabs} tab${w.tabs === 1 ? '' : 's'}</span></div>`).join('') : `<div class="empty">No workspaces open. Open herdr on the box to start one.</div>`) + `<div class="session-counts">${h.agents.length ? Object.entries(counts).map(([status,n]) => `${n} ${esc(status)}`).join(' / ') : 'No agents yet. Start an agent in a herdr pane.'}</div>`;
-}
-function tmux(list) { $('tmux').innerHTML = list.length ? list.map(s => `<div class="row"><span class="ellip"><span class="mono">${esc(s.name)}</span> <span class="dim">/ ${s.windows} window${s.windows > 1 ? 's' : ''}</span></span><span class="mono dim">${s.attached ? 'attached' : 'detached'}</span></div>`).join('') : `<div class="empty">No tmux session. Run tmux on the box to start one.</div>`; }
-function browsers(list) { $('brcount').textContent = list.length ? list.length + ' open' : ''; $('browsers').innerHTML = list.length ? list.map(b => `<div class="row"><span class="ellip">Chrome${b.headless ? ' headless' : ''} <span class="dim mono">${b.port && b.port !== '0' ? 'cdp ' + b.port : 'pid ' + b.pid}</span></span><span class="mono dim">${Math.round(b.rss / 1048576)}M / ${dur(b.secs)}</span></div>`).join('') : `<div class="empty">No browser is open. Start a browser task when you need one.</div>`; }
-function docker(list) { $('docker').innerHTML = list.length ? list.map(c => `<div class="row"><span class="ellip"><span class="mono">${esc(c.name)}</span> <span class="dim">${esc(c.image)}</span></span><span class="mono dim ellip">${esc(c.status)}</span></div>`).join('') : `<div class="empty">No containers visible. Start one in Docker.</div>`; }
-function reports(list) {
-  $('reports').innerHTML = list.length ? list.map(r => { const i = r.rel.lastIndexOf('/'); return `<a class="row" ${r.url ? `href="${esc(r.url)}" target="_blank" rel="noopener"` : ''}><span class="rel ellip"><span class="dim">${esc(r.rel.slice(0, i + 1))}</span><b>${esc(r.rel.slice(i + 1))}</b></span><span class="age hide-sm">${(r.size / 1024).toFixed(0)} KB</span><span class="age">${ago(r.t)}</span></a>`; }).join('') : `<div class="empty">No recent reports here. Save a report under a configured report folder.</div>`;
-}
-
-let curUrl = '', returnFocus = null, viewerTimer;
-function loading() { $('viewer').classList.add('loading-frame'); $('vframe').setAttribute('aria-busy','true'); $('vhint').textContent = 'Loading…'; clearTimeout(viewerTimer); viewerTimer = setTimeout(() => { $('vhint').textContent = 'Still loading / try reload or open in a new tab'; }, 8000); }
-function view(url) {
-  if (window.innerWidth <= 820) { window.open(url, '_blank', 'noopener'); return; }
-  returnFocus = document.activeElement; curUrl = url; $('vurl').textContent = new URL(url,location.origin).href;
-  $('vopen').href = url; $('viewer').classList.add('on'); loading(); $('vframe').src = url;
-  $('viewer').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
-  $('vclose').focus({preventScroll:true});
-  document.querySelectorAll('.ports .row').forEach(r => r.classList.toggle('cur', r.getAttribute('href') === url));
-}
-function closeViewer() { clearTimeout(viewerTimer); curUrl = ''; $('vframe').src = 'about:blank'; $('viewer').classList.remove('on','loading-frame'); document.querySelectorAll('.ports .row.cur').forEach(r => r.classList.remove('cur')); if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true}); }
-$('vframe').addEventListener('load', () => { if (!curUrl) return; clearTimeout(viewerTimer); $('viewer').classList.remove('loading-frame'); $('vframe').setAttribute('aria-busy','false'); $('vhint').textContent = ''; try { $('vframe').contentDocument?.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeViewer(); } }); } catch {} });
-for (const id of ['ports','quick','reports']) $(id).addEventListener('click', e => {
-  const pop = e.target.closest('button.popout'); if (pop) { window.open(pop.dataset.url,'_blank','noopener'); return; }
-  const a = e.target.closest('a[href]'); if (!a || window.innerWidth <= 820 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-  e.preventDefault(); view(a.getAttribute('href'));
+$('view-filter').oninput=e=>{filters[current]=e.target.value;$('clear-filter').hidden=!e.target.value;renderCurrent();};function clearFilter(){filters[current]='';$('view-filter').value='';$('clear-filter').hidden=true;renderCurrent();$('view-filter').focus();}$('clear-filter').onclick=clearFilter;
+$('view-sort').onchange=e=>{sorts[current]=e.target.value;renderCurrent();if(current==='processes')loadProcesses();};
+async function focusPane(pane){if(pendingFocus.has(pane))return;pendingFocus.add(pane);renderCurrent();text('action-status','Focusing pane...');try{const r=await fetch('/api/herdr/focus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pane_id:pane})}),result=await r.json();if(!r.ok)throw new Error(result.error||'Could not focus. Refresh and try again.');text('action-status','Focused '+pane+' in herdr on the box.');}catch(error){text('action-status',error.message);}finally{pendingFocus.delete(pane);renderCurrent();}}
+async function stopProcess(key){const p=processes.find(p=>procKey(p)===key);if(!p){text('action-status','This process has exited. Refresh the list.');kills.delete(key);return;}const signal=kills.get(key)==='force-confirm'?'SIGKILL':'SIGTERM';kills.set(key,'pending');renderProcesses();text('action-status','Sending '+signal+' to '+p.name+' ('+p.pid+')...');try{const r=await fetch('/api/proc/kill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pid:p.pid,signal,startTicks:p.startTicks})}),result=await r.json();if(!r.ok)throw new Error(result.error);kills.set(key,signal==='SIGTERM'?'term':'done');text('action-status','Sent '+signal+' to '+p.name+' ('+p.pid+').');await loadProcesses();}catch(error){kills.delete(key);text('action-status',error.message||'Could not stop this process. Refresh and try again.');}renderProcesses();}
+document.addEventListener('click',e=>{const close=e.target.closest('[data-close-sheet]');if(close){closeSheets();return;}if(e.target.classList.contains('sheet-backdrop')){closeSheets();return;}if(e.target.closest('[data-clear]')){clearFilter();return;}const pop=e.target.closest('[data-popout]');if(pop){window.open(pop.dataset.popout,'_blank','noopener');return;}const focus=e.target.closest('[data-focus]');if(focus){focusPane(focus.dataset.focus);return;}const stop=e.target.closest('[data-kill]');if(stop){const key=stop.dataset.kill;kills.set(key,kills.get(key)==='term'?'force-confirm':'confirm');renderProcesses();return;}const confirm=e.target.closest('[data-confirm-kill]');if(confirm){stopProcess(confirm.dataset.confirmKill);return;}const cancel=e.target.closest('[data-cancel-kill]');if(cancel){kills.delete(cancel.dataset.cancelKill);renderProcesses();return;}const sort=e.target.closest('[data-sort]');if(sort){sorts.processes=sort.dataset.sort;$('view-sort').value=sort.dataset.sort;renderProcesses();return;}
+ const link=e.target.closest('a[data-view-url]');if(link&&!e.metaKey&&!e.ctrlKey&&!e.shiftKey&&!e.altKey){if(innerWidth<=760)return;e.preventDefault();focusReturn=document.activeElement;openViewer(link.dataset.viewUrl);$('viewer').scrollIntoView({block:'start',behavior:'instant'});$('viewer-close').focus({preventScroll:true});}
 });
-$('agents').addEventListener('click', async e => {
-  const row = e.target.closest('button[data-pane]'); if (!row || pendingFocus.has(row.dataset.pane)) return;
-  const pane = row.dataset.pane; pendingFocus.add(pane); row.classList.add('focus-pending'); $('focus-status').textContent = 'Focusing pane…';
-  try { const r = await fetch('/api/herdr/focus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pane_id:pane})}); const result = await r.json(); if (!r.ok) throw new Error(result.error); $('focus-status').textContent = `Focused ${pane} in herdr on the box.`; }
-  catch (error) { $('focus-status').textContent = error.message || 'Could not focus the pane. Try again.'; }
-  finally { pendingFocus.delete(pane); row.classList.remove('focus-pending'); }
-});
-$('vclose').onclick = closeViewer;
-$('vreload').onclick = () => { if (curUrl) { loading(); $('vframe').src = curUrl; } };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
-window.addEventListener('resize', () => { if (window.innerWidth <= 820 && curUrl) closeViewer(); });
-let polling = false;
-async function tick() {
-  if (polling) return; polling = true;
-  try {
-    const r = await fetch('/api/state', {cache:'no-store'});
-    if (r.status === 401) { location.href = '/login?next=' + encodeURIComponent(location.pathname); return; }
-    if (!r.ok) throw new Error(r.status);
-    const s = await r.json(); last = Date.now();
-    document.title = s.title + ' / ' + s.host; $('title').textContent = s.title;
-    $('host').textContent = s.host; $('host').title = s.health.host;
-    const savedFocus=rememberFocus();
-    meters(s.health,s.hist); ports(s.ports,s.host); quick(s.quick,s.ports,s.host,s.terminal); agents(s.agents); herdr(s.herdr); tmux(s.tmux); browsers(s.browsers); docker(s.docker); reports(s.reports);
-    restoreFocus(savedFocus);
-    $('reportdays').textContent = 'last ' + s.reportDays + ' days';
-    $('mirror-errors').textContent = s.mirrorErrors.join(' / ');
-    $('connection').textContent = s.terminal.error || '';
-    $('pulse').classList.remove('stale');
-  } catch (e) { $('pulse').classList.add('stale'); $('connection').textContent = 'Connection lost. Check the box; retrying in 3 seconds.'; }
-  finally { polling = false; }
-}
-setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}) + (last && Date.now() - last > 10000 ? ' / stale' : ''); },1000);
-tick(); setInterval(() => { if (!document.hidden) tick(); },3000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+let chordAt=0;document.addEventListener('keydown',e=>{const sheet=document.querySelector('.sheet-backdrop:not([hidden])');if(e.key==='Escape'){closeSheets();closeViewer();return;}if(sheet&&e.key==='Tab'){const elements=[...sheet.querySelectorAll('a,button,input')],first=elements[0],last=elements.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}if(e.target.matches('input,textarea,select,[contenteditable="true"]'))return;if(e.key==='?'){e.preventDefault();openSheet('help-sheet');return;}if(e.key==='/'&&!$('toolbar').hidden){e.preventDefault();$('view-filter').focus();return;}if(e.key==='g'){chordAt=Date.now();return;}if(Date.now()-chordAt<1200){const to={o:'overview',p:'ports',a:'agents',t:'terminal',f:'files'}[e.key];if(to){e.preventDefault();location.hash='/'+to;}chordAt=0;}});
+window.addEventListener('hashchange',route);document.addEventListener('visibilitychange',()=>{if(document.hidden){source?.close();source=null;}else{connectStream();refresh();}});window.addEventListener('pagehide',()=>source?.close());
+route();connectStream();refresh();loadSettings();setInterval(refresh,5000);setInterval(()=>{if(document.hidden)return;if(current==='processes')loadProcesses();if(current==='boxes')loadBoxes();if(lastMetric&&Date.now()-lastMetric>4000){$('live-status').classList.add('stale');text('live-status-text','Reconnecting');}},3000);
 </script>
 </body>
 </html>
