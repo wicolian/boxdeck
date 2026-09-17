@@ -95,6 +95,13 @@ func tokenCommand(args []string) error {
 	if err != nil {
 		return err
 	}
+	return tokenCommandWithConfig(&cfg, args)
+}
+
+func tokenCommandWithConfig(cfg *config, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("usage: boxdeck token [new|list|revoke PREFIX]")
+	}
 	switch args[0] {
 	case "new":
 		if len(args) != 1 {
@@ -105,7 +112,7 @@ func tokenCommand(args []string) error {
 			return err
 		}
 		cfg.Tokens = append(cfg.Tokens, token)
-		if err = saveConfig(cfg); err != nil {
+		if err := saveConfig(*cfg); err != nil {
 			return err
 		}
 		fmt.Println(token)
@@ -144,7 +151,7 @@ func tokenCommand(args []string) error {
 			return fmt.Errorf("no token starts with %q", prefix)
 		}
 		cfg.Tokens = append(cfg.Tokens[:found], cfg.Tokens[found+1:]...)
-		if err = saveConfig(cfg); err != nil {
+		if err := saveConfig(*cfg); err != nil {
 			return err
 		}
 		fmt.Println("Token revoked")

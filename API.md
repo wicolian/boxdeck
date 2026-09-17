@@ -315,6 +315,29 @@ boxdeck ctl browser shot PAGE screenshot.png
 boxdeck ctl browser stop
 ```
 
+## Pairing a mobile app
+
+Authenticated `GET /api/pair.json` creates a fresh bearer token labeled `phone` and returns:
+
+```json
+{"label":"phone","url":"http://box:8100","token":"bd_..."}
+```
+
+The token is added to the normal token list and can be revoked with `boxdeck token revoke PREFIX`.
+`GET /api/pair` creates the same kind of token and returns a PNG QR encoding
+`boxdeck://add?url=<url>&token=<token>`. Treat both the QR and JSON response as credentials.
+
+A mobile client can use the existing read endpoints with `Authorization: Bearer TOKEN`. The alert
+contract is additive: `GET /api/alerts?state=open`, `GET /api/alerts/{id}`, and the action endpoints
+return an alert with an `actions` array. Each action has a label, HTTP method, path, and JSON body:
+
+```json
+{"label":"Approve","method":"POST","path":"/api/herd/keys","body":{"pane":"w8:p1","keys":"Enter"}}
+```
+
+The client may render these buttons without knowing the rule that created the alert. Use
+`GET /api/events` as an authenticated SSE stream and send `Last-Event-ID` when reconnecting.
+
 The 8103 QA run produced this real table output (the process and port rows are
 machine state at the time of the check):
 

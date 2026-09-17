@@ -17,6 +17,7 @@ type peerDevice struct {
 	Name       string   `json:"name"`
 	DNSName    string   `json:"dnsName,omitempty"`
 	OS         string   `json:"os,omitempty"`
+	LastSeen   string   `json:"lastSeen,omitempty"`
 	Online     bool     `json:"online"`
 	IPs        []string `json:"ips"`
 	URL        string   `json:"url"`
@@ -72,7 +73,7 @@ func (d *peerDiscovery) snapshot(ctx context.Context, status tailscaleStatus, fl
 		go func(i int, node netNode) {
 			defer wg.Done()
 			if !node.Online {
-				devices[i] = peerDevice{Name: node.Name, DNSName: node.DNSName, OS: node.OS, Online: false, IPs: append([]string(nil), node.IPs...), Discovered: true, Message: "offline"}
+				devices[i] = peerDevice{Name: node.Name, DNSName: node.DNSName, OS: node.OS, LastSeen: node.LastSeen, Online: false, IPs: append([]string(nil), node.IPs...), Discovered: true, Message: "offline"}
 				return
 			}
 			devices[i] = probePeer(ctx, node, fleetToken)
@@ -90,7 +91,7 @@ func (d *peerDiscovery) snapshot(ctx context.Context, status tailscaleStatus, fl
 
 func probePeer(parent context.Context, node netNode, fleetToken string) peerDevice {
 	ip := peerAddress(node)
-	device := peerDevice{Name: node.Name, DNSName: node.DNSName, OS: node.OS, Online: node.Online, IPs: append([]string(nil), node.IPs...), Discovered: true}
+	device := peerDevice{Name: node.Name, DNSName: node.DNSName, OS: node.OS, LastSeen: node.LastSeen, Online: node.Online, IPs: append([]string(nil), node.IPs...), Discovered: true}
 	if device.Name == "" {
 		device.Name = ip
 	}
