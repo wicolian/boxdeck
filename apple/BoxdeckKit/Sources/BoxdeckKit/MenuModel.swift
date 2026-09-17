@@ -27,11 +27,12 @@ public enum MenuModelBuilder {
             let working = state?.agents.filter { $0.status == "working" }.count ?? box.agents
             let needs = state?.agents.filter { ["needs_you", "needs-you", "waiting", "blocked"].contains($0.status) }.count ?? 0
             let memory = box.health.memTotal == 0 ? "memory unavailable" : "\(formatGB(box.health.memUsed))/\(formatGB(box.health.memTotal)) GB"
-            let quota = box.usage.quota.compactMap { provider, quota in
-                guard let quota else { return nil }
-                let five = quota.fiveHour.map { "\(provider) 5h \(Int($0.pct))%" }
-                let seven = quota.sevenDay.map { "7d \(Int($0.pct))%" }
-                return [five, seven].compactMap { $0 }.joined(separator: " ")
+            var quota: [String] = []
+            for (provider, value) in box.usage.quota {
+                guard let value else { continue }
+                let five = value.fiveHour.map { "\(provider) 5h \(Int($0.pct))%" }
+                let seven = value.sevenDay.map { "7d \(Int($0.pct))%" }
+                quota.append([five, seven].compactMap { $0 }.joined(separator: " "))
             }
             return MenuBox(name: box.name, url: box.url, reachable: box.ok, cpu: box.health.cpu, memory: memory, agents: "\(working) working, \(needs) needs you", ports: box.ports, quota: quota)
         }, openAlerts: alerts.filter { $0.state == "open" }, localUsage: usage)

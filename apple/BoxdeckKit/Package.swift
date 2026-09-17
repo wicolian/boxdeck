@@ -13,6 +13,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "BoxdeckKit"),
-        .testTarget(name: "BoxdeckKitTests", dependencies: ["BoxdeckKit"])
+        .testTarget(name: "BoxdeckKitTests", dependencies: ["BoxdeckKit"], resources: [.copy("Fixtures")])
     ]
 )
