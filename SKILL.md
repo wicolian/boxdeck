@@ -17,6 +17,16 @@ export BOXDECK_TO=http://box:8100
 export BOXDECK_TOKEN="$TOKEN"
 ```
 
+For a shared tailnet fleet, install the same token on every device and include
+it in each device's `tokens` list:
+
+```sh
+boxdeck install --fleet-token "$FLEET_TOKEN"
+```
+
+The Network view discovers online peers and the Usage and Boxes views include
+their usage when the fleet token is accepted.
+
 Commands and example output:
 
 ```text
@@ -53,6 +63,10 @@ boxdeck ctl kill 338018
 killed	338018
 
 boxdeck ctl run "printf ready"
+boxdeck ctl browser start
+boxdeck ctl browser pages
+boxdeck ctl browser shot PAGE screenshot.png
+boxdeck ctl browser stop
 ready
 exit 0
 
@@ -79,3 +93,20 @@ mirror a port to a trusted tailnet and keep the deck itself authenticated.
 `allowRun` is off by default. Enabling it gives a bearer-token caller shell
 execution as the boxdeck service account, so leave it off unless that authority
 is intended.
+
+## Remote browser control
+
+Boxdeck starts one managed headless Chromium or Chrome per box and serves its
+CDP endpoint through the authenticated deck. From another device on the private
+network, use the token query accepted by CDP clients:
+
+```sh
+AGENT_BROWSER_IDLE_TIMEOUT_MS=0 agent-browser --cdp \
+  "http://box:8100/cdp?token=$TOKEN" open https://example.com
+AGENT_BROWSER_IDLE_TIMEOUT_MS=0 agent-browser --cdp \
+  "http://box:8100/cdp?token=$TOKEN" screenshot
+```
+
+The Browser view shows pages and captures a page screenshot. Stop the managed
+browser when the task is complete. `/cdp/` and mirrored ports are private
+network surfaces. Mirrored ports carry no password.

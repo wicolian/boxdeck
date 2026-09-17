@@ -1,6 +1,6 @@
 # contrib
 
-`tailnet-autoserve` – exposes every local TCP listener to your tailnet on the same port, and
+`tailnet-autoserve` - exposes every local TCP listener to your tailnet on the same port, and
 removes the entry when the listener goes away. Run it from a user systemd timer every 10 s:
 
 ```

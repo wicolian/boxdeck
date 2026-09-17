@@ -36,12 +36,13 @@ func (a *app) usageAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 type allUsageBox struct {
-	Name      string                           `json:"name"`
-	URL       string                           `json:"url"`
-	Local     bool                             `json:"local"`
-	OK        bool                             `json:"ok"`
-	Providers map[string]usageProviderResponse `json:"providers"`
-	Error     string                           `json:"error,omitempty"`
+	Name       string                           `json:"name"`
+	URL        string                           `json:"url"`
+	Local      bool                             `json:"local"`
+	OK         bool                             `json:"ok"`
+	Discovered bool                             `json:"discovered,omitempty"`
+	Providers  map[string]usageProviderResponse `json:"providers"`
+	Error      string                           `json:"error,omitempty"`
 }
 
 type allUsageResponse struct {
@@ -87,6 +88,27 @@ func (a *app) usageAllAPI(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 	wg.Wait()
+	for _, device := range a.discoveredDevices(r.Context()) {
+		if !device.Boxdeck {
+			continue
+		}
+		box := allUsageBox{Name: device.Name, URL: device.URL, Discovered: true, Providers: map[string]usageProviderResponse{}}
+		if !device.UsageOK {
+			box.Error = device.Message
+			result.Boxes = append(result.Boxes, box)
+			continue
+		}
+		b, _ := json.Marshal(device.Usage)
+		var remote usageResponse
+		if err := json.Unmarshal(b, &remote); err != nil {
+			box.Error = "invalid discovered usage response"
+		} else {
+			box.OK = true
+			box.Providers = remote.Providers
+			addUsageResponse(&result, remote)
+		}
+		result.Boxes = append(result.Boxes, box)
+	}
 	result.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	jsonReply(w, http.StatusOK, result)
 }

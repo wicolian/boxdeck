@@ -32,6 +32,16 @@ and terminal through one login. The same stream follows you between views.
 </details>
 <!-- before-and-after:end -->
 
+### Phase 4 remote control surfaces
+
+| Herd | Browser | Network |
+|:---:|:---:|:---:|
+| ![Herd](./captures/net-after-herd-needs-desktop-final.png) | ![Browser](./captures/net-after-browser-desktop-final.png) | ![Network](./captures/net-after-network-desktop-final.png) |
+
+The Herd and Browser views also have phone layouts in
+[`captures/`](./captures/). The Browser view uses the same managed Chromium
+process for agent CDP clients and the human canvas.
+
 No Node runtime, npm packages or Go dependencies. Linux is the target; macOS
 builds provide partial health data. `ss`, `ps`, `tmux`, `docker` and `find` supply
 optional machine details. Their results are cached. The shared SSE sampler reads
@@ -42,8 +52,8 @@ from 3 to 30 seconds after 15 seconds without a poll.
 
 ## Navigate the console
 
-Use the collapsible left rail for Overview, Ports, Processes, Agents, Terminal,
-Files, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
+Use the collapsible left rail for Overview, Ports, Processes, Agents, Herd,
+Browser, Network, Terminal, Files, Docker, Boxes and Settings. Routes use hashes, such as `#/processes`, so
 changing views keeps the page and stream alive. On phones, four direct links and
 More form a five-item bottom bar. More opens the remaining views.
 
@@ -119,7 +129,9 @@ health support and can use `boxdeck ctl` to control a Linux box.
 
 The UI reads `/api/stream`, `/api/ui/procs` and `/api/ui/settings` and sends process
 signals to `/api/proc/kill`. The public token and CLI API is documented in [API.md](./API.md).
-Boxes uses the real `/api/boxes` response. It keeps the local box first and shows
+Herd reads and steers herdr or tmux panes. Browser manages one Chromium process
+and exposes its authenticated CDP tunnel. Network shows Tailscale peers, Serve
+entries, local interfaces and mirrors. Boxes uses the real `/api/boxes` response. It keeps the local box first and shows
 an unreachable timestamp and a next step when another box does not respond.
 
 ## Install
@@ -132,6 +144,9 @@ curl -fsSL https://raw.githubusercontent.com/wicolian/boxdeck/main/install.sh | 
 
 It chooses Linux or macOS and amd64 or arm64, installs to `~/.local/bin/boxdeck`,
 and runs `boxdeck install`. On first install, choose a user, password and hostname.
+To connect every device on one tailnet, pass the same private token to every
+install: `boxdeck install --fleet-token "$FLEET_TOKEN"`. The token must also be
+present in each device's `tokens` list.
 On Linux it writes and starts `~/.config/systemd/user/boxdeck.service` with
 `Nice=10`, then enables linger. Existing config is kept. On macOS, run `boxdeck serve`
 after setup; automatic service installation uses Linux systemd.
@@ -187,7 +202,7 @@ systemctl --user disable --now files-web.service
 
 The Go installer replaces `boxdeck.service`. It leaves other services alone.
 
-## Herdr
+## Herd and Herdr
 
 Requires [herdr](https://github.com/herdrdev/herdr) 0.9 or newer. Boxdeck reads its
 local socket at `~/.config/herdr/herdr.sock` while someone is watching, cached for
@@ -199,6 +214,29 @@ context and five-hour limit when supplied, and the pane ID. Click the row to foc
 that pane in herdr on the box. The authenticated `/api/herdr/focus` endpoint sends
 herdr's `agent.focus` socket request, equivalent to `herdr agent focus <pane_id>`.
 Process entries are matched by their inherited herdr pane ID, not their folder name.
+
+The Herd view expands every visible agent into a live terminal tail. Waiting or
+prompted agents float to the top and get a `needs you` tag. Interrupt, Enter,
+`y`, `n` and prompt actions use herdr when available, then fall back to tmux.
+
+## Browser and Network
+
+The Browser view starts one managed Chromium or Chrome process per box, lists
+its open pages, captures screenshots through CDP, and provides a human-usable
+interactive canvas with URL bar, tabs, keyboard, pointer and touch input. From
+a remote agent, use:
+
+```sh
+AGENT_BROWSER_IDLE_TIMEOUT_MS=0 agent-browser --cdp \
+  "http://box:8100/cdp?token=$TOKEN" open https://example.com
+```
+
+The Network view reports Tailscale names and IPs, peers, Tailscale Serve
+entries, local IPv4 interfaces, mirror ports and bind errors. Mirrored ports
+carry no password, so only mirror a port to a trusted private tailnet.
+It also probes online tailnet peers on port 8100, marks installed boxdeck
+devices with their version, and shows today's usage when the shared fleet token
+is accepted. Peers without boxdeck include the one-line install command.
 
 ## Config
 
@@ -216,6 +254,7 @@ Process entries are matched by their inherited herdr pane ID, not their folder n
   "filesRoot": "~",
   "terminal": true,
   "ttydPort": 7681,
+  "fleetToken": "same-private-token-on-every-box",
   "quick": [["App", 3001]],
   "reportRoots": ["~/reports", "~/box"],
   "reportDays": 3,

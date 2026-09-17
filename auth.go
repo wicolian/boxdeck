@@ -128,7 +128,7 @@ func jsonReply(w http.ResponseWriter, status int, v any) {
 	_ = jsonEncode(w, v)
 }
 func (a *app) unauthorized(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/api/") {
+	if strings.HasPrefix(r.URL.Path, "/api/") || r.URL.Path == "/cdp" || strings.HasPrefix(r.URL.Path, "/cdp/") {
 		jsonReply(w, 401, map[string]string{"error": "Sign in to continue", "login": "/login"})
 		return
 	}

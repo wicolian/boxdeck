@@ -10,6 +10,7 @@ The additive config fields are:
 ```json
 {
   "tokens": [],
+  "fleetToken": "same-private-token-on-every-box",
   "boxes": [{"name":"old-thinkpad","url":"http://thinkpad:8100","token":"..."}],
   "allowRun": false
 }
@@ -142,6 +143,73 @@ load, network receive and transmit bytes per second, disk read and write bytes
 per second, and the top eight processes by CPU and memory. `POST /api/proc/kill`
 is the process-page action endpoint.
 
+## Herd controls
+
+The Herd endpoints read and steer an agent pane. `pane` accepts a herdr pane ID
+or a tmux target. When herdr is unavailable, boxdeck uses tmux directly.
+
+```sh
+curl -sS -H "Authorization: Bearer $TOKEN" \
+  "$BOXDECK_TO/api/herd/read?pane=w1:p1&lines=80"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"pane":"w1:p1"}' "$BOXDECK_TO/api/herd/interrupt"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"pane":"w1:p1","keys":"Enter"}' "$BOXDECK_TO/api/herd/keys"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"pane":"w1:p1","text":"check the failing test"}' "$BOXDECK_TO/api/herd/prompt"
+```
+
+Pane reads strip ANSI control sequences and return at most 400 lines. The
+response includes `source` and `needsYou`. Key values are `Enter`, `y`, `n`,
+`Tab` and `Esc`.
+
+## Browser and CDP
+
+Boxdeck manages one Chromium or Chrome process per box. It uses a persistent
+profile at `~/.local/share/boxdeck/browser`, reads the debugging port from the
+browser output, and exposes the page list from `/json/list`.
+
+```sh
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"headless":true}' "$BOXDECK_TO/api/browser/start"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/browser"
+curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/browser/stop"
+```
+
+The browser debugging tunnel supports HTTP and WebSocket CDP traffic. A query
+token is accepted because CDP clients cannot set an Authorization header. The
+returned debugger URLs point back through the deck:
+
+```sh
+AGENT_BROWSER_IDLE_TIMEOUT_MS=0 agent-browser \
+  --cdp "http://box:8100/cdp?token=$TOKEN" open https://example.com
+AGENT_BROWSER_IDLE_TIMEOUT_MS=0 agent-browser \
+  --cdp "http://box:8100/cdp?token=$TOKEN" screenshot
+```
+
+The Browser view and `boxdeck ctl browser start|stop|pages|shot PAGE OUT.png`
+use the same managed process. Keep the token private.
+
+The Browser view also provides a human tab inside the deck. It uses
+`/api/browser/screen?page=PAGE` as an authenticated WebSocket for a capped JPEG
+screencast and forwards pointer, touch-as-mouse, wheel, keyboard and paste input.
+`POST /api/browser/tabs` with `{"url":"https://example.com"}` opens a tab;
+`DELETE /api/browser/tabs?page=PAGE` closes one. The interactive tab stops when
+the view is hidden.
+
+## Network
+
+`GET /api/net` reports Tailscale self and peer state, Tailscale Serve entries,
+non-loopback IPv4 interfaces, boxdeck mirrors and bind errors. Tailscale is
+optional. A mirrored port is plain TCP and carries no password, so the private
+tailnet is its access boundary.
+
+`GET /api/net/peers` probes online Tailscale peers on port 8100 every 60 seconds
+with a one second timeout. A peer that answers the unauthenticated health check
+is marked `boxdeck:true` with its version. When `fleetToken` is set, the same
+token must be present in every device's `tokens`; discovered devices are then
+read through `/api/state` and `/api/usage` and include today's usage.
+
 ## Remote client
 
 The same binary includes `ctl`. JSON is the default output; add `--table` for a
@@ -166,6 +234,13 @@ The standalone command does not need a running deck:
 ```sh
 boxdeck usage --days 7 --table
 boxdeck usage --days 30 --json
+```
+
+```sh
+boxdeck ctl browser start
+boxdeck ctl browser pages
+boxdeck ctl browser shot PAGE screenshot.png
+boxdeck ctl browser stop
 ```
 
 The 8103 QA run produced this real table output (the process and port rows are

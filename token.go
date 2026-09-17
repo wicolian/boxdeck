@@ -18,13 +18,23 @@ func (a *app) tokenAuthed(r *http.Request) bool {
 		return false
 	}
 	scheme, token, ok := strings.Cut(strings.TrimSpace(r.Header.Get("Authorization")), " ")
-	if !ok || !strings.EqualFold(scheme, "Bearer") || token == "" || strings.ContainsAny(token, " \t\r\n") {
-		return false
+	if ok && strings.EqualFold(scheme, "Bearer") && token != "" && !strings.ContainsAny(token, " \t\r\n") {
+		return tokenMatches(a.cfg.Tokens, token)
 	}
+	if r.URL.Path == "/cdp" || strings.HasPrefix(r.URL.Path, "/cdp/") {
+		queryToken := strings.TrimSpace(r.URL.Query().Get("token"))
+		if queryToken != "" && !strings.ContainsAny(queryToken, " \t\r\n") {
+			return tokenMatches(a.cfg.Tokens, queryToken)
+		}
+	}
+	return false
+}
+
+func tokenMatches(configured []string, token string) bool {
 	want := sha256.Sum256([]byte(token))
 	valid := false
-	for _, configured := range a.cfg.Tokens {
-		got := sha256.Sum256([]byte(configured))
+	for _, value := range configured {
+		got := sha256.Sum256([]byte(value))
 		if subtle.ConstantTimeCompare(got[:], want[:]) == 1 {
 			valid = true
 		}
