@@ -1,0 +1,4 @@
+[
+  {"name":"discovered","url":"http://discovered:8100","boxdeck":true},
+  {"name":"unmanaged","url":"http://unmanaged:8100","boxdeck":false}
+]
