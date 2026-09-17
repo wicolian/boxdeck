@@ -117,7 +117,10 @@
     browserScreenCanvas = null;
   }
 
+  // CDP ids must fit a 32 bit int; Date.now() does not, and Chrome answers with an error instead of acting.
+  let browserScreenSeq = 100;
   function browserScreenSend(message) {
+    if (message && (message.id === undefined || message.id > 2147483647)) message.id = ++browserScreenSeq;
     if (browserScreenSocket?.readyState === WebSocket.OPEN) browserScreenSocket.send(JSON.stringify(message));
   }
 
