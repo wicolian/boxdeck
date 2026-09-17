@@ -9,6 +9,20 @@ and see, live:
 - **tmux** sessions, **browsers** (headless Chrome count and memory), **docker** containers
 - **Fresh reports** – the newest `.md` / `.html` / `.png` under the folders you name, linked through the file viewer
 
+<!-- before-and-after:start -->
+| Before | After |
+|:---:|:---:|
+| ![Before: ss, free, ps, tmux ls in a terminal](./captures/before.png) | ![After: boxdeck](./captures/after.png) |
+
+<details><summary>On a phone</summary>
+
+| Preview (Phone) |
+|:---:|
+| <img src="./captures/after-phone.png" width="390" alt="boxdeck on a phone"> |
+
+</details>
+<!-- before-and-after:end -->
+
 Zero dependencies. One Node file for the API, one HTML file for the page. It reads `/proc`
 and shells out to `ss`, `ps`, `tmux`, `docker` and `find` only while someone is looking
 (polls stop when the tab is hidden; sampling slows to every 30 s when nobody is watching).
