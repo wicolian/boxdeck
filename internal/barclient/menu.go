@@ -1,6 +1,7 @@
 package barclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -10,6 +11,23 @@ import (
 func BuildMenu(boxes []BoxSnapshot) MenuModel {
 	model := MenuModel{Boxes: make([]MenuBox, 0, len(boxes)), IconState: IconHealthy, Generated: time.Now()}
 	for _, box := range boxes {
+		for _, alert := range box.Alerts {
+			if len(model.Needs) >= 8 || alert.State != "open" {
+				continue
+			}
+			menuAlert := MenuAlert{Title: alert.Title, Box: box.Name, Token: box.Token, URL: joinHash(box.URL, strings.TrimPrefix(alert.Link, "#/")), AckURL: strings.TrimRight(box.URL, "/") + "/api/alerts/" + alert.ID + "/ack"}
+			if len(alert.Actions) > 0 && alert.Actions[0].Method == "POST" {
+				body, _ := json.Marshal(alert.Actions[0].Body)
+				menuAlert.ActionURL = strings.TrimRight(box.URL, "/") + alert.Actions[0].Path
+				menuAlert.ActionLabel, menuAlert.ActionBody = alert.Actions[0].Label, string(body)
+			}
+			model.Needs = append(model.Needs, menuAlert)
+			if alert.Severity == "critical" {
+				model.IconState = IconRust
+			} else if model.IconState != IconRust {
+				model.IconState = IconAttention
+			}
+		}
 		menuBox := MenuBox{Title: box.Name, URL: box.URL}
 		if box.Discovered || box.Tag == "tailnet" {
 			menuBox.Title += " [tailnet]"
@@ -165,6 +183,16 @@ func LocalUsageTitle(usage UsageResponse) string {
 
 func RenderText(model MenuModel) string {
 	lines := []string{}
+	if len(model.Needs) > 0 {
+		lines = append(lines, "Needs you")
+		for _, alert := range model.Needs {
+			lines = append(lines, "  "+alert.Box+": "+alert.Title)
+			lines = append(lines, "    Ack")
+			if alert.ActionLabel != "" {
+				lines = append(lines, "    "+alert.ActionLabel)
+			}
+		}
+	}
 	if model.AddBox {
 		lines = append(lines, "Add a box")
 	}

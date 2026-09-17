@@ -19,6 +19,7 @@ type ctlArgs struct {
 	Token   string
 	Box     string
 	Table   bool
+	Open    bool
 	Command string
 	Args    []string
 }
@@ -31,6 +32,8 @@ func parseCtlArgs(argv []string) (ctlArgs, error) {
 		switch {
 		case arg == "--table":
 			parsed.Table = true
+		case arg == "--open":
+			parsed.Open = true
 		case arg == "--json":
 			parsed.Table = false
 		case arg == "--to", arg == "--token", arg == "--box":
@@ -103,6 +106,20 @@ func parseCtlArgs(argv []string) (ctlArgs, error) {
 			}
 		default:
 			return ctlArgs{}, fmt.Errorf("unknown browser command %q", commandArgs[0])
+		}
+		parsed.Args = commandArgs
+	case "alerts":
+		if len(commandArgs) != 0 {
+			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl alerts [--open]")
+		}
+	case "ack":
+		if len(commandArgs) != 1 {
+			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl ack ID")
+		}
+		parsed.Args = commandArgs
+	case "snooze":
+		if len(commandArgs) != 1 {
+			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl snooze 2h")
 		}
 		parsed.Args = commandArgs
 	default:
@@ -249,6 +266,16 @@ func ctlRequest(args ctlArgs) (string, string, any, error) {
 		return http.MethodGet, "/api/usage", nil, nil
 	case "apps":
 		return http.MethodGet, "/api/apps", nil, nil
+	case "alerts":
+		path := "/api/alerts?state=open"
+		if !args.Open {
+			path = "/api/alerts"
+		}
+		return http.MethodGet, path, nil, nil
+	case "ack":
+		return http.MethodPost, "/api/alerts/" + url.PathEscape(args.Args[0]) + "/ack", object{}, nil
+	case "snooze":
+		return http.MethodPost, "/api/alerts/snooze-all", object{"until": args.Args[0]}, nil
 	case "app":
 		path := "/api/apps/" + url.PathEscape(args.Args[1]) + "/" + args.Args[0]
 		if args.Args[0] == "log" {
@@ -346,6 +373,13 @@ func printCtlTable(command string, data []byte) error {
 		fmt.Println("STATUS\tAPP\tPID\tPORT\tURL")
 		for _, row := range arrayObjects(value) {
 			fmt.Printf("%v\t%v\t%v\t%v\t%v\n", cell(row["status"]), cell(row["name"]), cell(row["pid"]), cell(row["port"]), cell(row["url"]))
+		}
+		return nil
+	}
+	if command == "alerts" {
+		fmt.Println("SEVERITY\tTITLE\tBOX\tRULE\tSTATE")
+		for _, row := range arrayObjects(value) {
+			fmt.Printf("%v\t%v\t%v\t%v\t%v\n", cell(row["severity"]), cell(row["title"]), cell(row["box"]), cell(row["rule"]), cell(row["state"]))
 		}
 		return nil
 	}

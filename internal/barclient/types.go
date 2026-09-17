@@ -104,6 +104,28 @@ type BoxSnapshot struct {
 	State       State                    `json:"-"`
 	Usage       UsageResponse            `json:"-"`
 	UsageByName map[string]UsageProvider `json:"-"`
+	Alerts      []Alert                  `json:"-"`
+	Token       string                   `json:"-"`
+}
+
+type AlertAction struct {
+	Label  string         `json:"label"`
+	Method string         `json:"method"`
+	Path   string         `json:"path"`
+	Body   map[string]any `json:"body"`
+}
+
+type Alert struct {
+	ID       string        `json:"id"`
+	Box      string        `json:"box"`
+	Rule     string        `json:"rule"`
+	Severity string        `json:"severity"`
+	Title    string        `json:"title"`
+	Body     string        `json:"body"`
+	At       string        `json:"at"`
+	State    string        `json:"state"`
+	Link     string        `json:"link"`
+	Actions  []AlertAction `json:"actions"`
 }
 
 type UsageAllResponse struct {
@@ -129,12 +151,16 @@ const (
 	ActionRefresh  LineAction = "refresh"
 	ActionSettings LineAction = "settings"
 	ActionQuit     LineAction = "quit"
+	ActionAlertAck LineAction = "alert_ack"
+	ActionAlert    LineAction = "alert_action"
 )
 
 type MenuLine struct {
 	Title  string
 	Action LineAction
 	URL    string
+	Token  string
+	Body   string
 }
 
 type MenuBox struct {
@@ -145,6 +171,17 @@ type MenuBox struct {
 
 type LocalUsage struct {
 	Title string
+}
+
+type MenuAlert struct {
+	Title       string
+	Box         string
+	URL         string
+	AckURL      string
+	Token       string
+	ActionURL   string
+	ActionLabel string
+	ActionBody  string
 }
 
 type IconState string
@@ -158,6 +195,7 @@ const (
 
 type MenuModel struct {
 	Boxes      []MenuBox
+	Needs      []MenuAlert
 	LocalUsage *LocalUsage
 	AddBox     bool
 	IconState  IconState

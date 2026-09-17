@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -85,6 +88,15 @@ func (a *barApp) notifyTransitions(boxes []barclient.BoxSnapshot) {
 		if !hasNeedsYou(old) && hasNeedsYou(box) {
 			a.notifyOnce(box.URL+":needs", now, box.Name, "An agent needs your attention")
 		}
+		oldAlerts := map[string]bool{}
+		for _, alert := range old.Alerts {
+			oldAlerts[alert.ID] = true
+		}
+		for _, alert := range box.Alerts {
+			if !oldAlerts[alert.ID] {
+				a.notifyOnce(box.URL+":alert:"+alert.ID, now, box.Name, alert.Title)
+			}
+		}
 	}
 }
 
@@ -119,6 +131,21 @@ func (a *barApp) render() {
 	}
 	systray.SetTooltip(model.Tooltip)
 	systray.ResetMenu()
+	if len(model.Needs) > 0 {
+		section := systray.AddMenuItem("Needs you", "Open alerts")
+		_ = section
+		for _, alert := range model.Needs {
+			item := systray.AddMenuItem(alert.Box+": "+alert.Title, "Open alert")
+			go menuOpen(item, alert.URL)
+			ack := systray.AddMenuItem("  Ack", "Acknowledge alert")
+			go menuPost(ack, alert.AckURL, alert.Token, "{}")
+			if alert.ActionLabel != "" {
+				action := systray.AddMenuItem("  "+alert.ActionLabel, "Run alert action")
+				go menuPost(action, alert.ActionURL, alert.Token, alert.ActionBody)
+			}
+		}
+		systray.AddSeparator()
+	}
 	for _, box := range model.Boxes {
 		name := systray.AddMenuItem(box.Title, "Open this boxdeck")
 		go menuOpen(name, box.URL)
@@ -170,6 +197,31 @@ func menuAction(item *systray.MenuItem, action barclient.LineAction, target stri
 		close(app.stop)
 		systray.Quit()
 	}
+}
+
+func menuPost(item *systray.MenuItem, target, token, body string) {
+	<-item.ClickedCh
+	request, err := http.NewRequest(http.MethodPost, target, bytes.NewBufferString(body))
+	if err != nil {
+		return
+	}
+	request.Header.Set("Content-Type", "application/json")
+	if token != "" {
+		request.Header.Set("Authorization", "Bearer "+token)
+	}
+	response, err := (&http.Client{Timeout: 10 * time.Second}).Do(request)
+	if err == nil {
+		_ = response.Body.Close()
+	}
+}
+
+func alertActionBody(value string) string {
+	var body any
+	if json.Unmarshal([]byte(value), &body) != nil {
+		return "{}"
+	}
+	b, _ := json.Marshal(body)
+	return string(b)
 }
 
 func printModel(configPath string) error {

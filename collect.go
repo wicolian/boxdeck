@@ -235,6 +235,7 @@ func (c *collectors) getProcesses() []process {
 
 type tmuxPane struct {
 	Session, WName, CWD string
+	Command             string
 	Win, Pane, PID      int
 	Attached            bool
 }
@@ -248,7 +249,7 @@ func (c *collectors) getPanes() []tmuxPane {
 			if len(p) < 8 {
 				continue
 			}
-			list = append(list, tmuxPane{p[0], p[2], p[6], integer(p[1]), integer(p[3]), integer(p[4]), p[7] != "0"})
+			list = append(list, tmuxPane{Session: p[0], WName: p[2], CWD: p[6], Command: p[5], Win: integer(p[1]), Pane: integer(p[3]), PID: integer(p[4]), Attached: p[7] != "0"})
 		}
 		return list
 	})

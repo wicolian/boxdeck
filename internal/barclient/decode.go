@@ -75,6 +75,17 @@ func DecodePeers(data []byte) ([]Peer, error) {
 	return value, err
 }
 
+func DecodeAlerts(data []byte) ([]Alert, error) {
+	var value []Alert
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, err
+	}
+	if value == nil {
+		value = []Alert{}
+	}
+	return value, nil
+}
+
 type boxCardJSON struct {
 	Name       string `json:"name"`
 	URL        string `json:"url"`
@@ -151,7 +162,7 @@ func (c *Client) get(ctx context.Context, path string) ([]byte, error) {
 }
 
 func (c *Client) FetchBox(ctx context.Context, name string) (BoxSnapshot, error) {
-	box := BoxSnapshot{Name: name, URL: c.BaseURL}
+	box := BoxSnapshot{Name: name, URL: c.BaseURL, Token: c.Token}
 	stateData, err := c.get(ctx, "/api/state")
 	if err != nil {
 		return box, err
@@ -166,6 +177,11 @@ func (c *Client) FetchBox(ctx context.Context, name string) (BoxSnapshot, error)
 	if usageErr == nil {
 		if usage, decodeErr := DecodeUsage(usageData); decodeErr == nil {
 			box.Usage = usage
+		}
+	}
+	if alertsData, alertsErr := c.get(ctx, "/api/alerts?state=open"); alertsErr == nil {
+		if alerts, decodeErr := DecodeAlerts(alertsData); decodeErr == nil {
+			box.Alerts = alerts
 		}
 	}
 	return box, nil

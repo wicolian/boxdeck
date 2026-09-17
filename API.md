@@ -64,6 +64,37 @@ directory listings.
 `health` is unauthenticated and returns only `{"ok":true,"version":"dev"}`.
 It is suitable for a load balancer probe.
 
+## Building a mobile app or a watch complication
+
+Alerts are available to a phone or watch client through the same authenticated
+origin:
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/alerts?state=open"
+curl -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/alerts/ALERT_ID"
+curl -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/alerts/ALERT_ID/ack"
+curl -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"until":"2h"}' "$BOXDECK_TO/api/alerts/ALERT_ID/snooze"
+```
+
+Each alert contains `id`, `box`, `rule`, `severity`, `title`, `body`, `at`,
+`state`, `link` and `actions`. An action is portable UI metadata:
+
+```json
+{"label":"Approve","method":"POST","path":"/api/herd/keys","body":{"pane":"w8:p1","keys":"Enter"}}
+```
+
+The stream at `GET /api/events` is Server Sent Events. Every alert, alert state
+change, agent status flip and box reachability change is an event. Send the last
+received event id as `Last-Event-ID` to resume from the persisted event log.
+The event `data` field is JSON. Actions are ordinary existing boxdeck endpoints,
+so a watch can render their labels without knowing alert rule internals.
+
+`GET /api/alerts/rules` returns rule settings, quiet hours, sink status and the
+disarm state. `PUT /api/alerts/rules` persists rule thresholds and switches.
+The bar also shows up to eight open alerts under Needs you and can acknowledge
+or run the first action with the configured box token.
+
 `boxes` is fetched server-side. The local box is first. Each configured remote
 box is queried in parallel with its token kept on the server, a 3 second
 per-box timeout, and a 5 second cache. A failed box has `ok:false` and `since`
