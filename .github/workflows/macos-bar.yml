@@ -1,0 +1,54 @@
+name: macOS bar
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - phase5-swift
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Swift version
+        run: swift --version
+      - name: Run Swift tests
+        run: swift test
+      - name: Build arm64
+        run: swift build -c release --arch arm64
+      - name: Build x86_64
+        run: swift build -c release --arch x86_64
+      - name: Package universal app
+        env:
+          VERSION: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARM64=.build/arm64-apple-macosx/release/BoxdeckBar
+          X86_64=.build/x86_64-apple-macosx/release/BoxdeckBar
+          test -x "$ARM64"
+          test -x "$X86_64"
+          lipo -create "$ARM64" "$X86_64" -output "$RUNNER_TEMP/BoxdeckBar"
+          packaging/macos/build.sh "$RUNNER_TEMP/BoxdeckBar" "$RUNNER_TEMP/BoxdeckBar.app" "$VERSION"
+          mkdir -p dist
+          ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/BoxdeckBar.app" dist/boxdeck-bar_darwin_universal.zip
+          APP_PATH="$RUNNER_TEMP/BoxdeckBar.app" python3 - <<'PY'
+          import os
+          import plistlib
+          from pathlib import Path
+
+          app = Path(os.environ["APP_PATH"])
+          info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
+          assert info["CFBundleIdentifier"] == "dev.wicolian.boxdeck-bar"
+          assert info["CFBundleExecutable"] == "BoxdeckBar"
+          assert info["LSUIElement"] is True
+          assert (app / "Contents/MacOS/BoxdeckBar").is_file()
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: boxdeck-bar-darwin-universal
+          path: dist/boxdeck-bar_darwin_universal.zip

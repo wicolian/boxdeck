@@ -62,21 +62,18 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: false
-      - run: go -C cmd/boxdeck-bar test ./...
-      - name: Build universal bar app
+      - name: Run Swift tests
+        run: swift test
+      - name: Build universal Swift bar app
         shell: bash
         run: |
           set -euo pipefail
+          swift build -c release --arch arm64
+          swift build -c release --arch x86_64
           mkdir -p dist
-          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go -C cmd/boxdeck-bar build -trimpath -ldflags='-s -w' -o "$RUNNER_TEMP/boxdeck-bar-arm64" .
-          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go -C cmd/boxdeck-bar build -trimpath -ldflags='-s -w' -o "$RUNNER_TEMP/boxdeck-bar-amd64" .
-          lipo -create "$RUNNER_TEMP/boxdeck-bar-arm64" "$RUNNER_TEMP/boxdeck-bar-amd64" -output "$RUNNER_TEMP/boxdeck-bar"
-          packaging/macos/build.sh "$RUNNER_TEMP/boxdeck-bar" "$RUNNER_TEMP/boxdeck-bar.app"
-          ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/boxdeck-bar.app" dist/boxdeck-bar_darwin_universal.zip
+          lipo -create .build/arm64-apple-macosx/release/BoxdeckBar .build/x86_64-apple-macosx/release/BoxdeckBar -output "$RUNNER_TEMP/BoxdeckBar"
+          packaging/macos/build.sh "$RUNNER_TEMP/BoxdeckBar" "$RUNNER_TEMP/BoxdeckBar.app" "${GITHUB_REF_NAME#v}"
+          ditto -c -k --sequesterRsrc --keepParent "$RUNNER_TEMP/BoxdeckBar.app" dist/boxdeck-bar_darwin_universal.zip
       - uses: actions/upload-artifact@v4
         with:
           name: bar-darwin-universal

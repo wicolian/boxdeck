@@ -239,8 +239,9 @@ discovery. Keep tokens in this file with mode 0600 and use a private tailnet.
 
 ![boxdeck-bar menu model mock](./captures/bar-menu.png)
 
-The macOS app is ad hoc signed. Gatekeeper may require right-click Open the first
-time until a notarized build is available.
+macOS uses the native SwiftUI BoxdeckBar app. Linux and Windows use the Go
+boxdeck-bar app. The macOS app is ad hoc signed. Gatekeeper may require
+right-click Open the first time until a notarized build is available.
 
 ## One login
 
