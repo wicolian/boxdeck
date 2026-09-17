@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
@@ -24,9 +25,12 @@ func newLiveHub(ctx context.Context, home string) *liveHub {
 	return &liveHub{ctx: ctx, sampler: newProcSampler("/proc", "/sys", home), subs: map[chan []byte]bool{}, interval: time.Second}
 }
 func (h *liveHub) current() (liveMetrics, []procInfo) {
+	h.mu.Lock()
+	watching := len(h.subs) > 0
+	h.mu.Unlock()
 	h.sampleMu.Lock()
 	defer h.sampleMu.Unlock()
-	if time.Since(h.sampler.at) >= h.interval {
+	if h.latest.Time == 0 || (!watching && time.Since(h.sampler.at) >= h.interval) {
 		h.latest = h.sampler.sample(time.Now())
 	}
 	return h.latest, append([]procInfo{}, h.sampler.all...)
@@ -58,7 +62,15 @@ func (h *liveHub) run(ctx context.Context) {
 	ticker := time.NewTicker(h.interval)
 	defer ticker.Stop()
 	for {
-		m, _ := h.current()
+		if ctx.Err() != nil {
+			return
+		}
+		// The stream owns its cadence. A TTL lookup here can reuse a sample
+		// when a timer fires a fraction early and halve the effective rate.
+		h.sampleMu.Lock()
+		h.latest = h.sampler.sample(time.Now())
+		m := h.latest
+		h.sampleMu.Unlock()
 		b, _ := json.Marshal(m)
 		h.mu.Lock()
 		if ctx.Err() == nil {
@@ -134,5 +146,5 @@ func (a *app) uiSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	jsonReply(w, 200, object{"config": cfg, "version": version, "update": "Download the latest release and run boxdeck install"})
+	jsonReply(w, 200, object{"config": cfg, "version": version, "pid": os.Getpid(), "update": "Download the latest release and run boxdeck install"})
 }

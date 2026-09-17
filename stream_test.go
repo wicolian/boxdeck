@@ -104,3 +104,31 @@ func TestUISettingsMasksPassword(t *testing.T) {
 		t.Fatal("settings exposed credentials")
 	}
 }
+
+func TestStreamSamplesFreshOnEveryTick(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	h := newLiveHub(ctx, "")
+	h.sampler = fixtureSampler(t)
+	h.interval = 20 * time.Millisecond
+	// Even a recently cached REST sample must not make an SSE tick repeat it.
+	h.current()
+	ch, stop := h.subscribe()
+	defer stop()
+	var last int64
+	for range 6 {
+		select {
+		case b := <-ch:
+			var m liveMetrics
+			if err := json.Unmarshal(b, &m); err != nil {
+				t.Fatal(err)
+			}
+			if last != 0 && m.Time <= last {
+				t.Fatalf("repeated timestamp %d", m.Time)
+			}
+			last = m.Time
+		case <-time.After(time.Second):
+			t.Fatal("stream stalled")
+		}
+	}
+}

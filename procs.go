@@ -319,7 +319,9 @@ func (a *app) uiProcs(w http.ResponseWriter, r *http.Request) {
 	_, all := a.live.current()
 	servers := map[int]bool{}
 	for _, p := range a.collect.getPorts() {
-		servers[p.PID] = true
+		if !p.Ephemeral && p.PID > 0 {
+			servers[p.PID] = true
+		}
 	}
 	for i := range all {
 		p := &all[i]
