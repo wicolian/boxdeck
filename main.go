@@ -115,6 +115,12 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.unauthorized(w, r)
 		return
 	}
+	// A browser always sends Origin on a WebSocket upgrade; a cookie session from another site
+	// must not be able to open the terminal, the screencast or the CDP tunnel (CSWSH).
+	if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") && r.Header.Get("Origin") != "" && !sameOrigin(r) {
+		http.Error(w, "forbidden origin", 403)
+		return
+	}
 	if r.Method != "GET" && r.Method != "HEAD" && !sameOrigin(r) {
 		jsonReply(w, 403, object{"error": "Open the deck and try again"})
 		return

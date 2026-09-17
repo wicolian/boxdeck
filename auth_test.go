@@ -147,3 +147,18 @@ func BenchmarkCredentialsEqual(b *testing.B) {
 		})
 	}
 }
+
+func TestWebSocketUpgradeRejectsForeignOrigin(t *testing.T) {
+	a := testApp(t)
+	req := httptest.NewRequest("GET", "/term/", nil)
+	req.Host = "box:8100"
+	req.Header.Set("Upgrade", "websocket")
+	req.Header.Set("Connection", "Upgrade")
+	req.Header.Set("Origin", "http://evil.example")
+	req.AddCookie(&http.Cookie{Name: "boxdeck", Value: a.cookieValue(time.Now().Add(time.Hour))})
+	rec := httptest.NewRecorder()
+	a.ServeHTTP(rec, req)
+	if rec.Code != 403 {
+		t.Fatalf("foreign origin upgrade = %d, want 403", rec.Code)
+	}
+}
