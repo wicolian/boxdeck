@@ -198,6 +198,50 @@ make build
 Open `http://<your-box>:8100`. The default bind is loopback; use the automatic
 Tailscale mirror or an SSH tunnel to reach it. Keep the deck on a private network.
 
+## Menu bar
+
+`boxdeck-bar` is a cross-platform client for monitoring one box or a fleet without
+keeping the web deck open. It shows CPU, memory, load, agents, open ports, Claude
+and Codex quota, and local usage. A box that needs attention turns the tray icon
+amber; an unreachable box turns it rust. The client never executes work on a box.
+
+Install the server and menu bar client on macOS with Homebrew:
+
+```sh
+brew install wicolian/tap/boxdeck
+brew install --cask wicolian/tap/boxdeck-bar
+brew services start boxdeck
+```
+
+On Linux, install the server with the installer above, then download
+`boxdeck-bar_linux_amd64` or `boxdeck-bar_linux_arm64` from the latest release,
+place it on your PATH, and copy `packaging/linux/boxdeck-bar.desktop` to
+`~/.config/autostart/`. On Windows, download `boxdeck-bar_windows_amd64.exe`
+from the latest release and run it at login.
+
+The menu bar config is `~/.config/boxdeck/bar.json` on macOS and Linux, or
+`%APPDATA%\boxdeck\bar.json` on Windows:
+
+```json
+{
+  "boxes": [{"name": "box", "url": "http://box:8100", "token": "..."}],
+  "fleetToken": "...",
+  "refreshSec": 30,
+  "openWith": "browser",
+  "notify": false
+}
+```
+
+Set `fleetToken` when the net discovery service is enabled. The bar then shows
+discovered boxdeck devices below configured boxes with a `tailnet` label. A
+server without `/api/net/peers` or discovered box fields is treated as having no
+discovery. Keep tokens in this file with mode 0600 and use a private tailnet.
+
+![boxdeck-bar menu model mock](./captures/bar-menu.png)
+
+The macOS app is ad hoc signed. Gatekeeper may require right-click Open the first
+time until a notarized build is available.
+
 ## One login
 
 The sign-in page sets a signed, HttpOnly, SameSite=Lax cookie for 30 days. Its

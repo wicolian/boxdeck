@@ -1,0 +1,11 @@
+{
+  "providers": {
+    "claude": {
+      "quota": {"fiveHour":{"pct":20,"resetsAt":"2026-09-17T23:10:00Z"},"sevenDay":{"pct":68,"resetsAt":"2026-09-19T18:59:59Z"}},
+      "today": {"tokens":{"in":3062,"cachedIn":508593677,"cacheWrite":5809401,"out":1247876},"costUsd":0},
+      "sessions": 124
+    },
+    "codex": {"quota": null,"today":{"tokens":{"in":10,"cachedIn":20,"cacheWrite":30,"out":40},"costUsd":1.25},"sessions":2}
+  },
+  "device":"box"
+}

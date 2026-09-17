@@ -1,0 +1,8 @@
+{
+  "providers": {},
+  "boxes": [
+    {"name":"box","url":"http://box:8100","local":true,"ok":true,"providers":{}},
+    {"name":"configured","url":"http://configured:8100","ok":true,"providers":{}},
+    {"name":"discovered","url":"http://discovered:8100","ok":true,"discovered":true,"tag":"tailnet","providers":{}}
+  ]
+}
