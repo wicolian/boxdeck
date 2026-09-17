@@ -15,7 +15,7 @@ jobs:
       - name: Test shared package
         run: swift test --package-path apple/BoxdeckKit
       - name: Generate Xcode project
-        run: cd apple && xcodegen generate --spec project.yml --project Boxdeck.xcodeproj
+        run: cd apple && xcodegen generate --spec project.yml
       - name: Build iOS simulator app
         run: xcodebuild -project apple/Boxdeck.xcodeproj -scheme Boxdeck -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath .work/ios-derived CODE_SIGNING_ALLOWED=NO build
       - name: Build watchOS simulator app
