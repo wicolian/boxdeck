@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0e13">
+<title>Deck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5' fill='%23e8a33d'/%3E%3C/svg%3E">
+<style>
+:root{
+  --hull:#0b0e13;          /* the canvas: the bridge at night */
+  --deck:#10141b;          /* raised panel */
+  --plate:#080a0e;         /* inset: meters and inputs */
+  --seam:rgba(255,255,255,.06);
+  --seam-soft:rgba(255,255,255,.035);
+  --seam-hard:rgba(255,255,255,.12);
+  --ink:#e6e9ee;           /* primary text */
+  --ink-2:#a3aab6;         /* secondary */
+  --ink-3:#6b7382;         /* tertiary, metadata */
+  --ink-4:#434a56;         /* muted */
+  --lamp:#e8a33d;          /* amber: live, attention, links on hover */
+  --lamp-dim:rgba(232,163,61,.14);
+  --moss:#5fb57a;          /* ok */
+  --rust:#d9695a;          /* trouble */
+  --mono:ui-monospace,"SF Mono",Menlo,"JetBrains Mono",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Inter",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--hull)}
+body{margin:0;background:var(--hull);color:var(--ink);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 64px}
+/* masthead */
+.mast{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding:4px 0 20px}
+.mast h1{font:600 15px/1 var(--sans);letter-spacing:.01em;margin:0}
+.mast .host{font-family:var(--mono);color:var(--ink-2)}
+.mast .clock{margin-left:auto;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:12px}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--lamp);margin-right:8px;vertical-align:1px;box-shadow:0 0 0 0 rgba(232,163,61,.5);animation:pulse 2.4s ease-out infinite}
+.pulse.stale{background:var(--rust);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(232,163,61,.45)}70%{box-shadow:0 0 0 7px rgba(232,163,61,0)}100%{box-shadow:0 0 0 0 rgba(232,163,61,0)}}
+.quick{display:flex;gap:6px;flex-wrap:wrap}
+.quick a{font:500 12px/1 var(--sans);padding:7px 10px;border-radius:6px;border:1px solid var(--seam);background:var(--deck);color:var(--ink-2);transition:border-color .12s,color .12s}
+.quick a:hover{border-color:var(--lamp);color:var(--ink)}
+.quick a.off{opacity:.4;pointer-events:none}
+/* meters */
+.meters{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--seam);border:1px solid var(--seam);border-radius:8px;overflow:hidden;margin-bottom:28px}
+.meter{background:var(--deck);padding:14px 16px 12px;position:relative}
+.meter .k{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+.meter .k span{letter-spacing:0;text-transform:none;color:var(--ink-4);font-family:var(--mono)}
+.meter .v{font:500 26px/1.1 var(--mono);font-variant-numeric:tabular-nums;margin:10px 0 8px;letter-spacing:-.02em}
+.meter .v small{font-size:13px;color:var(--ink-3);margin-left:4px;letter-spacing:0}
+.meter .bar{height:3px;background:var(--plate);border-radius:2px;overflow:hidden}
+.meter .bar i{display:block;height:100%;background:var(--ink-3);transition:width .6s ease}
+.meter.warn .bar i{background:var(--lamp)} .meter.bad .bar i{background:var(--rust)}
+.meter.warn .v{color:var(--lamp)} .meter.bad .v{color:var(--rust)}
+.meter svg{position:absolute;right:12px;top:30px;width:88px;height:30px;opacity:.7}
+.meter svg polyline{fill:none;stroke:var(--ink-4);stroke-width:1.2;stroke-linejoin:round}
+.meter.warn svg polyline{stroke:var(--lamp)} .meter.bad svg polyline{stroke:var(--rust)}
+.meter .sub{font:12px/1 var(--mono);color:var(--ink-3);margin-top:8px;font-variant-numeric:tabular-nums}
+/* sections */
+section{margin-bottom:28px}
+h2{font:500 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 10px;display:flex;align-items:baseline;gap:10px}
+h2 b{font-family:var(--mono);font-weight:400;color:var(--ink-4);letter-spacing:0;text-transform:none}
+.board{border:1px solid var(--seam);border-radius:8px;background:var(--deck);overflow:hidden}
+.row{display:grid;align-items:center;gap:14px;padding:10px 14px;border-top:1px solid var(--seam-soft);min-height:42px}
+.row:first-child{border-top:0}
+.row.head{color:var(--ink-4);font:500 11px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;min-height:32px;padding-top:9px;padding-bottom:8px;background:var(--plate)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.dim{color:var(--ink-3)} .ghost{color:var(--ink-4)}
+.ellip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty{padding:18px 14px;color:var(--ink-4);font-size:13px}
+/* berths (ports) */
+.ports .row{grid-template-columns:64px minmax(0,1.4fr) minmax(0,1fr) 20px}
+.ports .row.live{cursor:pointer}
+.ports .row.live:hover{background:var(--lamp-dim)}
+.ports .row.live:hover .arrow{color:var(--lamp)}
+.port{font:500 14px/1 var(--mono);color:var(--ink)}
+.led{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--moss);margin-right:8px;vertical-align:1px}
+.ephemeral .led{background:var(--ink-4)}
+.ephemeral{color:var(--ink-4)} .ephemeral .port{color:var(--ink-4)}
+.name{font-weight:500} .name small{display:block;color:var(--ink-3);font-weight:400;font-size:12px}
+.arrow{color:var(--ink-4);text-align:right}
+/* two-up */
+.cols{display:grid;grid-template-columns:3fr 2fr;gap:20px}
+.agents .row{grid-template-columns:64px minmax(0,1fr) 56px 56px 64px}
+.kind{font:500 11px/1 var(--mono);padding:4px 6px;border-radius:4px;border:1px solid var(--seam-hard);color:var(--ink-2);display:inline-block}
+.kind.codex{border-color:rgba(95,181,122,.35);color:var(--moss)}
+.stack{display:flex;flex-direction:column;gap:20px}
+.list .row{grid-template-columns:minmax(0,1fr) auto}
+.reports .row{grid-template-columns:minmax(0,1fr) 80px 56px}
+.reports .row:hover{background:var(--lamp-dim)}
+.reports .rel{font-family:var(--mono);font-size:12.5px}
+.reports .rel b{font-weight:500;color:var(--ink)}
+.age{color:var(--ink-3);font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:820px){.mast .clock{display:none}.meters{grid-template-columns:repeat(2,1fr)}.cols{grid-template-columns:1fr}.ports .row{grid-template-columns:56px minmax(0,1fr) 20px}.ports .row>.cwd{display:none}.agents .row{grid-template-columns:56px minmax(0,1fr) 64px}.agents .row>.hide-sm{display:none}.reports .row{grid-template-columns:minmax(0,1fr) 56px}.reports .row>.hide-sm{display:none}.meter svg{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mast">
+    <h1><span class="pulse" id="pulse"></span><span id="title">Deck</span></h1>
+    <span class="host" id="host">box</span>
+    <span class="quick" id="quick"></span>
+    <span class="clock" id="clock"></span>
+  </div>
+
+  <div class="meters" id="meters"></div>
+
+  <section class="ports">
+    <h2>Berths <b id="portcount"></b></h2>
+    <div class="board" id="ports"></div>
+  </section>
+
+  <div class="cols">
+    <section class="agents">
+      <h2>Agents <b id="agentcount"></b></h2>
+      <div class="board" id="agents"></div>
+    </section>
+    <div class="stack">
+      <section class="list"><h2>tmux</h2><div class="board" id="tmux"></div></section>
+      <section class="list"><h2>Browsers <b id="brcount"></b></h2><div class="board" id="browsers"></div></section>
+      <section class="list" id="dockersec"><h2>Docker</h2><div class="board" id="docker"></div></section>
+    </div>
+  </div>
+
+  <section class="reports">
+    <h2>Fresh reports <b>last 3 days</b></h2>
+    <div class="board" id="reports"></div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const gb = b => (b / 1073741824).toFixed(1);
+const dur = s => s < 60 ? s + 's' : s < 3600 ? Math.floor(s/60) + 'm' : s < 86400 ? Math.floor(s/3600) + 'h ' + Math.floor(s%3600/60) + 'm' : Math.floor(s/86400) + 'd ' + Math.floor(s%86400/3600) + 'h';
+const ago = t => { const s = Math.max(0, (Date.now() - t) / 1000); return s < 60 ? 'now' : s < 3600 ? Math.floor(s/60) + ' min' : s < 86400 ? Math.floor(s/3600) + ' h' : Math.floor(s/86400) + ' d'; };
+const spark = (arr, max) => { if (!arr.length) return ''; const w = 88, h = 30, n = Math.max(arr.length - 1, 1);
+  const pts = arr.map((v, i) => `${(i / n * w).toFixed(1)},${(h - 2 - Math.min(v, max) / max * (h - 4)).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}"/></svg>`; };
+const grade = (pct, warn, bad) => pct >= bad ? 'bad' : pct >= warn ? 'warn' : '';
+let last = 0;
+
+function meters(h, hist) {
+  const memPct = Math.round(100 * h.memUsed / h.memTotal), swapPct = h.swapTotal ? Math.round(100 * h.swapUsed / h.swapTotal) : 0, loadPct = Math.round(100 * h.load1 / h.cores);
+  const m = [
+    { k: 'CPU', hint: h.cores + ' cores', v: h.cpu, unit: '%', pct: h.cpu, cls: grade(h.cpu, 70, 90), sub: `load ${h.load1.toFixed(2)} · ${h.load5.toFixed(2)} · ${h.load15.toFixed(2)}`, sp: spark(hist.cpu, 100) },
+    { k: 'Memory', hint: gb(h.memTotal) + ' GB', v: gb(h.memUsed), unit: 'GB', pct: memPct, cls: grade(memPct, 80, 92), sub: `${gb(h.memAvail)} GB free`, sp: spark(hist.mem, 100) },
+    { k: 'Swap', hint: gb(h.swapTotal) + ' GB', v: gb(h.swapUsed), unit: 'GB', pct: swapPct, cls: grade(swapPct, 75, 90), sub: `${gb(h.swapFree)} GB free`, sp: spark(hist.swap, 100) },
+    { k: 'Disk', hint: '/', v: h.diskPct, unit: '%', pct: h.diskPct, cls: grade(h.diskPct, 80, 92), sub: `${gb(h.diskTotal - h.diskUsed)} GB free · up ${dur(Math.floor(h.uptime))}`, sp: '' },
+  ];
+  $('meters').innerHTML = m.map(x => `<div class="meter ${x.cls}"><div class="k">${x.k}<span>${x.hint}</span></div><div class="v">${x.v}<small>${x.unit}</small></div>${x.sp}<div class="bar"><i style="width:${Math.min(100, x.pct)}%"></i></div><div class="sub">${x.sub}</div></div>`).join('');
+}
+
+function ports(list, host) {
+  const real = list.filter(p => !p.ephemeral), eph = list.filter(p => p.ephemeral);
+  $('portcount').textContent = real.length + ' open';
+  const row = p => { const name = p.label || p.title || p.proc || 'unknown'; const sub = p.label ? (p.title && p.title !== p.label && p.title !== 'needs login' ? p.title : (p.proc && p.proc !== name ? p.proc : '')) : (p.proc && p.proc !== name ? p.proc : '');
+    return `<a class="row ${p.ephemeral ? 'ephemeral' : 'live'}" href="${p.url}" target="_blank" rel="noopener"><span class="port"><i class="led"></i>${p.port}</span><span class="name ellip">${esc(name)}${sub ? `<small class="ellip">${esc(sub)}</small>` : ''}</span><span class="cwd dim mono ellip">${esc(p.cwd || '')}</span><span class="arrow">↗</span></a>`; };
+  $('ports').innerHTML = list.length ? `<div class="row head"><span>Port</span><span>What</span><span class="cwd">Where</span><span></span></div>` + real.map(row).join('') + (eph.length ? `<div class="empty" style="padding:8px 14px;border-top:1px solid var(--seam-soft)">${eph.length} helper socket${eph.length > 1 ? 's' : ''}: ${eph.map(p => p.port + (p.proc ? ' ' + esc(p.proc) : '')).join(', ')}</div>` : '') : `<div class="empty">Nothing is listening. Start a dev server and it shows here within 10 s as http://${host}:PORT.</div>`;
+}
+function quick(q, list, host) {
+  const open = new Set(list.map(p => p.port));
+  $('quick').innerHTML = (q || []).map(([n, p]) => `<a href="http://${host}:${p}" target="_blank" rel="noopener" class="${open.has(p) ? '' : 'off'}">${esc(n)}</a>`).join('');
+}
+
+function agents(list) {
+  $('agentcount').textContent = list.length ? list.length + ' running' : '';
+  $('agents').innerHTML = list.length ? `<div class="row head"><span>Kind</span><span>Where</span><span class="hide-sm">CPU</span><span class="hide-sm">Mem</span><span>Age</span></div>` + list.map(a => `<div class="row"><span><span class="kind ${a.kind}">${a.kind}</span></span><span class="ellip"><span class="mono">${esc(a.cwd)}</span><small class="dim" style="display:block;font-size:12px">${a.pane ? 'tmux ' + esc(a.pane) + (a.win ? ' · ' + esc(a.win) : '') : 'pid ' + a.pid}${a.model ? ' · ' + esc(a.model) : ''}</small></span><span class="mono dim hide-sm">${a.cpu.toFixed(0)}%</span><span class="mono dim hide-sm">${Math.round(a.rss / 1048576)}M</span><span class="mono dim">${dur(a.secs)}</span></div>`).join('') : `<div class="empty">No claude or codex process is running.</div>`;
+}
+function tmux(list) { $('tmux').innerHTML = list.length ? list.map(s => `<div class="row"><span class="ellip"><span class="mono">${esc(s.name)}</span> <span class="dim">· ${s.windows} window${s.windows > 1 ? 's' : ''}</span></span><span class="mono dim">${s.attached ? 'attached' : 'detached'}</span></div>`).join('') : `<div class="empty">No tmux session.</div>`; }
+function browsers(list) { $('brcount').textContent = list.length ? list.length + ' of 2' : ''; $('browsers').innerHTML = list.length ? list.map(b => `<div class="row"><span class="ellip">Chrome${b.headless ? ' headless' : ''} <span class="dim mono">${b.port && b.port !== '0' ? 'cdp ' + b.port : 'pid ' + b.pid}</span></span><span class="mono dim">${Math.round(b.rss / 1048576)}M · ${dur(b.secs)}</span></div>`).join('') : `<div class="empty">No browser open.</div>`; }
+function docker(list) { $('docker').innerHTML = list.length ? list.map(c => `<div class="row"><span class="ellip"><span class="mono">${esc(c.name)}</span> <span class="dim">${esc(c.image)}</span></span><span class="mono dim ellip">${esc(c.status)}</span></div>`).join('') : `<div class="empty">No container running.</div>`; }
+function reports(list) {
+  $('reports').innerHTML = list.length ? list.map(r => { const i = r.rel.lastIndexOf('/'); return `<a class="row" ${r.url ? `href="${r.url}" target="_blank" rel="noopener"` : ''}><span class="rel ellip"><span class="dim">${esc(r.rel.slice(0, i + 1))}</span><b>${esc(r.rel.slice(i + 1))}</b></span><span class="age hide-sm">${(r.size / 1024).toFixed(0)} KB</span><span class="age">${ago(r.t)}</span></a>`; }).join('') : `<div class="empty">No report written in the last 3 days.</div>`;
+}
+
+async function tick() {
+  try {
+    const r = await fetch(location.origin + '/api/state', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status);
+    const s = await r.json(); last = Date.now();
+    document.title = s.title + ' · ' + s.host; $('title').textContent = s.title;
+    $('host').textContent = s.host; $('host').title = s.health.host;
+    meters(s.health, s.hist); ports(s.ports, s.host); quick(s.quick, s.ports, s.host); agents(s.agents); tmux(s.tmux); browsers(s.browsers); docker(s.docker); reports(s.reports);
+    $('pulse').classList.remove('stale');
+  } catch (e) { $('pulse').classList.add('stale'); }
+}
+setInterval(() => { $('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + (last && Date.now() - last > 10000 ? ' · stale' : ''); }, 1000);
+tick(); setInterval(() => { if (!document.hidden) tick(); }, 3000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+</script>
+</body>
+</html>

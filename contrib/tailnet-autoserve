@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Expose every local TCP listener to the tailnet as plain TCP on the same port.
+# Mac: http://box:3001 reaches whatever listens on 127.0.0.1:3001 here.
+# Skipped: ssh, dns, samba, syncthing, tailscale, T3 on 443.
+SKIP='^(22|53|139|443|445|3773|8384|22000|41641)$'
+want=$(ss -ltnH | awk '{print $4}' | grep -E '^(127\.0\.0\.1|0\.0\.0\.0|\[::\]|\[::1\]):' | sed -E 's/.*:([0-9]+)$/\1/' | sort -un | grep -Ev "$SKIP" || true)
+have=$(tailscale serve status --json 2>/dev/null | python3 -c '
+import sys,json
+d=json.load(sys.stdin) or {}
+print("\n".join(sorted(k.split(":")[-1] for k in (d.get("TCP") or {}).keys())))' 2>/dev/null || true)
+for p in $want; do grep -qx "$p" <<<"$have" || { sudo tailscale serve --bg --tcp="$p" "tcp://127.0.0.1:$p" >/dev/null 2>&1 && echo "+ $p"; }; done
+for p in $have; do [ -n "$p" ] && ! grep -qx "$p" <<<"$want" && { sudo tailscale serve --tcp="$p" off >/dev/null 2>&1 && echo "- $p"; }; done
+exit 0

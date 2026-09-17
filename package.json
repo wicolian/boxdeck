@@ -1,0 +1,11 @@
+{
+  "name": "boxdeck",
+  "version": "0.1.0",
+  "description": "A one-page cockpit for your ssh dev box: live ports, health, agents, tmux, browsers, docker, fresh reports. Zero dependencies.",
+  "license": "MIT",
+  "repository": "github:wicolian/boxdeck",
+  "bin": { "boxdeck": "server.js", "boxdeck-files": "files-web.js" },
+  "scripts": { "start": "node server.js" },
+  "optionalDependencies": { "marked": "^15.0.0" },
+  "engines": { "node": ">=18" }
+}
