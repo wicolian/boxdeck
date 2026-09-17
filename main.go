@@ -23,20 +23,22 @@ var page []byte
 var version = "dev"
 
 type app struct {
-	cfg       config
-	secret    []byte
-	ctx       context.Context
-	cancel    context.CancelFunc
-	collect   *collectors
-	health    *healthSampler
-	mirrors   *mirrorManager
-	term      terminalManager
-	boxesMemo boxCache
-	usage     *usageService
-	workers   sync.WaitGroup
-	live      *liveHub
-	browser   *browserManager
-	peers     *peerDiscovery
+	cfg           config
+	secret        []byte
+	ctx           context.Context
+	cancel        context.CancelFunc
+	collect       *collectors
+	health        *healthSampler
+	mirrors       *mirrorManager
+	term          terminalManager
+	boxesMemo     boxCache
+	usage         *usageService
+	workers       sync.WaitGroup
+	live          *liveHub
+	browser       *browserManager
+	peers         *peerDiscovery
+	gitStatusMu   sync.Mutex
+	gitStatusMemo map[string]gitStatusCache
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -51,7 +53,7 @@ func fileURL(relative string) string {
 }
 func newApp(cfg config, secret []byte) *app {
 	ctx, cancel := context.WithCancel(context.Background())
-	a := &app{cfg: cfg, secret: secret, ctx: ctx, cancel: cancel}
+	a := &app{cfg: cfg, secret: secret, ctx: ctx, cancel: cancel, gitStatusMemo: map[string]gitStatusCache{}}
 	a.live = newLiveHub(ctx, cfg.home)
 	a.browser = newBrowserManager(cfg.home, ctx)
 	a.peers = &peerDiscovery{}
@@ -138,6 +140,14 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.usageAPI(w, r)
 	case r.URL.Path == "/api/usage/all":
 		a.usageAllAPI(w, r)
+	case r.URL.Path == "/api/edit/new":
+		a.editNew(w, r)
+	case r.URL.Path == "/api/edit/rename":
+		a.editRename(w, r)
+	case r.URL.Path == "/api/edit":
+		a.edit(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/git/"):
+		a.gitAPI(w, r)
 	case r.URL.Path == "/api/state":
 		if r.Method != "GET" {
 			jsonReply(w, 405, object{"error": "Use GET to read state"})

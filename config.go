@@ -65,6 +65,7 @@ type config struct {
 	Hide         []portNumber      `json:"hide"`
 	Quick        []shortcut        `json:"quick"`
 	ReportRoots  []string          `json:"reportRoots"`
+	RepoRoots    []string          `json:"repoRoots"`
 	ReportDays   int               `json:"reportDays"`
 	AgentPattern string            `json:"agentPattern"`
 	Title        string            `json:"title"`
@@ -108,7 +109,7 @@ func normalizeHost(host string) (string, error) {
 func loadConfig(path, home string) (config, error) {
 	host, _ := os.Hostname()
 	_, ttyErr := exec.LookPath("ttyd")
-	c := config{Port: 8100, Bind: "127.0.0.1", Host: host, User: "admin", FilesRoot: home, FilesAuth: true, TTYDPort: 7681, Terminal: ttyErr == nil, ReportDays: 3, Title: "Deck", Mirror: "auto", ReportRoots: []string{"~/reports", "~/box"}, Hide: []portNumber{22, 53, 111, 139, 445}, Quick: []shortcut{}, Known: map[string]string{"3000": "App", "3001": "App", "4000": "API", "5173": "Vite", "4173": "Vite preview", "8080": "HTTP", "8000": "HTTP", "6006": "Storybook", "5432": "Postgres", "6379": "Redis", "27017": "MongoDB", "9222": "Chrome CDP", "7681": "Terminal (ttyd)", "8384": "Syncthing", "3773": "T3 Code"}, Tokens: []string{}, Boxes: []boxConfig{}, AgentPattern: `^(\S*/)?(claude|codex|aider|opencode|goose)(\s|$)`, home: home, path: path}
+	c := config{Port: 8100, Bind: "127.0.0.1", Host: host, User: "admin", FilesRoot: home, FilesAuth: true, TTYDPort: 7681, Terminal: ttyErr == nil, ReportDays: 3, Title: "Deck", Mirror: "auto", ReportRoots: []string{"~/reports", "~/box"}, RepoRoots: []string{"~", "~/codes", "~/src", "~/projects"}, Hide: []portNumber{22, 53, 111, 139, 445}, Quick: []shortcut{}, Known: map[string]string{"3000": "App", "3001": "App", "4000": "API", "5173": "Vite", "4173": "Vite preview", "8080": "HTTP", "8000": "HTTP", "6006": "Storybook", "5432": "Postgres", "6379": "Redis", "27017": "MongoDB", "9222": "Chrome CDP", "7681": "Terminal (ttyd)", "8384": "Syncthing", "3773": "T3 Code"}, Tokens: []string{}, Boxes: []boxConfig{}, AgentPattern: `^(\S*/)?(claude|codex|aider|opencode|goose)(\s|$)`, home: home, path: path}
 	b, err := os.ReadFile(path)
 	if err == nil {
 		if err = json.Unmarshal(b, &c); err != nil {
@@ -173,6 +174,9 @@ func loadConfig(path, home string) (config, error) {
 	}
 	for i, p := range c.ReportRoots {
 		c.ReportRoots[i] = expandHome(p, home)
+	}
+	for i, p := range c.RepoRoots {
+		c.RepoRoots[i] = expandHome(p, home)
 	}
 	c.agentRE, err = regexp.Compile(c.AgentPattern)
 	if err != nil {

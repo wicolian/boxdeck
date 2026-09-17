@@ -129,6 +129,7 @@ type apiFileEntry struct {
 	Dir     bool   `json:"dir"`
 	Size    int64  `json:"size"`
 	ModTime string `json:"modTime"`
+	Status  string `json:"status,omitempty"`
 }
 
 func (a *app) apiFiles(w http.ResponseWriter, r *http.Request) {
@@ -168,6 +169,25 @@ func (a *app) apiFiles(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			result = append(result, apiFileEntry{Name: entry.Name(), Dir: entry.IsDir(), Size: info.Size(), ModTime: info.ModTime().UTC().Format(time.RFC3339)})
+		}
+		if repo, repoErr := gitRepoAt(abs); repoErr == nil {
+			status, statusErr := a.cachedGitStatus(repo)
+			if statusErr == nil {
+				marks := map[string]string{}
+				for _, item := range status {
+					mark := item.Status
+					if mark == "" {
+						mark = "?"
+					}
+					marks[filepath.ToSlash(item.Path)] = mark
+				}
+				for i := range result {
+					rel, relErr := filepath.Rel(repo, filepath.Join(abs, result[i].Name))
+					if relErr == nil {
+						result[i].Status = marks[filepath.ToSlash(rel)]
+					}
+				}
+			}
 		}
 		sort.Slice(result, func(i, j int) bool {
 			if result[i].Dir != result[j].Dir {
