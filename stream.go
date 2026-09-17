@@ -134,6 +134,7 @@ func (a *app) uiSettings(w http.ResponseWriter, r *http.Request) {
 	var cfg map[string]any
 	_ = json.Unmarshal(b, &cfg)
 	cfg["password"] = "********"
+	cfg["fleetToken"] = "********"
 	if tokens, ok := cfg["tokens"].([]any); ok {
 		cfg["tokens"] = fmt.Sprintf("%d tokens", len(tokens))
 	} else {

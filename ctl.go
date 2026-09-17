@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -82,6 +83,23 @@ func parseCtlArgs(argv []string) (ctlArgs, error) {
 		if len(commandArgs) != 0 {
 			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl %s", parsed.Command)
 		}
+	case "browser":
+		if len(commandArgs) == 0 {
+			return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl browser [start|stop|pages|shot PAGE OUT.png]")
+		}
+		switch commandArgs[0] {
+		case "start", "stop", "pages":
+			if len(commandArgs) != 1 {
+				return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl browser %s", commandArgs[0])
+			}
+		case "shot":
+			if len(commandArgs) != 3 {
+				return ctlArgs{}, fmt.Errorf("usage: boxdeck ctl browser shot PAGE OUT.png")
+			}
+		default:
+			return ctlArgs{}, fmt.Errorf("unknown browser command %q", commandArgs[0])
+		}
+		parsed.Args = commandArgs
 	default:
 		return ctlArgs{}, fmt.Errorf("unknown ctl command %q", parsed.Command)
 	}
@@ -186,6 +204,23 @@ func ctlCommand(argv []string) error {
 	if err != nil {
 		return err
 	}
+	if args.Command == "browser" && args.Args[0] == "shot" {
+		var shot struct {
+			Data string `json:"data"`
+		}
+		if err := json.Unmarshal(data, &shot); err != nil || shot.Data == "" {
+			return fmt.Errorf("browser returned no screenshot")
+		}
+		image, err := base64.StdEncoding.DecodeString(shot.Data)
+		if err != nil {
+			return fmt.Errorf("invalid screenshot data")
+		}
+		if err := os.WriteFile(args.Args[2], image, 0600); err != nil {
+			return err
+		}
+		fmt.Println("saved", args.Args[2])
+		return nil
+	}
 	if args.Table {
 		return printCtlTable(args.Command, data)
 	}
@@ -221,6 +256,19 @@ func ctlRequest(args ctlArgs) (string, string, any, error) {
 		return http.MethodGet, "/api/files?path=" + url.QueryEscape(args.Args[0]), nil, nil
 	case "run":
 		return http.MethodPost, "/api/run", object{"cmd": args.Args[0]}, nil
+	case "browser":
+		switch args.Args[0] {
+		case "start":
+			return http.MethodPost, "/api/browser/start", object{"headless": true}, nil
+		case "stop":
+			return http.MethodPost, "/api/browser/stop", object{}, nil
+		case "pages":
+			return http.MethodGet, "/api/browser", nil, nil
+		case "shot":
+			return http.MethodGet, "/api/browser/shot?page=" + url.QueryEscape(args.Args[1]), nil, nil
+		default:
+			return "", "", nil, fmt.Errorf("unknown browser command %q", args.Args[0])
+		}
 	default:
 		return "", "", nil, fmt.Errorf("unknown ctl command %q", args.Command)
 	}
@@ -299,6 +347,23 @@ func printCtlTable(command string, data []byte) error {
 				fmt.Fprint(os.Stderr, stderr)
 			}
 			fmt.Printf("exit %v\n", cell(row["exitCode"]))
+			return nil
+		}
+	}
+	if command == "browser" {
+		if row, ok := value.(map[string]any); ok {
+			for _, key := range []string{"running", "pid", "port", "memory", "error"} {
+				if v, exists := row[key]; exists {
+					fmt.Printf("%s\t%v\n", key, cell(v))
+				}
+			}
+			if pages, ok := row["pages"].([]any); ok {
+				for _, page := range pages {
+					if item, ok := page.(map[string]any); ok {
+						fmt.Printf("page\t%s\t%s\t%s\n", cell(item["id"]), cell(item["title"]), cell(item["url"]))
+					}
+				}
+			}
 			return nil
 		}
 	}

@@ -20,15 +20,16 @@ type boxConfig struct {
 }
 
 type boxCard struct {
-	Name   string   `json:"name"`
-	URL    string   `json:"url"`
-	Local  bool     `json:"local"`
-	OK     bool     `json:"ok"`
-	Since  string   `json:"since"`
-	Health object   `json:"health"`
-	Agents int      `json:"agents"`
-	Ports  int      `json:"ports"`
-	Usage  boxUsage `json:"usage"`
+	Name       string   `json:"name"`
+	URL        string   `json:"url"`
+	Local      bool     `json:"local"`
+	OK         bool     `json:"ok"`
+	Since      string   `json:"since"`
+	Health     object   `json:"health"`
+	Agents     int      `json:"agents"`
+	Ports      int      `json:"ports"`
+	Usage      boxUsage `json:"usage"`
+	Discovered bool     `json:"discovered,omitempty"`
 }
 
 type boxUsage struct {
@@ -43,6 +44,22 @@ func boxUsageFromResponse(response usageResponse) boxUsage {
 		usage.Quota[provider] = value.Quota
 	}
 	return usage
+}
+
+func boxUsageFromObject(value object) boxUsage {
+	if value == nil {
+		return boxUsage{Today: map[string]usageSummary{}, Quota: map[string]*usageQuota{}}
+	}
+	b, _ := json.Marshal(value)
+	var response usageResponse
+	if json.Unmarshal(b, &response) != nil {
+		return boxUsage{Today: map[string]usageSummary{}, Quota: map[string]*usageQuota{}}
+	}
+	return boxUsageFromResponse(response)
+}
+
+func discoveredBox(device peerDevice) boxCard {
+	return boxCard{Name: device.Name, URL: device.URL, OK: device.Boxdeck, Health: device.Health, Agents: device.Agents, Ports: device.Ports, Usage: boxUsageFromObject(device.Usage), Discovered: true}
 }
 
 type boxCache struct {
@@ -84,6 +101,7 @@ func (a *app) boxes(ctx context.Context) []boxCard {
 	}
 	configs := append([]boxConfig(nil), a.cfg.Boxes...)
 	a.boxesMemo.mu.Unlock()
+	discovered := a.discoveredDevices(ctx)
 
 	state := a.state()
 	local := boxCard{
@@ -97,7 +115,7 @@ func (a *app) boxes(ctx context.Context) []boxCard {
 		Ports:  collectionLength(state["ports"]),
 		Usage:  boxUsageFromResponse(a.usage.snapshot(ctx, 30)),
 	}
-	value := make([]boxCard, len(configs)+1)
+	value := make([]boxCard, len(configs)+1, len(configs)+len(discovered)+1)
 	value[0] = local
 	var wg sync.WaitGroup
 	for i, cfg := range configs {
@@ -108,6 +126,11 @@ func (a *app) boxes(ctx context.Context) []boxCard {
 		}(i, cfg)
 	}
 	wg.Wait()
+	for _, device := range discovered {
+		if device.Boxdeck {
+			value = append(value, discoveredBox(device))
+		}
+	}
 
 	a.boxesMemo.mu.Lock()
 	a.boxesMemo.value = append([]boxCard(nil), value...)

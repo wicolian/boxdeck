@@ -35,6 +35,8 @@ type app struct {
 	usage     *usageService
 	workers   sync.WaitGroup
 	live      *liveHub
+	browser   *browserManager
+	peers     *peerDiscovery
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -51,6 +53,8 @@ func newApp(cfg config, secret []byte) *app {
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &app{cfg: cfg, secret: secret, ctx: ctx, cancel: cancel}
 	a.live = newLiveHub(ctx, cfg.home)
+	a.browser = newBrowserManager(cfg.home, ctx)
+	a.peers = &peerDiscovery{}
 	a.collect = &collectors{ctx: ctx, cfg: cfg, titles: map[int]titleEntry{}}
 	a.health = &healthSampler{ctx: ctx, hist: map[string][]float64{"cpu": {}, "mem": {}, "swap": {}, "load": {}}}
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
@@ -143,6 +147,34 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		jsonReply(w, 200, a.state())
 	case r.URL.Path == "/api/herdr/focus":
 		a.focusHerdr(w, r)
+	case r.URL.Path == "/api/herd/read":
+		a.herdRead(w, r)
+	case r.URL.Path == "/api/herd/interrupt":
+		a.herdInterrupt(w, r)
+	case r.URL.Path == "/api/herd/keys":
+		a.herdKeys(w, r)
+	case r.URL.Path == "/api/herd/prompt":
+		a.herdPrompt(w, r)
+	case r.URL.Path == "/api/browser":
+		a.browserStatus(w, r)
+	case r.URL.Path == "/api/browser/start":
+		a.browserStart(w, r)
+	case r.URL.Path == "/api/browser/stop":
+		a.browserStop(w, r)
+	case r.URL.Path == "/api/browser/shot":
+		a.browserShot(w, r)
+	case r.URL.Path == "/api/browser/tabs":
+		a.browserTabs(w, r)
+	case r.URL.Path == "/api/browser/screen":
+		a.browserScreen(w, r)
+	case r.URL.Path == "/api/net":
+		a.netAPI(w, r)
+	case r.URL.Path == "/api/net/peers":
+		a.netPeersAPI(w, r)
+	case r.URL.Path == "/views-net.js" || r.URL.Path == "/views-net.css":
+		a.netViewAsset(w, r)
+	case r.URL.Path == "/cdp" || strings.HasPrefix(r.URL.Path, "/cdp/"):
+		a.cdp(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/"):
 		a.api(w, r)
 	case r.URL.Path == "/files" || r.URL.Path == "/term":
@@ -215,6 +247,7 @@ func serve(cfg config) error {
 	a.usage.start(a.ctx)
 	defer a.cancel()
 	defer a.mirrors.close()
+	defer a.browser.stop()
 	listener, err := net.Listen("tcp", cfg.address(cfg.Port))
 	if err != nil {
 		return err
@@ -300,7 +333,7 @@ func main() {
 	} else if command == "token" {
 		err = tokenCommand(os.Args[2:])
 	} else if command == "install" {
-		err = install()
+		err = install(os.Args[2:]...)
 	} else if command == "serve" {
 		home, e := os.UserHomeDir()
 		err = e

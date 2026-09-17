@@ -41,6 +41,7 @@ input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appea
 @media(max-width:760px){button,.sort-wrap select,.shortcut-hint,.viewer-bar button,.viewer-bar a,.sheet header button,.proc-table .kill,.proc-table .cancel{min-height:56px}.viewer-bar button,.viewer-bar a{min-width:56px;height:56px}.filter-wrap button{min-height:56px}.section-top>a{min-height:56px}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 </style>
+<link rel="stylesheet" href="views-net.css">
 </head>
 <body>
 <aside class="rail" aria-label="Main navigation"><a class="brand" href="#/overview" aria-label="Boxdeck overview"><span class="lamp"></span><span class="brand-name">boxdeck</span></a><nav id="rail-nav"></nav><div class="rail-bottom"><button id="rail-toggle" title="Collapse navigation" aria-label="Collapse navigation"><span class="nav-label">Collapse</span><span aria-hidden="true">‹</span></button><form method="post" action="/logout"><button title="Sign out"><span aria-hidden="true">↪</span><span class="nav-label">Sign out</span></button></form></div></aside>
@@ -197,5 +198,6 @@ let chordAt=0;document.addEventListener('keydown',e=>{const sheet=document.query
 window.addEventListener('hashchange',route);document.addEventListener('visibilitychange',()=>{if(document.hidden){source?.close();source=null;}else{connectStream();refresh();}});window.addEventListener('pagehide',()=>source?.close());
 route();connectStream();refresh();loadSettings();setInterval(refresh,5000);setInterval(()=>{if(document.hidden)return;if(current==='processes')loadProcesses();if(current==='boxes')loadBoxes();if(lastMetric&&Date.now()-lastMetric>4000){$('live-status').classList.add('stale');text('live-status-text','Reconnecting');}},3000);
 </script>
+<script src="views-net.js"></script>
 </body>
 </html>

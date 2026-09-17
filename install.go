@@ -18,7 +18,32 @@ func serviceUnit(executable, path, home string) string {
 	}
 	return "[Unit]\nDescription=boxdeck: one-page cockpit for this box\n\n[Service]\nExecStart=" + quote(executable) + " serve\nEnvironment=" + quote("BOXDECK_CONFIG="+path) + "\nEnvironment=" + quote("PATH="+filepath.Join(home, ".local/bin")+":"+filepath.Join(home, "go/bin")+":/usr/local/bin:/usr/bin:/bin") + "\nRestart=always\nRestartSec=3\nNice=10\n\n[Install]\nWantedBy=default.target\n"
 }
-func install() error {
+func installFleetToken(args []string) (string, error) {
+	fleetToken := ""
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if strings.HasPrefix(arg, "--fleet-token=") {
+			fleetToken = strings.TrimPrefix(arg, "--fleet-token=")
+			continue
+		}
+		if arg == "--fleet-token" {
+			if i+1 >= len(args) || strings.TrimSpace(args[i+1]) == "" {
+				return "", fmt.Errorf("--fleet-token needs a value")
+			}
+			i++
+			fleetToken = args[i]
+			continue
+		}
+		return "", fmt.Errorf("unknown install option %q", arg)
+	}
+	return fleetToken, nil
+}
+
+func install(args ...string) error {
+	fleetToken, err := installFleetToken(args)
+	if err != nil {
+		return err
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -79,7 +104,7 @@ func install() error {
 		if err != nil {
 			return err
 		}
-		b, err := json.MarshalIndent(object{"user": user, "password": password, "host": host, "port": 8100, "filesPort": 0, "quick": []any{}, "reportRoots": []string{"~/reports", "~/box"}, "known": object{}, "tokens": []string{}, "boxes": []any{}, "allowRun": false}, "", "  ")
+		b, err := json.MarshalIndent(object{"user": user, "password": password, "host": host, "port": 8100, "filesPort": 0, "quick": []any{}, "reportRoots": []string{"~/reports", "~/box"}, "known": object{}, "tokens": []string{}, "fleetToken": fleetToken, "boxes": []any{}, "allowRun": false}, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -104,6 +129,12 @@ func install() error {
 	cfg, err := loadConfig(path, home)
 	if err != nil {
 		return err
+	}
+	if fleetToken != "" && cfg.FleetToken != fleetToken {
+		cfg.FleetToken = fleetToken
+		if err := saveConfig(cfg); err != nil {
+			return err
+		}
 	}
 	if _, err = loadSecret(filepath.Join(filepath.Dir(path), "secret")); err != nil {
 		return err

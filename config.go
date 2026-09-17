@@ -71,6 +71,7 @@ type config struct {
 	Mirror       any               `json:"mirror"`
 	MirrorBind   string            `json:"mirrorBind"`
 	Tokens       []string          `json:"tokens"`
+	FleetToken   string            `json:"fleetToken"`
 	Boxes        []boxConfig       `json:"boxes"`
 	AllowRun     bool              `json:"allowRun"`
 	Pricing      pricingConfig     `json:"pricing"`
@@ -116,7 +117,7 @@ func loadConfig(path, home string) (config, error) {
 	} else if !os.IsNotExist(err) {
 		return c, err
 	}
-	for key, p := range map[string]*string{"BIND": &c.Bind, "HOST": &c.Host, "USER": &c.User, "PASSWORD": &c.Password, "FILES_ROOT": &c.FilesRoot, "MIRROR_BIND": &c.MirrorBind} {
+	for key, p := range map[string]*string{"BIND": &c.Bind, "HOST": &c.Host, "USER": &c.User, "PASSWORD": &c.Password, "FILES_ROOT": &c.FilesRoot, "MIRROR_BIND": &c.MirrorBind, "FLEET_TOKEN": &c.FleetToken} {
 		if v, ok := os.LookupEnv("BOXDECK_" + key); ok {
 			*p = v
 		}
