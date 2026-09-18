@@ -35,8 +35,6 @@ targets:
     type: application.watchapp2
     platform: watchOS
     deploymentTarget: "10.0"
-    sources:
-      - path: BoxdeckWatchContainer
     dependencies:
       - target: BoxdeckWatch Extension
     settings:
