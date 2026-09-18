@@ -52,7 +52,7 @@ fun QrScannerScreen(onCode: (String) -> Unit, onClose: () -> Unit) {
 }
 
 @Composable
-@OptIn(ExperimentalGetImage::class)
+@androidx.annotation.OptIn(markerClass = [ExperimentalGetImage::class])
 private fun AndroidViewQrPreview(onCode: (String) -> Unit, lifecycleOwner: androidx.lifecycle.LifecycleOwner) {
     val context = LocalContext.current
     androidx.compose.ui.viewinterop.AndroidView(
