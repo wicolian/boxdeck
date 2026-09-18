@@ -265,6 +265,22 @@ macOS uses the native SwiftUI BoxdeckBar app. Linux and Windows use the Go
 boxdeck-bar app. The macOS app is ad hoc signed. Gatekeeper may require
 right-click Open the first time until a notarized build is available.
 
+## Connect an agent
+
+Open Settings, choose Connect an agent, and create a token labelled `agent`.
+Then connect Claude Code from any trusted machine:
+
+```sh
+claude mcp add --transport http boxdeck http://box:8100/mcp --header "Authorization: Bearer <agent-token>"
+```
+
+The MCP server gives an agent tools for box state, processes, agent panes,
+alerts, usage, files, Git, apps, browser control and screenshots. The `run`
+tool stays hidden until `allowRun` is enabled in the Connect section. Keep the
+token on a private tailnet and revoke it with `boxdeck token revoke PREFIX`.
+The Connect section also provides Codex, Cursor, Windsurf, curl and stdio
+bridge snippets, plus a phone pairing QR.
+
 ## Alerts and phone delivery
 
 Alerts watch agent input waits, stuck terminal panes, usage limits, quotas, box

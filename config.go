@@ -72,6 +72,7 @@ type config struct {
 	Mirror             any               `json:"mirror"`
 	MirrorBind         string            `json:"mirrorBind"`
 	Tokens             []string          `json:"tokens"`
+	TokenLabels        map[string]string `json:"tokenLabels,omitempty"`
 	FleetToken         string            `json:"fleetToken"`
 	Boxes              []boxConfig       `json:"boxes"`
 	AllowRun           bool              `json:"allowRun"`

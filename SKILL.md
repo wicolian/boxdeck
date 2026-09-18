@@ -10,6 +10,21 @@ Install the single binary:
 curl -fsSL https://raw.githubusercontent.com/wicolian/boxdeck/main/install.sh | sh
 ```
 
+## MCP first
+
+When the target exposes `/mcp`, prefer MCP over `ctl`. Connect with the token
+from Settings and call `box_state` or `box_ports` for exact machine facts.
+Call `alerts_list` with `state` set to `open`, then `box_agents` and
+`agent_read` when the user asks what needs attention. To steer an agent, read
+its pane first, then use `agent_prompt`, `agent_keys`, `agent_interrupt`, or
+`agent_focus` as appropriate. To open a port in a browser, use `box_ports`,
+start the managed browser with `browser_start`, then use
+`browser_navigate`, `browser_pages`, and `browser_screenshot`.
+
+The current MCP protocol is `2026-07-28` and is stateless. Boxdeck also accepts
+the legacy `2025-11-25`, `2025-06-18`, and `2025-03-26` initialization clients.
+Keep `allowRun` off unless command execution is explicitly intended.
+
 Set the target and a token without putting either in source or reports:
 
 ```sh
