@@ -143,22 +143,24 @@ func TestNtfyRequestShapeAndWebhookSignature(t *testing.T) {
 
 func TestAlertInboxLoopbackHeaderRule(t *testing.T) {
 	a := testApp(t)
-	r := httptest.NewRequest(http.MethodPost, "/api/alerts", strings.NewReader(`{"source":"tests","severity":"critical","title":"Tests failed","body":"broken"}`))
-	r.RemoteAddr = "127.0.0.1:54321"
-	r.Header.Set("X-Boxdeck-Local", "1")
-	r.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	a.ServeHTTP(w, r)
-	if w.Code != http.StatusCreated {
-		t.Fatalf("loopback inbox status = %d %s", w.Code, w.Body.String())
+	a.inboxSecret = "0123456789abcdef0123456789abcdef0123456789abcdef"
+	post := func(remote, secret string) int {
+		r := httptest.NewRequest(http.MethodPost, "/api/alerts", strings.NewReader(`{"source":"tests","severity":"critical","title":"Tests failed","body":"broken"}`))
+		r.RemoteAddr = remote
+		r.Header.Set("X-Boxdeck-Local", secret)
+		r.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		a.ServeHTTP(w, r)
+		return w.Code
 	}
-	remote := httptest.NewRequest(http.MethodPost, "/api/alerts", strings.NewReader(`{"title":"bad"}`))
-	remote.RemoteAddr = "192.0.2.1:54321"
-	remote.Header.Set("X-Boxdeck-Local", "1")
-	w = httptest.NewRecorder()
-	a.ServeHTTP(w, remote)
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("remote loopback shortcut status = %d", w.Code)
+	if code := post("127.0.0.1:54321", a.inboxSecret); code != http.StatusCreated {
+		t.Fatalf("loopback inbox with the secret = %d", code)
+	}
+	if code := post("127.0.0.1:54321", "1"); code != http.StatusUnauthorized {
+		t.Fatalf("loopback inbox with a bare header = %d, want 401", code)
+	}
+	if code := post("192.0.2.1:54321", a.inboxSecret); code != http.StatusUnauthorized {
+		t.Fatalf("remote inbox with the secret = %d, want 401", code)
 	}
 }
 
