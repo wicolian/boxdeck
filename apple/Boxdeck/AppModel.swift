@@ -30,10 +30,10 @@ final class AppModel: ObservableObject {
     @AppStorage("ntfyURL") var ntfyURL = "https://ntfy.sh"
     @AppStorage("ntfyTopic") var ntfyTopic = ""
     @AppStorage("ntfyToken") var ntfyToken = ""
+    @AppStorage("pushPermissionAsked") private var pushPermissionAsked = false
     private var eventTask: Task<Void, Never>?
     private var ntfyTask: Task<Void, Never>?
     private var clients: [String: BoxdeckClient] = [:]
-    private var previousAlertIDs = Set<String>()
 
     deinit { eventTask?.cancel(); ntfyTask?.cancel() }
 
@@ -86,6 +86,10 @@ final class AppModel: ObservableObject {
         try store.save(BoxConnection(name: URL(string: pairing.url)?.host ?? "Box", url: pairing.url, token: pairing.token))
     }
 
+    func unregisterPush(for box: BoxConnection) {
+        BoxdeckPushRegistration.unregister(platform: "ios", box: box)
+    }
+
     func handle(_ url: URL) {
         guard url.scheme?.lowercased() == "boxdeck" else { return }
         if url.host?.lowercased() == "add", let pairing = try? PairingURL.parse(url) { try? add(pairing) }
@@ -93,8 +97,21 @@ final class AppModel: ObservableObject {
     }
 
     func requestNotifications() async {
-        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])) ?? false
+        let granted = (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
         notificationsEnabled = granted
+        pushPermissionAsked = true
+        if granted {
+            await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
+        }
+    }
+
+    func startPushRegistration() async {
+        if !pushPermissionAsked {
+            await requestNotifications()
+        } else if await UNUserNotificationCenter.current().notificationSettings().authorizationStatus == .authorized {
+            notificationsEnabled = true
+            await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
+        }
     }
 
     func toggleDisarm() async {
@@ -109,18 +126,7 @@ final class AppModel: ObservableObject {
     }
 
     private func publishAlerts(_ fresh: [Alert]) {
-        let new = fresh.filter { !previousAlertIDs.contains($0.id) && $0.state == "open" }
         alerts = fresh.sorted { $0.at > $1.at }
-        previousAlertIDs = Set(fresh.map(\.id))
-        guard notificationsEnabled else { return }
-        for alert in new.prefix(5) {
-            let content = UNMutableNotificationContent()
-            content.title = alert.title
-            content.body = alert.body
-            content.sound = .default
-            let request = UNNotificationRequest(identifier: "boxdeck-\(alert.id)", content: content, trigger: nil)
-            UNUserNotificationCenter.current().add(request)
-        }
     }
 
     private func startEvents(client: BoxdeckClient) {

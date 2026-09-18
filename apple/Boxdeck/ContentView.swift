@@ -12,7 +12,7 @@ struct ContentView: View {
         }
         .tint(BridgeTheme.amber)
         .background(BridgeTheme.hull)
-        .task { await model.refresh() }
+        .task { await model.startPushRegistration(); await model.refresh() }
         .onOpenURL { url in model.handle(url) }
     }
 }

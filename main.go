@@ -56,6 +56,9 @@ type app struct {
 	gitStatusMemo map[string]gitStatusCache
 	apps          *appManager
 	alerts        *alertManager
+	push          *pushRegistry
+	apns          *apnsSender
+	pushMu        sync.Mutex
 	inboxSecret   string
 	tokenMu       sync.Mutex
 	mcpMu         sync.Mutex
@@ -91,6 +94,15 @@ func newApp(cfg config, secret []byte) *app {
 	a.usage = newUsageService(cfg)
 	a.apps = newAppsManager(ctx, cfg)
 	a.alerts = newAlertManager(cfg)
+	a.push = newPushRegistry(cfg.home)
+	a.apns = &apnsSender{}
+	a.alerts.push = a.push
+	a.alerts.sendAPNS = func(ctx context.Context, device pushDevice, alert Alert) error {
+		a.pushMu.Lock()
+		apnsConfig := a.cfg.Apns
+		a.pushMu.Unlock()
+		return a.apns.send(ctx, apnsConfig, device, alert, a.alertDeckURL(), a.alerts.actionTokenFor(alert))
+	}
 	if secret, err := ensureInboxSecret(cfg.home); err == nil {
 		a.inboxSecret = secret
 	} else {
@@ -185,6 +197,8 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.alertEventsAPI(w, r)
 	case r.URL.Path == "/api/alerts" || r.URL.Path == "/api/alerts/rules" || r.URL.Path == "/api/alerts/snooze-all" || r.URL.Path == "/api/alerts/disarm" || r.URL.Path == "/api/alerts/sinks/test":
 		a.alertsAPI(w, r)
+	case r.URL.Path == "/api/push" || r.URL.Path == "/api/push/register" || r.URL.Path == "/api/push/test" || r.URL.Path == "/api/push/config" || r.URL.Path == "/api/push/key":
+		a.pushAPI(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/alerts/"):
 		a.alertActionAPI(w, r)
 	case r.URL.Path == "/api/proc/kill":

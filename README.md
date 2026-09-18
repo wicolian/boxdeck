@@ -291,8 +291,14 @@ health, watched processes, app exits and shell probes. They are recorded locally
 even during quiet hours. Notifications are off by default. Alerts are deduplicated
 for 15 minutes and the inbox is capped at 5000 records kept for 30 days.
 
-To reach an iPhone and Apple Watch today, install the ntfy app, subscribe to a
-private topic, then add this to the boxdeck config:
+Native phone push is the first choice. Build and install the iOS app, create an
+APNs key, then enter the Key ID, Team ID, bundle ID, environment, and `.p8` file
+in the Phone push block in Settings. The deck sends directly to Apple APNs, and
+the iPhone and Apple Watch show Approve, Yes, No, Interrupt, Snooze 2h, and Ack.
+See [docs/ios-setup.md](docs/ios-setup.md) for the ten setup steps.
+
+ntfy remains available if you do not want to run the iOS app. Install the ntfy
+app, subscribe to a private topic, then add this to the boxdeck config:
 
 ```json
 {
@@ -356,10 +362,11 @@ reported by Tailscale, including devices without boxdeck, with an install hint.
 The watch app has large Needs You actions, a boxes glance, and a complication
 that refreshes every 15 minutes.
 
-There is no push backend yet. For background delivery, install the ntfy app on
-the phone and subscribe to the same topic configured in the deck's ntfy sink.
-The Boxdeck app listens to the ntfy JSON stream while it is in the foreground.
-The future APNs relay contract is in [PUSH.md](PUSH.md).
+Native APNs delivery is direct from the deck. The iOS app registers its device
+token with every configured deck, and the watch app mirrors the same category
+and can register its own token when installed standalone. ntfy remains the
+fallback for users who do not want the iOS app. The complete contract is in
+[PUSH.md](PUSH.md).
 
 ## Android and Wear OS
 

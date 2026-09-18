@@ -233,6 +233,18 @@ func (a *app) alertRulesAPI(w http.ResponseWriter, r *http.Request) {
 	cfg.QuietAllowCritical = body.QuietAllowCritical
 	if body.Sinks != nil {
 		cfg.Sinks = body.Sinks
+		if a.cfg.Apns.enabled() {
+			found := false
+			for _, sink := range cfg.Sinks {
+				if strings.EqualFold(sink.Type, "apns") {
+					found = true
+					break
+				}
+			}
+			if !found {
+				cfg.Sinks = append(cfg.Sinks, alertSink{Name: "apns", Type: "apns"})
+			}
+		}
 	}
 	a.alerts.cfg = cfg
 	a.alerts.mu.Unlock()

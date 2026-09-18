@@ -98,6 +98,32 @@ disarm state. `PUT /api/alerts/rules` persists rule thresholds and switches.
 The bar also shows up to eight open alerts under Needs you and can acknowledge
 or run the first action with the configured box token.
 
+## Native push registration
+
+When APNs is configured, the deck sends directly to Apple. Register an iOS or
+watchOS token with the normal authenticated origin:
+
+```sh
+curl -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"platform":"ios","token":"DEVICE_TOKEN","name":"phone","bundleId":"dev.wicolian.boxdeck"}' \
+  "$BOXDECK_TO/api/push/register"
+curl -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/push"
+curl -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/push/test"
+curl -X DELETE -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"id":"REGISTERED_DEVICE_ID"}' "$BOXDECK_TO/api/push/register"
+```
+
+`GET /api/push` returns the non-secret APNs settings, registered device
+platforms and names, a short token suffix, and each device's last delivery
+result. The full token is never returned. Settings accepts APNs ids and the
+environment at `POST /api/push/config`; the `.p8` upload is a multipart field
+named `key` at `POST /api/push/key`. The key and token store are mode 0600.
+
+The APNs alert payload uses category `BOXDECK_ALERT`, includes the alert JSON,
+deck URL, action token, and actions, and is capped at 4096 bytes. Critical
+alerts use the default sound. Critical and warning alerts use the time-sensitive
+interruption level. A 410 `Unregistered` response removes that device.
+
 `boxes` is fetched server-side. The local box is first. Each configured remote
 box is queried in parallel with its token kept on the server, a 3 second
 per-box timeout, and a 5 second cache. A failed box has `ok:false` and `since`

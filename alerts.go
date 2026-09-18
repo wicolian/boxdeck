@@ -246,6 +246,8 @@ type alertSnapshot struct {
 
 type alertManager struct {
 	mintAction    func(alertID string) string
+	sendAPNS      func(context.Context, pushDevice, Alert) error
+	push          *pushRegistry
 	mu            sync.Mutex
 	cfg           alertConfig
 	path          string
@@ -295,6 +297,18 @@ func alertConfigFromConfig(cfg config) alertConfig {
 	}
 	if cfg.WatchApps != nil {
 		value.WatchApps = cfg.WatchApps
+	}
+	if cfg.Apns.enabled() {
+		found := false
+		for _, sink := range value.Sinks {
+			if strings.EqualFold(sink.Type, "apns") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			value.Sinks = append(value.Sinks, alertSink{Name: "apns", Type: "apns"})
+		}
 	}
 	return value
 }
@@ -1133,6 +1147,31 @@ func (m *alertManager) deliverAttempt(ctx context.Context, sink alertSink, alert
 		}
 		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		return doDelivery(request)
+	case "apns":
+		if m.sendAPNS == nil || m.push == nil {
+			return errors.New("apns delivery is not configured")
+		}
+		devices := m.push.list()
+		if len(devices) == 0 {
+			return errors.New("no registered push devices")
+		}
+		var failures []string
+		for _, device := range devices {
+			err := m.sendAPNS(ctx, device, alert)
+			status := alertDelivery{At: m.now(), Status: "delivered", Tries: 1}
+			if err != nil {
+				status.Status, status.Message = "failed", errorText(err)
+				failures = append(failures, device.Name+": "+err.Error())
+				if isAPNSUnregistered(err) {
+					_, _ = m.push.remove(pushDeviceID(device), "", "")
+				}
+			}
+			_ = m.push.record(device, status)
+		}
+		if len(failures) > 0 {
+			return errors.New(strings.Join(failures, "; "))
+		}
+		return nil
 	case "desktop":
 		command, args := "notify-send", []string{alert.Title, alert.Body}
 		if _, err := exec.LookPath(command); err != nil {

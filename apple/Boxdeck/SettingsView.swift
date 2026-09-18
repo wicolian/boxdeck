@@ -19,9 +19,10 @@ struct SettingsView: View {
                     Button { pairing = true } label: { Label("Scan pairing QR", systemImage: "qrcode.viewfinder") }
                 }
                 Section("Configured boxes") {
-                    ForEach(model.store.boxes) { box in HStack { VStack(alignment: .leading) { Text(box.name); Text(box.url).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("Remove", role: .destructive) { model.store.remove(box); Task { await model.refresh() } } } }
+                    ForEach(model.store.boxes) { box in HStack { VStack(alignment: .leading) { Text(box.name); Text(box.url).font(.caption).foregroundStyle(.secondary) }; Spacer(); Button("Remove", role: .destructive) { model.unregisterPush(for: box); model.store.remove(box); Task { await model.refresh() } } } }
                 }
                 Section("Notifications") {
+                    Text("Notifications let Boxdeck deliver native alert buttons from your deck to this device.").font(.caption).foregroundStyle(.secondary)
                     Toggle("Notify while the app is open", isOn: $model.notificationsEnabled).onChange(of: model.notificationsEnabled) { enabled in if enabled { Task { await model.requestNotifications() } } }
                     Toggle("Disarm alerts", isOn: $model.disarmed).onChange(of: model.disarmed) { _ in Task { await model.toggleDisarm() } }
                 }

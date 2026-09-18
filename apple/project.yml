@@ -18,6 +18,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck
         SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_ENTITLEMENTS: Boxdeck/Boxdeck.entitlements
     info:
       path: Boxdeck/Info.plist
       properties:
@@ -42,6 +43,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch
         SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_ENTITLEMENTS: BoxdeckWatch/BoxdeckWatch.entitlements
         INFOPLIST_FILE: BoxdeckWatchContainer/Info.plist
   BoxdeckWatch Extension:
     type: watchkit2-extension
@@ -57,6 +59,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch.extension
         SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_ENTITLEMENTS: BoxdeckWatch/BoxdeckWatchExtension.entitlements
         INFOPLIST_FILE: BoxdeckWatch/Info.plist
   BoxdeckWatch Complication:
     type: app-extension
@@ -70,6 +73,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch.complication
         SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
+        CODE_SIGN_ENTITLEMENTS: BoxdeckWatch/BoxdeckWatchComplication.entitlements
 schemes:
   Boxdeck:
     build:
