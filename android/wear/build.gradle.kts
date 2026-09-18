@@ -38,6 +38,7 @@ dependencies {
     implementation("androidx.wear.compose:compose-navigation:1.6.2")
     implementation("androidx.wear:wear:1.4.0")
     implementation("androidx.wear.tiles:tiles:1.6.2")
+    implementation("androidx.concurrent:concurrent-futures:1.2.0")
     implementation("androidx.wear.protolayout:protolayout-material:1.4.2")
     implementation("com.google.android.horologist:horologist-tiles:0.7.15")
     implementation("com.google.android.gms:play-services-wearable:20.0.1")
