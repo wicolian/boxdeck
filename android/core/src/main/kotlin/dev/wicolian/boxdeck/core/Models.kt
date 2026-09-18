@@ -239,12 +239,23 @@ data class Alert(
     val link: String = "",
     val actions: List<AlertAction> = emptyList(),
     val count: Int = 1,
-    val snoozedUntil: String = ""
+    val snoozedUntil: String? = null
 )
 
 @Serializable
 data class AlertPage(
     val alerts: List<Alert> = emptyList(),
+    val disarmed: Boolean = false
+)
+
+@Serializable
+data class AlertRulesResponse(
+    val rules: JsonObject = buildJsonObject { },
+    val probes: List<JsonObject> = emptyList(),
+    val quiet: JsonObject = buildJsonObject { },
+    val quietAllowCritical: Boolean = false,
+    val sinks: List<JsonObject> = emptyList(),
+    val delivery: JsonObject = buildJsonObject { },
     val disarmed: Boolean = false
 )
 

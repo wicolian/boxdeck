@@ -50,7 +50,7 @@ class BoxdeckClient(
     suspend fun herdrFocus(paneId: String): JsonObject = post("/api/herdr/focus", jsonObjectOf("pane_id" to JsonPrimitive(paneId)), JsonObject.serializer())
     suspend fun procKill(pid: Int, signal: Int = 15): JsonObject = post("/api/proc/kill", jsonObjectOf("pid" to JsonPrimitive(pid), "signal" to JsonPrimitive(signal)), JsonObject.serializer())
 
-    suspend fun alerts(state: String = "open", since: String? = null): AlertPage = get("/api/alerts?state=${encodeQuery(state)}${since?.let { "&since=${encodeQuery(it)}" }.orEmpty()}", AlertPage.serializer())
+    suspend fun alerts(state: String = "open", since: String? = null): List<Alert> = get("/api/alerts?state=${encodeQuery(state)}${since?.let { "&since=${encodeQuery(it)}" }.orEmpty()}", ListSerializerHolder.alerts)
     suspend fun alert(id: String): Alert = get("/api/alerts/${encodePath(id)}", Alert.serializer())
     suspend fun createAlert(alert: JsonObject): Alert = post("/api/alerts", alert, Alert.serializer())
     suspend fun ackAlert(id: String): Alert = post("/api/alerts/${encodePath(id)}/ack", null, Alert.serializer())
@@ -58,8 +58,8 @@ class BoxdeckClient(
     suspend fun resolveAlert(id: String): Alert = post("/api/alerts/${encodePath(id)}/resolve", null, Alert.serializer())
     suspend fun snoozeAll(until: String): JsonObject = post("/api/alerts/snooze-all", jsonObjectOf("until" to JsonPrimitive(until)), JsonObject.serializer())
     suspend fun disarm(on: Boolean): JsonObject = post("/api/alerts/disarm", jsonObjectOf("on" to JsonPrimitive(on)), JsonObject.serializer())
-    suspend fun alertRules(): List<AlertRule> = get("/api/alerts/rules", ListSerializerHolder.rules)
-    suspend fun updateAlertRules(rules: List<AlertRule>): List<AlertRule> = put("/api/alerts/rules", json.encodeToJsonElement(rules), ListSerializerHolder.rules)
+    suspend fun alertRules(): AlertRulesResponse = get("/api/alerts/rules", AlertRulesResponse.serializer())
+    suspend fun updateAlertRules(rules: JsonObject): AlertRulesResponse = put("/api/alerts/rules", rules, AlertRulesResponse.serializer())
     suspend fun testSink(name: String): JsonObject = get("/api/alerts/sinks/test?name=${encodeQuery(name)}", JsonObject.serializer())
 
     fun events(lastEventId: String? = null, listener: EventsListener): Closeable {
@@ -116,7 +116,7 @@ class BoxdeckClient(
         val boxes = kotlinx.serialization.builtins.ListSerializer(BoxSnapshot.serializer())
         val peers = kotlinx.serialization.builtins.ListSerializer(TailnetPeer.serializer())
         val apps = kotlinx.serialization.builtins.ListSerializer(AppView.serializer())
-        val rules = kotlinx.serialization.builtins.ListSerializer(AlertRule.serializer())
+        val alerts = kotlinx.serialization.builtins.ListSerializer(Alert.serializer())
     }
 
     interface EventsListener {

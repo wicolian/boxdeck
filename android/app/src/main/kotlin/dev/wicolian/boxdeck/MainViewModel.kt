@@ -110,7 +110,7 @@ class MainViewModel(private val appContext: Context, private val store: BoxStore
         val states = pairs.associate { (box, client) -> box.url.trimEnd('/') to async { runCatching { client.state() }.getOrNull() } }.mapValues { it.value.await() }
         val usages = pairs.associate { (box, client) -> box.url.trimEnd('/') to async { runCatching { client.usage(30) }.getOrNull() } }.mapValues { it.value.await() }
         val devices = mergeFleet(store.boxes.value, deckCards, peerList, states, usages)
-        val alertLists = pairs.map { (box, client) -> async { box.url to runCatching { client.alerts().alerts }.getOrDefault(emptyList()) } }.awaitAll()
+        val alertLists = pairs.map { (box, client) -> async { box.url to runCatching { client.alerts() }.getOrDefault(emptyList()) } }.awaitAll()
         val alerts = alertLists.flatMap { (url, items) -> items.map { AlertItem(it, url) } }.sortedByDescending { it.alert.at }
         val usage = pairs.firstNotNullOfOrNull { (box, _) -> usages[box.url.trimEnd('/')] } ?: UsageResponse()
         FleetLoad(devices, alerts, usage)

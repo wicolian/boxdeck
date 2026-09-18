@@ -40,7 +40,7 @@ class WearStore(context: Context) {
         val boxes = boxes()
         val states = boxes.associate { box -> box.url to runCatching { BoxdeckClient(box.url, box.token).state() }.getOrNull() }.filterValues { it != null }.mapValues { it.value!! }
         val usage = boxes.associate { box -> box.url to runCatching { BoxdeckClient(box.url, box.token).usage(30) }.getOrNull() }.filterValues { it != null }.mapValues { it.value!! }
-        val alerts = boxes.flatMap { box -> runCatching { BoxdeckClient(box.url, box.token).alerts().alerts.map { box to it } }.getOrDefault(emptyList()) }
+        val alerts = boxes.flatMap { box -> runCatching { BoxdeckClient(box.url, box.token).alerts().map { box to it } }.getOrDefault(emptyList()) }
         WearSnapshot(boxes, alerts, states, usage)
     }
 }
