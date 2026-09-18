@@ -62,7 +62,7 @@
     const rule = container.querySelector('#alerts-rule-filter').value;
     const filtered = alerts.filter((item) => (!box || item.box === box) && (!rule || item.rule === rule));
     const list = container.querySelector('#alerts-list');
-    list.innerHTML = filtered.length ? filtered.map(card).join('') : '<div class="alert-empty">Quiet. Nothing needs you. Rules are on: agent needs you, stuck, quota, box down.</div>';
+    list.innerHTML = filtered.length ? filtered.map(card).join('') : '<div class="alert-empty"><strong>Inbox clear</strong><span>Rules are active. New agent, quota, box, pressure, process, or probe issues will appear here.</span></div>';
     container.querySelector('#alerts-summary').textContent = filtered.length + ' alerts';
     container.querySelectorAll('[data-alert-command]').forEach((button) => button.addEventListener('click', () => command(button.closest('[data-alert-id]').dataset.alertId, button.dataset.alertCommand)));
     container.querySelectorAll('[data-alert-path]').forEach((button) => button.addEventListener('click', async () => {
@@ -118,7 +118,7 @@
   function render(target) {
     container = target;
     mode = 'open';
-    target.innerHTML = '<section class="alerts-view"><div class="alerts-head"><div><p class="eyebrow">SENTRY</p><h2>Alerts</h2><p class="alert-lede">A quiet inbox for agents, boxes, quotas and probes.</p></div><span id="alerts-summary" class="mono"></span></div><nav class="alert-tabs" aria-label="Alert sections"><button data-alert-tab="open">Open</button><button data-alert-tab="snoozed">Snoozed</button><button data-alert-tab="resolved">Resolved</button><button data-alert-tab="rules">Rules</button><button data-alert-tab="delivery">Delivery</button></nav><div id="alerts-filters" class="alert-filters"><select id="alerts-box-filter" aria-label="Filter alerts by box"></select><select id="alerts-rule-filter" aria-label="Filter alerts by rule"></select><button id="alerts-snooze-all">Snooze all 2h</button></div><div id="alerts-panel"><div id="alerts-list"></div></div></section>';
+    target.innerHTML = '<section class="alerts-view"><div class="alerts-head"><div><p class="eyebrow">SENTRY</p><p class="view-subtitle">Quiet inbox for agents, boxes, quotas, and probes.</p></div><span id="alerts-summary" class="mono"></span></div><nav class="alert-tabs" aria-label="Alert sections"><button data-alert-tab="open" class="button-primary">Open</button><button data-alert-tab="snoozed">Snoozed</button><button data-alert-tab="resolved">Resolved</button><button data-alert-tab="rules">Rules</button><button data-alert-tab="delivery">Delivery</button></nav><div id="alerts-filters" class="alert-filters"><select id="alerts-box-filter" aria-label="Filter alerts by box"></select><select id="alerts-rule-filter" aria-label="Filter alerts by rule"></select><button id="alerts-snooze-all" class="button-quiet">Snooze all 2h</button></div><div id="alerts-panel"><div id="alerts-list"></div></div></section>';
     target.querySelectorAll('[data-alert-tab]').forEach((button) => button.onclick = async () => { mode = button.dataset.alertTab; target.querySelectorAll('[data-alert-tab]').forEach((item) => item.classList.toggle('selected', item === button)); target.querySelector('#alerts-filters').hidden = mode === 'rules' || mode === 'delivery'; if (mode === 'rules' || mode === 'delivery') { await loadRules(); } else { await load(); } });
     target.querySelector('#alerts-box-filter').onchange = renderList;
     target.querySelector('#alerts-rule-filter').onchange = renderList;

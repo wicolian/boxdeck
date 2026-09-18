@@ -17,6 +17,7 @@
   let browserScreenPage = '';
   let browserScreenCanvas = null;
   let browserScreenLastImage = 0;
+  let browserStopArmed = false;
 
   const $n = (id) => document.getElementById(id);
   const safe = (value) => String(value ?? '').replace(/[\u00b7\u2013\u2014]/g, ' / ');
@@ -51,21 +52,25 @@
     const entry = { id, label, render };
     registry.set(id, entry);
     const rail = document.getElementById('rail-nav');
-    const link = document.createElement('a');
-    link.href = '#/' + id;
-    link.dataset.nav = id;
-    link.title = label;
-    link.innerHTML = netNavIcon(id) + `<span class="nav-label">${escn(label)}</span>`;
-    const docker = rail && rail.querySelector('[data-nav="docker"]');
-    const agents = rail && rail.querySelector('[data-nav="agents"]');
-    const boxes = rail && rail.querySelector('[data-nav="boxes"]');
-    if (rail) rail.insertBefore(link, id === 'alerts' && agents ? agents.nextSibling : (boxes || (docker ? docker.nextSibling : null)));
+    const existingRail = rail && rail.querySelector('[data-nav="' + id + '"]');
+    if (id !== 'herd' && rail && !existingRail) {
+      const link = document.createElement('a');
+      link.href = '#/' + id;
+      link.dataset.nav = id;
+      link.title = label;
+      link.innerHTML = netNavIcon(id) + `<span class="nav-label">${escn(label)}</span>`;
+      const group = id === 'alerts' ? 'watch' : id === 'herd' ? 'watch' : id === 'browser' || id === 'network' ? 'fleet' : 'fleet';
+      const target = rail.querySelector('[data-nav-group-links="' + group + '"]');
+      if (target) target.append(link);
+    }
     const more = document.getElementById('more-nav');
-    if (more) {
+    if (id !== 'herd' && more && !more.querySelector('a[href="#/' + id + '"]')) {
       const moreLink = document.createElement('a');
       moreLink.href = '#/' + id;
       moreLink.textContent = label;
-      more.append(moreLink);
+      const group = id === 'alerts' ? 'watch' : id === 'herd' ? 'watch' : id === 'browser' || id === 'network' ? 'fleet' : 'fleet';
+      const target = more.querySelector('[data-nav-group-links="' + group + '"]');
+      if (target) target.append(moreLink);
     }
     const shell = document.createElement('div');
     shell.id = id + '-view';
@@ -92,7 +97,7 @@
       if (link.dataset.nav === id) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
-    ['overview-quick', 'live-band', 'toolbar'].forEach((name) => { if ($n(name)) $n(name).hidden = true; });
+    ['overview-focus', 'overview-quick', 'live-band', 'toolbar'].forEach((name) => { if ($n(name)) $n(name).hidden = true; });
     if ($n('view-title')) $n('view-title').textContent = registry.get(id).label;
     document.title = registry.get(id).label + ' / boxdeck';
   }
@@ -273,7 +278,7 @@
   async function herdView(container) {
     if (!container.dataset.ready) {
       container.dataset.ready = '1';
-      container.innerHTML = '<div class="net-view-head"><div><h2>Agents <small>live control</small></h2><p>Expand a pane to read its tail and send input. Waiting agents float to the top.</p></div><span class="net-cap">Herd</span></div><div id="herd-board" class="net-agent-list"></div>';
+      container.innerHTML = '<div class="net-view-head"><div><p class="view-subtitle">Live agent controls</p><p>Expand a pane to read its tail and send input. Waiting agents float to the top.</p></div><span class="net-cap">Agent controls</span></div><div id="herd-board" class="net-agent-list"></div>';
       container.addEventListener('click', async (event) => {
         const toggle = event.target.closest('[data-herd-toggle]');
         if (toggle) {
@@ -318,7 +323,7 @@
   function browserView(container) {
     if (!container.dataset.ready) {
       container.dataset.ready = '1';
-      container.innerHTML = '<div class="net-view-head"><div><h2>Browser <small>remote Chromium</small></h2><p>One managed browser per box. Agents can connect through the CDP tunnel and people can use it here.</p></div><span class="net-cap">1 browser</span></div><div class="net-controls"><button data-browser="start">Start headless browser</button><button data-browser="stop">Stop browser</button><span id="browser-status" class="net-inline-status"></span></div><div class="browser-interactive"><div class="browser-screen-head"><span id="browser-screen-status" class="net-status">Start the browser to browse here</span><button data-browser-keyboard>Keyboard</button><input id="browser-keyboard" class="browser-keyboard" aria-label="Browser keyboard input" autocomplete="off"></div><canvas id="browser-canvas" class="browser-canvas"></canvas><form class="browser-url" data-browser-url><button type="button" data-browser-nav="back" aria-label="Back">Back</button><button type="button" data-browser-nav="forward" aria-label="Forward">Forward</button><button type="button" data-browser-nav="reload" aria-label="Reload">Reload</button><input name="url" aria-label="Browser URL" placeholder="https://example.com"><button>Go</button><button type="button" data-tab-new>New tab</button></form></div><div id="browser-pages" class="net-pages"></div>';
+      container.innerHTML = '<div class="net-view-head"><div><p class="view-subtitle">Remote Chromium</p><p>One managed browser per box. Agents can connect through the CDP tunnel and people can use it here.</p></div><span class="net-cap">1 browser</span></div><div class="net-controls"><button class="button-primary" data-browser="start">Start headless browser</button><button class="button-danger" data-browser="stop">Stop browser</button><span id="browser-status" class="net-inline-status"></span></div><div class="browser-interactive"><div class="browser-screen-head"><span id="browser-screen-status" class="net-status">Browser is ready when you start it.</span><button data-browser-keyboard>Keyboard</button><input id="browser-keyboard" class="browser-keyboard" aria-label="Browser keyboard input" autocomplete="off"></div><canvas id="browser-canvas" class="browser-canvas"></canvas><form class="browser-url" data-browser-url><button type="button" data-browser-nav="back" aria-label="Back">Back</button><button type="button" data-browser-nav="forward" aria-label="Forward">Forward</button><button type="button" data-browser-nav="reload" aria-label="Reload">Reload</button><input name="url" aria-label="Browser URL" placeholder="https://example.com"><button>Go</button><button type="button" data-tab-new>New tab</button></form></div><div id="browser-pages" class="net-pages"></div>';
       container.addEventListener('click', async (event) => {
         const control = event.target.closest('[data-browser]');
         const shot = event.target.closest('[data-shot]');
@@ -328,6 +333,13 @@
         try {
           if (control) {
             const action = control.dataset.browser;
+            if (action === 'stop' && !browserStopArmed) {
+              browserStopArmed = true;
+              setStatus('Stop the managed browser? Press Stop again to confirm, or Escape to cancel.');
+              await renderBrowserState(container);
+              return;
+            }
+            browserStopArmed = false;
             setStatus(action === 'start' ? 'Starting browser...' : 'Stopping browser...');
             await json('/api/browser/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: action === 'start' ? JSON.stringify({ headless: true }) : '{}' });
             setStatus(action === 'start' ? 'Browser started.' : 'Browser stopped.');
@@ -374,8 +386,11 @@
     try {
       const state = await json('/api/browser');
       const status = $n('browser-status');
-      if (status) status.textContent = state.running ? `PID ${state.pid} / ${Math.round((state.memory || 0) / 1048576)} MB${state.agentDriving ? ' / an agent is driving this browser' : ''}` : (state.error || 'Browser is stopped');
-      if (!state.running) { closeBrowserScreen(); pages.innerHTML = '<div class="net-empty">Start the browser to open pages on this box.</div>'; return; }
+      const stopButton = container.querySelector('[data-browser="stop"]');
+      const running = !!state.running && !state.error;
+      if (stopButton) { stopButton.textContent = browserStopArmed ? 'Confirm stop' : 'Stop browser'; stopButton.disabled = !running; stopButton.classList.toggle('button-danger', !browserStopArmed); stopButton.classList.toggle('confirm', browserStopArmed); }
+      if (status) status.textContent = running ? `PID ${state.pid} / ${Math.round((state.memory || 0) / 1048576)} MB${state.agentDriving ? ' / an agent is driving this browser' : ''}` : (state.error || 'Browser is stopped');
+      if (!running) { closeBrowserScreen(); const canvas = $n('browser-canvas'); if (canvas) { canvas.width = 1; canvas.height = 1; canvas.getContext('2d')?.clearRect(0, 0, 1, 1); } pages.innerHTML = '<div class="net-empty">Browser is ready when you start it. Open a page to begin.</div>'; return; }
       if (!state.pages?.length) { pages.innerHTML = '<div class="net-empty">Browser is running. Open a page through CDP to see it here.</div>'; return; }
       const selected = browserScreenPage || state.pages.find((page) => page.type === 'page')?.id;
       if (selected) connectBrowserScreen(selected);
@@ -390,7 +405,7 @@
   function networkView(container) {
     if (!container.dataset.ready) {
       container.dataset.ready = '1';
-      container.innerHTML = '<div class="net-view-head"><div><h2>Network <small>tailnet surface</small></h2><p>See how this box is reachable and which local ports are exposed.</p></div><span class="net-cap">private box</span></div><div id="network-board" class="net-network-board"></div>';
+      container.innerHTML = '<div class="net-view-head"><div><p class="view-subtitle">Tailnet surface</p><p>See how this box is reachable and which local ports are exposed.</p></div><span class="net-cap">Private box</span></div><div id="network-board" class="net-network-board"></div>';
     }
     renderNetworkState(container);
   }
@@ -422,9 +437,17 @@
     } catch (error) { board.innerHTML = `<div class="net-empty">${escn(error.message || 'Could not read network state')}</div>`; }
   }
 
-  addView('herd', 'Herd', herdView);
+  addView('herd', 'Agent controls', herdView);
   addView('browser', 'Browser', browserView);
   addView('network', 'Network', networkView);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && browserStopArmed) {
+      browserStopArmed = false;
+      const button = document.querySelector('[data-browser="stop"]');
+      if (button) { button.textContent = 'Stop browser'; button.classList.remove('confirm'); }
+      setStatus('Browser stop cancelled.');
+    }
+  });
   window.addEventListener('hashchange', route);
   route();
 }());

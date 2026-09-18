@@ -7,6 +7,7 @@
   var apps = [];
   var currentContainer = null;
   var refreshTimer = 0;
+  var appStopArmed = '';
 
   async function json(path, options) {
     var response = await fetch(path, Object.assign({ cache: 'no-store' }, options || {}));
@@ -57,11 +58,12 @@
     var install = !app.detected && app.installHint ? '<p class="apps-install-copy">' + esc(app.installHint) + '</p>' : '';
     var link = app.docs ? '<a href="' + esc(app.docs) + '" target="_blank" rel="noopener">Docs</a>' : '';
     var meta = app.running && app.pid ? '<span class="mono">PID ' + app.pid + '</span>' : app.port ? '<span class="mono">port ' + app.port + '</span>' : (app.detected ? '<span>ready on this box</span>' : '<span>not installed</span>');
+    var stopConfirm = appStopArmed === app.id ? '<div class="action-confirm"><span>Stop this app?</span><button class="confirm" data-app-confirm="' + esc(app.id) + '">Confirm stop</button><button data-app-cancel>Cancel</button></div>' : '';
     return '<article class="apps-card" data-app-card="' + esc(app.id) + '">' +
       '<header class="apps-card-head"><span class="apps-badge" aria-hidden="true">' + esc(badge) + '</span><div class="apps-card-title"><h3>' + esc(app.name) + '</h3><p>' + esc(app.tag || 'box tool') + '</p></div>' + statusHTML(app) + '</header>' +
       '<div class="apps-card-meta">' + meta + (app.health ? '<span class="apps-health">healthy</span>' : '') + '</div>' +
       details + install +
-      '<div class="apps-card-actions">' + primaryHTML(app) + '<details class="apps-menu"><summary>More</summary><div class="apps-menu-pop"><button data-app-action="stop" data-app-id="' + esc(app.id) + '"' + (app.canStop ? '' : ' disabled') + '>Stop</button><button data-app-action="restart" data-app-id="' + esc(app.id) + '"' + (app.canStart ? '' : ' disabled') + '>Restart</button><button data-app-log="' + esc(app.id) + '">Log</button>' + (app.installHint ? '<button data-copy-install="' + esc(app.installHint) + '">Copy install hint</button>' : '') + link + '</div></details></div>' +
+      stopConfirm + '<div class="apps-card-actions">' + primaryHTML(app) + '<details class="apps-menu"><summary>More</summary><div class="apps-menu-pop"><button data-app-action="stop" data-app-id="' + esc(app.id) + '"' + (app.canStop ? '' : ' disabled') + '>Stop</button><button data-app-action="restart" data-app-id="' + esc(app.id) + '"' + (app.canStart ? '' : ' disabled') + '>Restart</button><button data-app-log="' + esc(app.id) + '">Log</button>' + (app.installHint ? '<button data-copy-install="' + esc(app.installHint) + '">Copy install hint</button>' : '') + link + '</div></details></div>' +
       '<div class="apps-log" data-app-log-drawer="' + esc(app.id) + '" hidden><div class="apps-log-head"><span>Last log lines</span><button data-close-log="' + esc(app.id) + '">Close</button></div><pre data-app-log-body></pre></div>' +
       '</article>';
   }
@@ -77,6 +79,7 @@
       strip.className = 'apps-overview-strip';
       berth.insertAdjacentElement('afterend', strip);
     }
+    strip.hidden = location.hash.indexOf('#/overview') === 0 && !!(node('view-filter') && node('view-filter').value.trim());
     var running = apps.filter(function (app) { return app.running; });
     var pills = running.map(function (app) {
       var target = openTarget(app);
@@ -89,9 +92,10 @@
     var grid = container.querySelector('[data-app-grid]');
     if (!grid) return;
     var rank = { running: 0, detected: 1, missing: 2 };
-    var ordered = apps.slice().sort(function (a, b) { return (rank[a.status] - rank[b.status]) || a.name.localeCompare(b.name); });
+    var filter = (container.querySelector('[data-app-filter]')?.value || '').trim().toLowerCase();
+    var ordered = apps.filter(function (app) { return !filter || [app.name, app.tag, app.status, app.message].join(' ').toLowerCase().indexOf(filter) >= 0; }).sort(function (a, b) { return (rank[a.status] - rank[b.status]) || a.name.localeCompare(b.name); });
     grid.innerHTML = ordered.map(cardHTML).join('');
-    container.querySelector('[data-app-count]').textContent = apps.length + ' recipes';
+    container.querySelector('[data-app-count]').textContent = filter ? ordered.length + ' of ' + apps.length + ' recipes' : apps.length + ' recipes';
     var builtin = ['terminal', 'files', 'browser', 't3code', 'herdr', 'jev', 'code-server', 'filebrowser', 'ollama', 'syncthing'];
     var custom = apps.filter(function (app) { return builtin.indexOf(app.id) < 0; });
     container.querySelector('[data-app-custom]').hidden = custom.length > 0;
@@ -156,9 +160,18 @@
       var action = event.target.closest('[data-app-action]');
       if (action) {
         event.preventDefault();
+        if (action.dataset.appAction === 'stop' && appStopArmed !== action.dataset.appId) {
+          appStopArmed = action.dataset.appId;
+          setStatus('Stop this app? Confirm in the card, or press Escape to cancel.');
+          renderCards(container);
+          return;
+        }
         doAction(action.dataset.appId, action.dataset.appAction);
         return;
       }
+      var confirm = event.target.closest('[data-app-confirm]');
+      if (confirm) { appStopArmed = ''; doAction(confirm.dataset.appConfirm, 'stop'); return; }
+      if (event.target.closest('[data-app-cancel]')) { appStopArmed = ''; renderCards(container); return; }
       var log = event.target.closest('[data-app-log]');
       if (log) {
         event.preventDefault();
@@ -186,15 +199,17 @@
         else window.open(open.dataset.appOpen, '_blank', 'noopener');
       }
     });
-    var reload = container.querySelector('[data-app-reload]');
+      var reload = container.querySelector('[data-app-reload]');
     if (reload) reload.addEventListener('click', reloadRecipes);
+    var filter = container.querySelector('[data-app-filter]');
+    if (filter) filter.addEventListener('input', function () { renderCards(container); });
   }
 
   function renderApps(container) {
     currentContainer = container;
     if (!container.dataset.ready) {
       container.dataset.ready = '1';
-      container.innerHTML = '<div class="apps-view-head"><div><h2>Apps <small>tools on this box</small></h2><p>Start a tool here, open it on any device, or add another recipe to your box.</p></div><div class="apps-view-actions"><button data-app-reload>Reload recipes</button><span class="view-summary" data-app-count></span><span class="notice" data-app-status role="status"></span></div></div><div class="apps-grid" data-app-grid></div><section class="apps-custom" data-app-custom><h2>Your recipes</h2><p>Drop a JSON recipe into <code>~/.config/boxdeck/apps</code>, then reload recipes.</p></section>';
+      container.innerHTML = '<div class="apps-view-head"><div><p class="view-subtitle">Tools on this box</p><p>Start a tool here, open it on any device, or add another recipe to your box.</p></div><div class="apps-view-actions"><input data-app-filter type="search" placeholder="Filter apps" aria-label="Filter apps"><button data-app-reload>Reload recipes</button><span class="view-summary" data-app-count></span><span class="notice" data-app-status role="status"></span></div></div><div class="apps-grid" data-app-grid></div><section class="apps-custom" data-app-custom><h2>Your recipes</h2><p>Drop a JSON recipe into <code>~/.config/boxdeck/apps</code>, then reload recipes.</p></section>';
       installEvents(container);
     }
     loadApps(container);
@@ -245,13 +260,19 @@
       document.querySelectorAll('.view').forEach(function (view) { view.hidden = view.id !== id + '-view'; });
       document.querySelectorAll('[data-nav]').forEach(function (link) { link.toggleAttribute('aria-current', link.dataset.nav === id); });
       node('view-title').textContent = entry.label;
-      ['overview-quick', 'live-band', 'toolbar'].forEach(function (part) { if (node(part)) node(part).hidden = true; });
+      ['overview-focus', 'overview-quick', 'live-band', 'toolbar'].forEach(function (part) { if (node(part)) node(part).hidden = true; });
       entry.render(node(id + '-view'));
     });
     return addView;
   }
 
   var addView = (window.boxdeck && window.boxdeck.addView) || fallbackAddView();
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && appStopArmed) {
+      appStopArmed = '';
+      if (currentContainer) renderCards(currentContainer);
+    }
+  });
   addView('apps', 'Apps', renderApps);
   var appsLink = node('rail-nav') && node('rail-nav').querySelector('[data-nav="apps"]');
   var filesLink = node('rail-nav') && node('rail-nav').querySelector('[data-nav="files"]');

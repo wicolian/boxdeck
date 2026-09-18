@@ -35,6 +35,16 @@ and terminal through one login. The same stream follows you between views.
 </details>
 <!-- before-and-after:end -->
 
+### Phase 5 UX pass
+
+The UX pass groups the rail into Watch, Work, Fleet, and Settings, keeps the
+five highest-value destinations on phones, and gives Boxes a device-first view
+of every tailnet peer. The same view states are captured at both sizes:
+
+| Desktop overview | Phone overview |
+|:---:|:---:|
+| ![UX desktop overview](./captures/ux/after/overview-desktop.png) | <img src="./captures/ux/after/overview-phone.png" width="390" alt="boxdeck UX overview on a phone"> |
+
 ### Phase 4 remote control surfaces
 
 | Herd | Browser | Network |
@@ -73,8 +83,9 @@ from 3 to 30 seconds after 15 seconds without a poll.
 
 ## Navigate the console
 
-Use the collapsible left rail for Overview, Ports, Processes, Agents, Herd,
-Browser, Network, Terminal, Apps, Files, Git, Docker, Boxes and Settings.
+Use the collapsible left rail for grouped Watch, Work, Fleet, and Settings
+surfaces. Agent controls live from Agents, while Browser, Network, Apps, Files,
+Git, Docker, Boxes and Settings remain available in their groups.
 Routes use hashes, such as `#/processes`, so
 changing views keeps the page and stream alive. On phones, four direct links and
 More form a five-item bottom bar. More opens the remaining views.
@@ -142,9 +153,20 @@ Keyboard shortcuts:
 | --- | --- |
 | `g o` | Overview |
 | `g p` | Ports |
+| `g r` | Processes |
 | `g a` | Agents |
+| `g l` | Alerts |
+| `g u` | Usage |
 | `g t` | Terminal |
+| `g v` | Apps |
 | `g f` | Files |
+| `g g` | Git |
+| `g b` | Browser |
+| `g d` | Docker |
+| `g n` | Network |
+| `g x` | Boxes |
+| `g s` | Settings |
+| `g h` | Agent controls |
 | `/` | Focus the current filter |
 | `Esc` | Close the viewer or sheet |
 | `?` | Show shortcuts |
