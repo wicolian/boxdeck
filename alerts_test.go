@@ -67,6 +67,7 @@ func TestAlertQuietSnoozeAndPersistence(t *testing.T) {
 		t.Fatalf("snoozed alerts = %+v", got)
 	}
 	m2 := newAlertManagerAt(cfg, path)
+	m2.now = m.now // the snooze ends two hours after the fixed clock, not after the wall clock
 	if got := m2.list("snoozed", "", "", ""); len(got) != 1 || got[0].ID != alert.ID {
 		t.Fatalf("persisted alert = %+v", got)
 	}
