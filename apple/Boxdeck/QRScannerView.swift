@@ -7,7 +7,7 @@ struct QRScannerView: UIViewControllerRepresentable {
     func updateUIViewController(_ controller: ScannerController, context: Context) {}
 }
 
-final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+final class ScannerController: UIViewController, @preconcurrency AVCaptureMetadataOutputObjectsDelegate {
     var onValue: ((URL) -> Void)?
     private let session = AVCaptureSession()
     override func viewDidLoad() {

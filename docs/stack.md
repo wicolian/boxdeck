@@ -19,7 +19,7 @@ and update automation are intentionally kept separate from product behavior.
 | `macos-latest` | Moving label | macOS 26 arm64, default Xcode 26.6 | https://github.com/actions/runner-images/blob/main/images/macos/macos-26-arm64-Readme.md | Retained and toolchain-verified |
 | `fyne.io/systray` | v1.12.2 | v1.12.2, released 2026-06-09 | https://github.com/fyne-io/systray/releases/tag/v1.12.2 | v1.12.2 retained |
 | XcodeGen | Homebrew latest at job time | 2.46.0, released 2026-07-16 | https://github.com/yonaskolb/XcodeGen/releases/tag/2.46.0 | Homebrew latest plus version output |
-| Swift package tools | 5.10 | Swift 6.3 | https://www.swift.org/blog/swift-6.3-released/ | 6.3 |
+| Swift package tools | 5.10 | Swift 6.4, released 2026-09-15; Xcode 26.6 runner supplies Swift 6.3 | https://www.swift.org/blog/swift-6.4-released/ | 6.3 for the current stable Xcode runner |
 | Swift Xcode language mode | 5.10 | Swift 6 language mode in Xcode 26.6 | https://developer.apple.com/xcode/system-requirements/ | 6.0 in iOS and watchOS targets; macOS package stays on Swift 5 mode due an Xcode 26.6 compiler crash |
 | Apple deployment targets | iOS 17, watchOS 10, macOS 13 | Supported by Xcode 26.6 | https://developer.apple.com/xcode/system-requirements/ | Retained as compatibility minimums |
 | Homebrew formula and cask | No livecheck blocks | Current service, OS blocks, and livecheck syntax | https://docs.brew.sh/Formula-Cookbook | Added `livecheck` blocks and retained valid blocks |
