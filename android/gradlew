@@ -2,7 +2,7 @@
 set -eu
 
 APP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
-GRADLE_VERSION=8.13
+GRADLE_VERSION=9.6.0
 DIST_DIR="$APP_HOME/.gradle-dist/gradle-$GRADLE_VERSION"
 if [ ! -x "$DIST_DIR/bin/gradle" ]; then
     mkdir -p "$APP_HOME/.gradle-dist"
