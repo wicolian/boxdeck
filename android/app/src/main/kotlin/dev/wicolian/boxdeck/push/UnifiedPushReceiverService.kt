@@ -23,7 +23,7 @@ class UnifiedPushReceiverService : PushService() {
     }
 
     override fun onNewEndpoint(endpoint: PushEndpoint, instance: String) {
-        getSharedPreferences("boxdeck-push", MODE_PRIVATE).edit().putString("endpoint", endpoint.endpoint).apply()
+        getSharedPreferences("boxdeck-push", MODE_PRIVATE).edit().putString("endpoint", endpoint.url).apply()
     }
 
     override fun onRegistrationFailed(reason: FailedReason, instance: String) {

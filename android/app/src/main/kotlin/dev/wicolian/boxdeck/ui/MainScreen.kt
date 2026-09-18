@@ -37,6 +37,7 @@ import dev.wicolian.boxdeck.PhoneTab
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
     val state by viewModel.ui.collectAsStateWithLifecycle()
+    val selectedDevice = state.selectedDevice
     var detailTab by remember { mutableStateOf(BoxDetailTab.OVERVIEW) }
     Scaffold(
         topBar = { TopAppBar(title = { Text(state.selectedDevice?.name ?: state.tab.label) }) },
@@ -59,7 +60,7 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
             when {
-                state.selectedDevice != null && state.selectedDevice.isDeck -> BoxDetailScreen(state.selectedDevice, state.detail, detailTab, { detailTab = it }, viewModel)
+                selectedDevice != null && selectedDevice.isDeck -> BoxDetailScreen(selectedDevice, state.detail, detailTab, { detailTab = it }, viewModel)
                 state.tab == PhoneTab.NEEDS -> AlertScreen(state.alerts, viewModel)
                 state.tab == PhoneTab.BOXES -> BoxesScreen(state.fleet, viewModel)
                 state.tab == PhoneTab.USAGE -> UsageScreen(state.usage)
