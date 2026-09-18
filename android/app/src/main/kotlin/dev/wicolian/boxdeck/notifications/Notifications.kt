@@ -2,12 +2,16 @@ package dev.wicolian.boxdeck.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.Manifest
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import dev.wicolian.boxdeck.BoxdeckApplication
 import dev.wicolian.boxdeck.MainActivity
 import dev.wicolian.boxdeck.R
@@ -43,6 +47,7 @@ object AlertNotifications {
             val pendingIntent = actionIntent(context, boxUrl, action, alert.id, index)
             builder.addAction(NotificationCompat.Action.Builder(android.R.drawable.ic_menu_send, action.label.ifBlank { "Act" }, pendingIntent).build())
         }
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         runCatching { NotificationManagerCompat.from(context).notify(alert.id.hashCode(), builder.build()) }
     }
 
