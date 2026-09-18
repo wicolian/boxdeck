@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"sort"
 	"sync"
@@ -175,8 +176,22 @@ func (a *app) discoveredDevices(ctx context.Context) []peerDevice {
 	return a.peers.snapshot(ctx, a.netTailscale(ctx), a.cfg.FleetToken)
 }
 
+// tailscalePath finds the tailscale CLI. A launchd or brew services process has a minimal
+// PATH, so the usual install locations and the macOS app bundle are checked as well.
+func tailscalePath() (string, error) {
+	if path, err := exec.LookPath("tailscale"); err == nil {
+		return path, nil
+	}
+	for _, candidate := range []string{"/usr/local/bin/tailscale", "/opt/homebrew/bin/tailscale", "/usr/bin/tailscale", "/Applications/Tailscale.app/Contents/MacOS/Tailscale"} {
+		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
+			return candidate, nil
+		}
+	}
+	return "", exec.ErrNotFound
+}
+
 func (a *app) netTailscale(ctx context.Context) tailscaleStatus {
-	path, err := exec.LookPath("tailscale")
+	path, err := tailscalePath()
 	if err != nil {
 		return tailscaleStatus{Peers: []netNode{}}
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os/exec"
 	"sort"
 	"strings"
 	"time"
@@ -188,7 +187,7 @@ type netViewState struct {
 func (a *app) netState(ctx context.Context) netViewState {
 	result := netViewState{Interfaces: localInterfaces(), Mirrors: []int{}, MirrorErrors: []string{}, Devices: []peerDevice{}, MirrorRule: "Mirrored ports carry no password", GeneratedAt: time.Now().UTC().Format(time.RFC3339)}
 	status := tailscaleStatus{Peers: []netNode{}}
-	if path, err := exec.LookPath("tailscale"); err == nil {
+	if path, err := tailscalePath(); err == nil {
 		result.Tailscale = object{"present": true, "message": ""}
 		if output, err := commandWithTimeout(ctx, 4*time.Second, path, "status", "--json"); err == nil {
 			if parsed, parseErr := parseTailscaleStatus(output); parseErr == nil {
