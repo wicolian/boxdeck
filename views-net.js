@@ -387,9 +387,10 @@
       const state = await json('/api/browser');
       const status = $n('browser-status');
       const stopButton = container.querySelector('[data-browser="stop"]');
-      if (stopButton) { stopButton.textContent = browserStopArmed ? 'Confirm stop' : 'Stop browser'; stopButton.disabled = !state.running; stopButton.classList.toggle('button-danger', !browserStopArmed); stopButton.classList.toggle('confirm', browserStopArmed); }
-      if (status) status.textContent = state.running ? `PID ${state.pid} / ${Math.round((state.memory || 0) / 1048576)} MB${state.agentDriving ? ' / an agent is driving this browser' : ''}` : (state.error || 'Browser is stopped');
-      if (!state.running) { closeBrowserScreen(); const canvas = $n('browser-canvas'); if (canvas) { canvas.width = 1; canvas.height = 1; canvas.getContext('2d')?.clearRect(0, 0, 1, 1); } pages.innerHTML = '<div class="net-empty">Browser is ready when you start it. Open a page to begin.</div>'; return; }
+      const running = !!state.running && !state.error;
+      if (stopButton) { stopButton.textContent = browserStopArmed ? 'Confirm stop' : 'Stop browser'; stopButton.disabled = !running; stopButton.classList.toggle('button-danger', !browserStopArmed); stopButton.classList.toggle('confirm', browserStopArmed); }
+      if (status) status.textContent = running ? `PID ${state.pid} / ${Math.round((state.memory || 0) / 1048576)} MB${state.agentDriving ? ' / an agent is driving this browser' : ''}` : (state.error || 'Browser is stopped');
+      if (!running) { closeBrowserScreen(); const canvas = $n('browser-canvas'); if (canvas) { canvas.width = 1; canvas.height = 1; canvas.getContext('2d')?.clearRect(0, 0, 1, 1); } pages.innerHTML = '<div class="net-empty">Browser is ready when you start it. Open a page to begin.</div>'; return; }
       if (!state.pages?.length) { pages.innerHTML = '<div class="net-empty">Browser is running. Open a page through CDP to see it here.</div>'; return; }
       const selected = browserScreenPage || state.pages.find((page) => page.type === 'page')?.id;
       if (selected) connectBrowserScreen(selected);
