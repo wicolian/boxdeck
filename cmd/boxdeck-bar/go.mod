@@ -1,6 +1,6 @@
 module github.com/wicolian/boxdeck/cmd/boxdeck-bar
 
-go 1.27
+go 1.27.1
 
 require (
 	fyne.io/systray v1.12.2

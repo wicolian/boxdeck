@@ -13,7 +13,12 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      # macos-latest is macOS 26 arm64 with Xcode 26.6 by default, verified 2026-09-18.
+      - uses: actions/checkout@v7 # v7.0.1 released 2026-07-20, verified 2026-09-18.
+      - name: Verify Apple toolchain
+        run: |
+          xcode-select -p
+          xcodebuild -version
       - name: Show Swift version
         run: swift --version
       - name: Run Swift tests
@@ -48,7 +53,7 @@ jobs:
           assert info["LSUIElement"] is True
           assert (app / "Contents/MacOS/BoxdeckBar").is_file()
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7 # v7.0.1 released 2026-04-10, verified 2026-09-18.
         with:
           name: boxdeck-bar-darwin-universal
           path: dist/boxdeck-bar_darwin_universal.zip
