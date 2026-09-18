@@ -248,6 +248,8 @@ type alertManager struct {
 	mintAction    func(alertID string) string
 	sendAPNS      func(context.Context, pushDevice, Alert) error
 	push          *pushRegistry
+	sendWebPush   func(context.Context, webPushRecord, Alert) error
+	webPush       *webPushRegistry
 	mu            sync.Mutex
 	cfg           alertConfig
 	path          string
@@ -1167,6 +1169,24 @@ func (m *alertManager) deliverAttempt(ctx context.Context, sink alertSink, alert
 				}
 			}
 			_ = m.push.record(device, status)
+		}
+		if len(failures) > 0 {
+			return errors.New(strings.Join(failures, "; "))
+		}
+		return nil
+	case "webpush":
+		if m.sendWebPush == nil || m.webPush == nil {
+			return errors.New("web push delivery is not configured")
+		}
+		records := m.webPush.list()
+		if len(records) == 0 {
+			return errors.New("no browser subscriptions")
+		}
+		var failures []string
+		for _, record := range records {
+			if err := m.sendWebPush(ctx, record, alert); err != nil {
+				failures = append(failures, record.Name+": "+err.Error())
+			}
 		}
 		if len(failures) > 0 {
 			return errors.New(strings.Join(failures, "; "))

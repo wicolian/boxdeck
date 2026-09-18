@@ -3,3 +3,5 @@ node_modules/
 /boxdeck
 /dist/
 .worktrees/
+apple/Boxdeck.xcodeproj/
+apple/Boxdeck/Info.plist

@@ -58,6 +58,8 @@ type app struct {
 	alerts        *alertManager
 	push          *pushRegistry
 	apns          *apnsSender
+	webPush       *webPushRegistry
+	webPushSender *webPushSender
 	pushMu        sync.Mutex
 	inboxSecret   string
 	tokenMu       sync.Mutex
@@ -103,6 +105,17 @@ func newApp(cfg config, secret []byte) *app {
 		a.pushMu.Unlock()
 		return a.apns.send(ctx, apnsConfig, device, alert, a.alertDeckURL(), a.alerts.actionTokenFor(alert))
 	}
+	a.webPush = newWebPushRegistry(cfg.home, secret)
+	if keys, err := loadVapidKeys(filepath.Join(cfg.home, ".local", "share", "boxdeck", "vapid.json")); err == nil {
+		a.webPushSender = &webPushSender{keys: keys}
+	} else {
+		log.Printf("web push keys: %v", err)
+	}
+	a.alerts.webPush = a.webPush
+	a.alerts.sendWebPush = func(ctx context.Context, record webPushRecord, alert Alert) error {
+		return a.sendWebPushRecord(ctx, record, alert, a.alerts.actionTokenFor(alert))
+	}
+	a.syncWebPushSink()
 	if secret, err := ensureInboxSecret(cfg.home); err == nil {
 		a.inboxSecret = secret
 	} else {
@@ -197,8 +210,12 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.alertEventsAPI(w, r)
 	case r.URL.Path == "/api/alerts" || r.URL.Path == "/api/alerts/rules" || r.URL.Path == "/api/alerts/snooze-all" || r.URL.Path == "/api/alerts/disarm" || r.URL.Path == "/api/alerts/sinks/test":
 		a.alertsAPI(w, r)
+	case r.URL.Path == "/api/push/web" || strings.HasPrefix(r.URL.Path, "/api/push/web/"):
+		a.webPushAPI(w, r)
 	case r.URL.Path == "/api/push" || r.URL.Path == "/api/push/register" || r.URL.Path == "/api/push/test" || r.URL.Path == "/api/push/config" || r.URL.Path == "/api/push/key":
 		a.pushAPI(w, r)
+	case r.URL.Path == "/sw.js" || r.URL.Path == "/manifest.webmanifest" || r.URL.Path == "/icon.svg":
+		a.pwaAsset(w, r)
 	case strings.HasPrefix(r.URL.Path, "/api/alerts/"):
 		a.alertActionAPI(w, r)
 	case r.URL.Path == "/api/proc/kill":

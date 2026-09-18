@@ -119,6 +119,37 @@ result. The full token is never returned. Settings accepts APNs ids and the
 environment at `POST /api/push/config`; the `.p8` upload is a multipart field
 named `key` at `POST /api/push/key`. The key and token store are mode 0600.
 
+## Browser push
+
+The deck is also a Web Push application server. `GET /api/push/web` returns the
+VAPID public key, the deck URL, and every browser subscription as an id, a
+label such as `Chrome on macOS`, the push service host, and the last delivery
+result. Endpoints and keys are never returned.
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/push/web"
+curl -X POST -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"subscription":{"endpoint":"https://...","keys":{"p256dh":"...","auth":"..."}},"name":"Laptop"}' \
+  "$BOXDECK_TO/api/push/web/subscribe"
+curl -X POST -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/push/web/test"
+curl -X DELETE -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"id":"SUBSCRIPTION_ID"}' "$BOXDECK_TO/api/push/web/subscribe"
+```
+
+`POST /api/push/web/subscribe` takes the `PushSubscription.toJSON()` value from
+the browser. The endpoint must be https, `p256dh` must be a 65 byte P-256 point
+and `auth` must be 16 bytes. `DELETE` accepts an `id` or an `endpoint`. The
+service worker is `/sw.js`, the manifest is `/manifest.webmanifest`, and both
+sit behind the normal deck authentication.
+
+Each send is one `POST` to the subscription endpoint with `Content-Encoding:
+aes128gcm` (RFC 8291), a `vapid` Authorization header signed with the deck's
+own ES256 key (RFC 8292), `TTL: 86400`, `Urgency` mapped from severity, and a
+`Topic` derived from the alert id so repeats collapse. The encrypted payload is
+JSON with the alert id, title, body, severity, rule, box, link, deck URL, action
+token, and actions, capped at 3993 bytes. A 404 or 410 from the push service
+removes that subscription.
+
 The APNs alert payload uses category `BOXDECK_ALERT`, includes the alert JSON,
 deck URL, action token, and actions, and is capped at 4096 bytes. Critical
 alerts use the default sound. Critical and warning alerts use the time-sensitive
