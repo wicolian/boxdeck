@@ -20,7 +20,7 @@ and update automation are intentionally kept separate from product behavior.
 | `fyne.io/systray` | v1.12.2 | v1.12.2, released 2026-06-09 | https://github.com/fyne-io/systray/releases/tag/v1.12.2 | v1.12.2 retained |
 | XcodeGen | Homebrew latest at job time | 2.46.0, released 2026-07-16 | https://github.com/yonaskolb/XcodeGen/releases/tag/2.46.0 | Homebrew latest plus version output |
 | Swift package tools | 5.10 | Swift 6.3 | https://www.swift.org/blog/swift-6.3-released/ | 6.3 |
-| Swift Xcode language mode | 5.10 | Swift 6 language mode in Xcode 26.6 | https://developer.apple.com/xcode/system-requirements/ | 6.0 |
+| Swift Xcode language mode | 5.10 | Swift 6 language mode in Xcode 26.6 | https://developer.apple.com/xcode/system-requirements/ | 6.0 in iOS and watchOS targets; macOS package stays on Swift 5 mode due an Xcode 26.6 compiler crash |
 | Apple deployment targets | iOS 17, watchOS 10, macOS 13 | Supported by Xcode 26.6 | https://developer.apple.com/xcode/system-requirements/ | Retained as compatibility minimums |
 | Homebrew formula and cask | No livecheck blocks | Current service, OS blocks, and livecheck syntax | https://docs.brew.sh/Formula-Cookbook | Added `livecheck` blocks and retained valid blocks |
 | Boxdeck tap release | 0.2.0 | v0.2.0, released 2026-09-17 | https://github.com/wicolian/boxdeck/releases/tag/v0.2.0 | 0.2.0 retained |
@@ -36,8 +36,9 @@ Xcode 26.6 includes Swift 6.3, iOS 26.5, watchOS 26.5, and macOS 26.5 SDKs.
 Its supported deployment range includes the existing iOS 17 and watchOS 10
 minimums, and the package macOS 13 target remains below its supported macOS
 deployment range. These targets are compatibility promises, not stale compiler
-pins, so they remain unchanged while the compiler and language mode move to
-Swift 6.
+pins, so they remain unchanged while the compiler moves to Swift 6. The macOS
+bar package uses the Swift 5 language mode explicitly because Xcode 26.6.0's
+Swift 6.3.3 frontend crashes while compiling its existing MenuPopover code.
 
 The workflow prints `xcode-select -p`, `xcodebuild -version`, and `swift
 --version`. It uses the current stable default on `macos-latest`, rather than a

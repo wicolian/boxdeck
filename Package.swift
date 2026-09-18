@@ -13,12 +13,14 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "BoxdeckBar",
-            path: "macos/BoxdeckBar"
+            path: "macos/BoxdeckBar",
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(
             name: "BoxdeckBarTests",
             dependencies: ["BoxdeckBar"],
             path: "macos/BoxdeckBarTests",
+            swiftSettings: [.swiftLanguageMode(.v5)],
             resources: [.copy("Fixtures")]
         )
     ]
