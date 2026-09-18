@@ -2,6 +2,7 @@
     <uses-feature android:name="android.hardware.type.watch" />
     <uses-permission android:name="android.permission.INTERNET" />
     <application android:label="boxdeck" android:theme="@style/Theme.BoxdeckWear">
+        <meta-data android:name="com.google.android.wearable.standalone" android:value="true" />
         <activity android:name=".WearActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
