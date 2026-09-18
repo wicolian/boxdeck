@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -271,6 +272,9 @@ func (m *browserManager) stop() error {
 func processMemory(pid int) int64 {
 	if pid <= 0 {
 		return 0
+	}
+	if runtime.GOOS == "darwin" {
+		return darwinProcessRSS(pid)
 	}
 	b, err := os.ReadFile(fmt.Sprintf("/proc/%d/status", pid))
 	if err != nil {

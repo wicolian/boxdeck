@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -11,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -40,6 +42,7 @@ type liveMetrics struct {
 	Time         int64      `json:"time"`
 	CPU          float64    `json:"cpu"`
 	Cores        []float64  `json:"cores"`
+	CoreCount    int        `json:"coreCount"`
 	MemTotal     uint64     `json:"memTotal"`
 	MemUsed      uint64     `json:"memUsed"`
 	SwapTotal    uint64     `json:"swapTotal"`
@@ -184,6 +187,9 @@ func (s *procSampler) sample(now time.Time) liveMetrics {
 	m := liveMetrics{Time: now.UnixMilli(), Cores: []float64{}, Load: []float64{0, 0, 0}, TopCPU: []procInfo{}, TopMem: []procInfo{}}
 	cpus := parseCPUs(readFile(filepath.Join(s.root, "stat")))
 	m.Available = len(cpus) > 0
+	if !m.Available && runtime.GOOS == "darwin" {
+		return s.sampleDarwin(now)
+	}
 	if !m.Available {
 		s.at = now
 		s.all = []procInfo{}
@@ -210,6 +216,7 @@ func (s *procSampler) sample(now time.Time) liveMetrics {
 		}
 		m.Cores = append(m.Cores, v)
 	}
+	m.CoreCount = len(m.Cores)
 	mem := map[string]uint64{}
 	for _, line := range strings.Split(readFile(filepath.Join(s.root, "meminfo")), "\n") {
 		f := strings.Fields(line)
@@ -291,6 +298,128 @@ func (s *procSampler) sample(now time.Time) liveMetrics {
 	s.prevCPU, s.prevNet, s.prevDisk, s.prevProc, s.at = cpus, netNow, diskNow, processes, now
 	return m
 }
+
+// sampleDarwin fills the same liveMetrics from ps, sysctl, vm_stat and netstat. Per core
+// figures are not available without a kernel call, so Cores stays empty and the view shows
+// the whole machine number. Working directories are resolved for the top lists only, with
+// one lsof call, and cached for ten seconds.
+func (s *procSampler) sampleDarwin(now time.Time) liveMetrics {
+	ctx := context.Background()
+	m := liveMetrics{Time: now.UnixMilli(), Cores: []float64{}, CoreCount: runtime.NumCPU(), Load: []float64{0, 0, 0}, TopCPU: []procInfo{}, TopMem: []procInfo{}, Available: true}
+	seconds := now.Sub(s.at).Seconds()
+	if s.at.IsZero() {
+		seconds = 0
+	}
+	rows := darwinProcesses(ctx)
+	m.CPU = darwinCPUPercent(rows, runtime.NumCPU())
+	m.MemTotal = uint64(number(strings.TrimSpace(sh(ctx, "sysctl", "-n", "hw.memsize"))))
+	_, available := parseVMStat(sh(ctx, "vm_stat"))
+	m.MemUsed = delta(m.MemTotal, uint64(available))
+	swapTotal, swapUsed, _ := parseSwapUsage(sh(ctx, "sysctl", "-n", "vm.swapusage"))
+	m.SwapTotal, m.SwapUsed = uint64(swapTotal), uint64(swapUsed)
+	for i, v := range strings.Fields(strings.Trim(sh(ctx, "sysctl", "-n", "vm.loadavg"), "{} \n")) {
+		if i >= 3 {
+			break
+		}
+		m.Load[i] = number(v)
+	}
+	if boot := parseBootTime(sh(ctx, "sysctl", "-n", "kern.boottime")); boot > 0 {
+		m.Uptime = float64(now.Unix() - boot)
+	}
+	netNow := parseNetstatIB(sh(ctx, "netstat", "-ibn"))
+	m.NetRX, m.NetTX = ioRates(netNow, s.prevNet, seconds)
+	all := make([]procInfo, 0, len(rows))
+	live := map[int]bool{}
+	for _, row := range rows {
+		live[row.PID] = true
+		all = append(all, procInfo{PID: row.PID, Name: darwinProcessName(row.Args), CPU: math.Round(row.CPU*10) / 10, Mem: row.RSS, Age: float64(row.Secs), User: row.User, Tags: []string{}, Start: row.Start, ppid: row.PPID, args: row.Args})
+	}
+	top := append(sortedProcs(all, "cpu", 8), sortedProcs(all, "mem", 8)...)
+	missing := []int{}
+	for _, p := range top {
+		meta, ok := s.metadata[p.PID]
+		if !ok || meta.start != p.Start || now.Sub(meta.at) > 10*time.Second {
+			missing = append(missing, p.PID)
+		}
+	}
+	for pid, cwd := range darwinCWDs(ctx, missing) {
+		start := uint64(0)
+		for _, p := range top {
+			if p.PID == pid {
+				start = p.Start
+			}
+		}
+		s.metadata[pid] = procMeta{start, now, "", tilde(cwd, s.home), ""}
+	}
+	for i := range all {
+		if meta, ok := s.metadata[all[i].PID]; ok {
+			all[i].CWD = meta.cwd
+		}
+	}
+	for pid := range s.metadata {
+		if !live[pid] {
+			delete(s.metadata, pid)
+		}
+	}
+	s.all = all
+	m.ProcessCount = len(all)
+	m.TopCPU = sortedProcs(all, "cpu", 8)
+	m.TopMem = sortedProcs(all, "mem", 8)
+	s.prevNet, s.at = netNow, now
+	return m
+}
+
+// darwinProcessName is the short name for a command line: the app name for a bundle path such
+// as /Applications/Safari.app/Contents/MacOS/Safari, else the executable basename. ps gives no
+// reliable comm column, and executable paths can contain spaces, so an absolute path is grown
+// one word at a time until it names a real file. Results are cached per command line.
+var darwinNameCache = struct {
+	mu    sync.Mutex
+	names map[string]string
+}{names: map[string]string{}}
+
+func darwinProcessName(args string) string {
+	args = strings.TrimSpace(args)
+	if args == "" {
+		return ""
+	}
+	darwinNameCache.mu.Lock()
+	name, ok := darwinNameCache.names[args]
+	darwinNameCache.mu.Unlock()
+	if ok {
+		return name
+	}
+	name = darwinProcessNameOf(args, func(path string) bool { info, err := os.Stat(path); return err == nil && !info.IsDir() })
+	darwinNameCache.mu.Lock()
+	if len(darwinNameCache.names) > 4096 {
+		darwinNameCache.names = map[string]string{}
+	}
+	darwinNameCache.names[args] = name
+	darwinNameCache.mu.Unlock()
+	return name
+}
+
+func darwinProcessNameOf(args string, exists func(string) bool) string {
+	fields := strings.Fields(args)
+	if len(fields) == 0 {
+		return ""
+	}
+	executable := fields[0]
+	if strings.HasPrefix(executable, "/") {
+		for i := 1; i < len(fields) && i < 12 && !exists(executable); i++ {
+			if strings.HasPrefix(fields[i], "-") {
+				break
+			}
+			executable += " " + fields[i]
+		}
+	}
+	if i := strings.Index(executable, ".app/"); i >= 0 {
+		bundle := executable[:i]
+		return bundle[strings.LastIndex(bundle, "/")+1:]
+	}
+	return executable[strings.LastIndex(executable, "/")+1:]
+}
+
 func sortedProcs(all []procInfo, order string, n int) []procInfo {
 	out := append([]procInfo{}, all...)
 	sort.Slice(out, func(i, j int) bool {
@@ -392,7 +521,12 @@ func (a *app) killProc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer p.Release()
-	if body.Start != 0 {
+	if body.Start != 0 && runtime.GOOS == "darwin" {
+		if darwinProcessStart(body.PID) != body.Start {
+			jsonReply(w, 409, object{"error": "This process changed or exited. Refresh the list"})
+			return
+		}
+	} else if body.Start != 0 {
 		st, err := parseProcStat(readFile(filepath.Join(a.live.sampler.root, strconv.Itoa(body.PID), "stat")))
 		if err != nil || st.Start != body.Start {
 			jsonReply(w, 409, object{"error": "This process changed or exited. Refresh the list"})

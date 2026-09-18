@@ -97,7 +97,16 @@ func (s *healthSampler) sample() {
 		}
 		h["memAvail"] = free
 		h["memUsed"] = max(0, h["memTotal"].(float64)-free)
-		h["partial"] = true
+		swapTotal, swapUsed, swapFree := parseSwapUsage(sh(s.ctx, "sysctl", "-n", "vm.swapusage"))
+		h["swapTotal"], h["swapUsed"], h["swapFree"] = swapTotal, swapUsed, swapFree
+		if boot := parseBootTime(sh(s.ctx, "sysctl", "-n", "kern.boottime")); boot > 0 {
+			h["uptime"] = float64(time.Now().Unix() - boot)
+		}
+		if runtime.GOOS == "darwin" {
+			h["cpu"] = darwinCPUPercent(darwinProcesses(s.ctx), runtime.NumCPU())
+		} else {
+			h["partial"] = true
+		}
 	}
 	d := s.disk.get(30*time.Second, func() object {
 		lines := strings.Split(sh(s.ctx, "df", "-k", "/"), "\n")
