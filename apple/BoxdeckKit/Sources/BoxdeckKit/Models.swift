@@ -332,6 +332,13 @@ public struct AlertAction: Codable, Sendable, Hashable, Identifiable {
     public var body: [String: String]
     public var id: String { label + path }
     public init(label: String = "", method: String = "POST", path: String = "", body: [String: String] = [:]) { self.label = label; self.method = method; self.path = path; self.body = body }
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        label = try container.decodeIfPresent(String.self, forKey: .label) ?? ""
+        method = try container.decodeIfPresent(String.self, forKey: .method) ?? "POST"
+        path = try container.decodeIfPresent(String.self, forKey: .path) ?? ""
+        body = try container.decodeIfPresent([String: String].self, forKey: .body) ?? [:]
+    }
 }
 
 public struct Alert: Codable, Sendable, Identifiable {

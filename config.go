@@ -78,6 +78,7 @@ type config struct {
 	AllowRun           bool              `json:"allowRun"`
 	Pricing            pricingConfig     `json:"pricing"`
 	Apps               []appRecipe       `json:"apps"`
+	Apns               apnsConfig        `json:"apns,omitempty"`
 	Alerts             alertConfig       `json:"alerts"`
 	AlertRules         alertRules        `json:"alertRules"`
 	AlertRulesComplete bool              `json:"alertRulesComplete"`
@@ -188,6 +189,13 @@ func loadConfig(path, home string) (config, error) {
 	}
 	for i, p := range c.RepoRoots {
 		c.RepoRoots[i] = expandHome(p, home)
+	}
+	c.Apns.KeyPath = expandHome(c.Apns.KeyPath, home)
+	if c.Apns.Environment == "" {
+		c.Apns.Environment = "sandbox"
+	}
+	if c.Apns.Environment != "sandbox" && c.Apns.Environment != "production" {
+		return c, fmt.Errorf("apns environment must be sandbox or production")
 	}
 	c.agentRE, err = regexp.Compile(c.AgentPattern)
 	if err != nil {

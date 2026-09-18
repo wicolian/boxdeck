@@ -1,9 +1,23 @@
 import SwiftUI
+import WatchKit
 
 @main
 struct BoxdeckWatchApp: App {
+    @WKExtensionDelegateAdaptor(BoxdeckWatchDelegate.self) private var extensionDelegate
     @StateObject private var model = WatchModel()
     var body: some Scene { WindowGroup { WatchRootView().environmentObject(model).preferredColorScheme(.dark) } }
+}
+
+final class BoxdeckWatchDelegate: NSObject, WKExtensionDelegate {
+    func applicationDidFinishLaunching() {
+        WKExtension.shared().registerForRemoteNotifications()
+    }
+
+    func didRegisterForRemoteNotifications(withDeviceToken deviceToken: Data) {
+        BoxdeckPushRegistration.register(tokenData: deviceToken, platform: "watchos", name: "Apple Watch")
+    }
+
+    func didFailToRegisterForRemoteNotificationsWithError(_ error: Error) {}
 }
 
 struct WatchRootView: View {

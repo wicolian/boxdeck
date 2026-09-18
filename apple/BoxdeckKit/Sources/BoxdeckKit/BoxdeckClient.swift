@@ -31,6 +31,13 @@ public final class BoxdeckClient: @unchecked Sendable {
     public func peers() async throws -> [Peer] { try await get("/api/net/peers", as: [Peer].self) }
     public func apps() async throws -> [AppRecord] { try await get("/api/apps", as: [AppRecord].self) }
     public func pairing() async throws -> Pairing { try await get("/api/pair.json", as: Pairing.self) }
+    public func registerPushToken(platform: String, token: String, name: String, bundleID: String) async throws {
+        _ = try await post("/api/push/register", body: PushRegistrationBody(platform: platform, token: token, name: name, bundleID: bundleID), as: EmptyReply.self)
+    }
+    public func unregisterPushToken(platform: String, token: String) async throws {
+        let data = try JSONEncoder().encode(PushUnregistrationBody(platform: platform, token: token))
+        _ = try await post("/api/push/register", data: data, as: EmptyReply.self, method: "DELETE")
+    }
 
     public func alerts(state: String = "open", since: String? = nil) async throws -> [Alert] {
         var path = "/api/alerts?state=\(encode(state))"
@@ -140,6 +147,8 @@ private struct DisarmBody: Encodable { var on: Bool }
 private struct PaneBody: Encodable { var pane: String }
 private struct KeyBody: Encodable { var pane: String; var keys: String }
 private struct PromptBody: Encodable { var pane: String; var text: String }
+private struct PushRegistrationBody: Encodable { var platform: String; var token: String; var name: String; var bundleID: String; enum CodingKeys: String, CodingKey { case platform, token, name; case bundleID = "bundleId" } }
+private struct PushUnregistrationBody: Encodable { var platform: String; var token: String }
 
 private extension JSONDecoder {
     static var boxdeck: JSONDecoder { JSONDecoder() }
