@@ -276,6 +276,9 @@
   }
 
   async function herdView(container) {
+    // #/herd?pane=w8:p1 opens straight onto that pane (the Agents view links here per row).
+    const wanted = new URLSearchParams(location.hash.split('?')[1] || '').get('pane');
+    if (wanted) { expanded.add(wanted); setTimeout(() => container.querySelector(`[data-pane="${CSS.escape(wanted)}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 400); }
     if (!container.dataset.ready) {
       container.dataset.ready = '1';
       container.innerHTML = '<div class="net-view-head"><div><p class="view-subtitle">Live agent controls</p><p>Expand a pane to read its tail and send input. Waiting agents float to the top.</p></div><span class="net-cap">Agent controls</span></div><div id="herd-board" class="net-agent-list"></div>';
