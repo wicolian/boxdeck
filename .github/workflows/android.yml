@@ -3,8 +3,14 @@ name: Android
 on:
   workflow_dispatch:
   push:
-    branches:
-      - phase5-android
+    branches: [main]
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths:
+      - 'android/**'
+      - '.github/workflows/android.yml'
 
 permissions:
   contents: read

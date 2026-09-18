@@ -3,7 +3,17 @@ name: Apple apps
 on:
   workflow_dispatch:
   push:
-    branches: [phase5-ios]
+    branches: [main]
+    paths:
+      - 'apple/**'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'apple/**'
+      - '.github/workflows/ios.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
