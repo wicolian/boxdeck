@@ -43,7 +43,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("androidx.navigation:navigation-compose:2.9.8")
-    implementation("androidx.security:security-crypto:1.1.0-alpha07")
+    implementation("androidx.security:security-crypto:1.1.0")
     implementation("androidx.webkit:webkit:1.14.0")
     implementation("androidx.camera:camera-camera2:1.4.2")
     implementation("androidx.camera:camera-lifecycle:1.4.2")
