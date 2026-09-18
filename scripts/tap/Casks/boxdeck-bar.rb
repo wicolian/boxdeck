@@ -7,5 +7,10 @@ cask "boxdeck-bar" do
   desc "Cross-platform menu bar client for boxdeck"
   homepage "https://github.com/wicolian/boxdeck"
 
+  livecheck do
+    url "https://github.com/wicolian/boxdeck"
+    strategy :github_latest
+  end
+
   app "boxdeck-bar.app"
 end

@@ -81,6 +81,9 @@ remain. It reads process counters directly, with no `ps` in the one-second loop.
 Browser connections stop in a hidden tab. The older state health sample slows
 from 3 to 30 seconds after 15 seconds without a poll.
 
+Current toolchain, runner, and Apple support versions are maintained in
+[docs/stack.md](docs/stack.md).
+
 ## Navigate the console
 
 Use the collapsible left rail for grouped Watch, Work, Fleet, and Settings
@@ -209,7 +212,7 @@ On Linux it writes and starts `~/.config/systemd/user/boxdeck.service` with
 after setup; automatic service installation uses Linux systemd.
 
 The downloader needs a published `v*` release containing the Go binaries. To build
-from a checkout with Go 1.27 or newer:
+from a checkout with the current Go version in [docs/stack.md](docs/stack.md) or newer:
 
 ```sh
 make build

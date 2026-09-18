@@ -9,9 +9,18 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      # macos-latest is macOS 26 arm64 with Xcode 26.6 by default, verified 2026-09-18.
+      - uses: actions/checkout@v7 # v7.0.1 released 2026-07-20, verified 2026-09-18.
+      - name: Verify Apple toolchain
+        run: |
+          xcode-select -p
+          xcodebuild -version
+          swift --version
       - name: Install XcodeGen
-        run: brew install xcodegen
+        # XcodeGen 2.46.0 released 2026-07-16, verified 2026-09-18.
+        run: |
+          brew install xcodegen
+          xcodegen --version
       - name: Test shared package
         run: swift test --package-path apple/BoxdeckKit
       - name: Generate Xcode project
@@ -26,7 +35,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent .work/ios-derived/Build/Products/Debug-iphonesimulator/Boxdeck.app .work/artifacts/Boxdeck-iphonesimulator.zip
           ditto -c -k --sequesterRsrc --keepParent .work/watch-derived/Build/Products/Debug-watchsimulator/BoxdeckWatch.app .work/artifacts/BoxdeckWatch-watchsimulator.zip
       - name: Upload simulator apps
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7 # v7.0.1 released 2026-04-10, verified 2026-09-18.
         with:
           name: boxdeck-apple-simulator-apps
           path: .work/artifacts/*.zip

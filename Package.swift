@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.3
 
 import PackageDescription
 
@@ -13,13 +13,15 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "BoxdeckBar",
-            path: "macos/BoxdeckBar"
+            path: "macos/BoxdeckBar",
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(
             name: "BoxdeckBarTests",
             dependencies: ["BoxdeckBar"],
             path: "macos/BoxdeckBarTests",
-            resources: [.copy("Fixtures")]
+            resources: [.copy("Fixtures")],
+            swiftSettings: [.swiftLanguageMode(.v5)]
         )
     ]
 )

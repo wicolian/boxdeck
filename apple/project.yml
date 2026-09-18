@@ -16,7 +16,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck
-        SWIFT_VERSION: "5.10"
+        SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
     info:
       path: Boxdeck/Info.plist
@@ -40,7 +40,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch
-        SWIFT_VERSION: "5.10"
+        SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
         INFOPLIST_FILE: BoxdeckWatchContainer/Info.plist
   BoxdeckWatch Extension:
@@ -55,7 +55,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch.extension
-        SWIFT_VERSION: "5.10"
+        SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
         INFOPLIST_FILE: BoxdeckWatch/Info.plist
   BoxdeckWatch Complication:
@@ -68,7 +68,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch.complication
-        SWIFT_VERSION: "5.10"
+        SWIFT_VERSION: "6.0"
         CODE_SIGNING_ALLOWED: NO
 schemes:
   Boxdeck:

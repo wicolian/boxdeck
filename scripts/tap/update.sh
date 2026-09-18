@@ -32,14 +32,14 @@ s/REPLACE_DARWIN_ARM64/$darwin_arm64/g
 s/REPLACE_LINUX_AMD64/$linux_amd64/g
 s/REPLACE_LINUX_ARM64/$linux_arm64/g
 s/REPLACE_BAR_DARWIN/$bar_darwin/g
-s/0.1.0/$VERSION/g
+s/__VERSION__/$VERSION/g
 EOF
 
 cat > "$TMP/boxdeck.rb" <<'EOF'
 class Boxdeck < Formula
   desc "Live console for a remote dev box"
   homepage "https://github.com/wicolian/boxdeck"
-  version "0.1.0"
+  version "__VERSION__"
 
   on_macos do
     if Hardware::CPU.arm?
@@ -65,6 +65,11 @@ class Boxdeck < Formula
     bin.install Dir["boxdeck*"][0] => "boxdeck"
   end
 
+  livecheck do
+    url "https://github.com/wicolian/boxdeck"
+    strategy :github_latest
+  end
+
   service do
     run [opt_bin/"boxdeck", "serve"]
     keep_alive true
@@ -75,13 +80,18 @@ sed -f "$sed_script" "$TMP/boxdeck.rb" > "$ROOT/scripts/tap/Formula/boxdeck.rb"
 
 cat > "$TMP/boxdeck-bar.rb" <<'EOF'
 cask "boxdeck-bar" do
-  version "0.1.0"
+  version "__VERSION__"
   sha256 "REPLACE_BAR_DARWIN"
 
   url "https://github.com/wicolian/boxdeck/releases/download/v#{version}/boxdeck-bar_darwin_universal.zip"
   name "boxdeck-bar"
   desc "Cross-platform menu bar client for boxdeck"
   homepage "https://github.com/wicolian/boxdeck"
+
+  livecheck do
+    url "https://github.com/wicolian/boxdeck"
+    strategy :github_latest
+  end
 
   app "boxdeck-bar.app"
 end
