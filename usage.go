@@ -2,14 +2,18 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -239,10 +243,18 @@ func (s *usageService) ensureScan(ctx context.Context) {
 	}()
 }
 
+// usageSnapshotScanGap is the shortest time between scans that a snapshot request can
+// trigger. The alert loop and the menu bar ask every few seconds; the ticker handles the
+// minute cadence while someone is watching.
+const usageSnapshotScanGap = 30 * time.Second
+
 func (s *usageService) snapshot(ctx context.Context, days int) usageResponse {
 	s.lastWatch.Store(s.now().UnixNano())
 	if s.started.Load() {
-		s.ensureScan(ctx)
+		lastScan := time.Unix(0, s.lastScan.Load())
+		if s.lastScan.Load() == 0 || s.now().Sub(lastScan) >= usageSnapshotScanGap {
+			s.ensureScan(ctx)
+		}
 	}
 	s.mu.RLock()
 	store := cloneUsageStore(s.store)
@@ -256,17 +268,35 @@ func (s *usageService) snapshot(ctx context.Context, days int) usageResponse {
 	return snapshotFromStore(store, days, s.now())
 }
 
+// cloneUsageStore copies the maps and slices that a scan rewrites or a snapshot reads. The
+// per file event slices are shared: parseUsageFile builds each one once and nothing appends
+// to it afterwards, and copying 100k events through JSON on every five second poll is what
+// used to keep the server busy.
 func cloneUsageStore(store usageStore) usageStore {
-	b, _ := json.Marshal(store)
-	var copy usageStore
-	if json.Unmarshal(b, &copy) != nil {
-		return emptyUsageStore()
+	copy := store
+	copy.Files = make(map[string]usageFile, len(store.Files))
+	for key, file := range store.Files {
+		copy.Files[key] = file
 	}
-	if copy.Files == nil {
-		copy.Files = map[string]usageFile{}
+	copy.Days = make(map[string]usageDay, len(store.Days))
+	for key, day := range store.Days {
+		if day.Models != nil {
+			models := make(map[string]usageModelDay, len(day.Models))
+			for model, row := range day.Models {
+				models[model] = row
+			}
+			day.Models = models
+		}
+		copy.Days[key] = day
 	}
-	if copy.Days == nil {
-		copy.Days = map[string]usageDay{}
+	copy.QuotaHistory = append([]quotaSample(nil), store.QuotaHistory...)
+	if store.ClaudeQuota.Opus != nil {
+		opus := *store.ClaudeQuota.Opus
+		copy.ClaudeQuota.Opus = &opus
+	}
+	if store.ClaudeQuota.Sonnet != nil {
+		sonnet := *store.ClaudeQuota.Sonnet
+		copy.ClaudeQuota.Sonnet = &sonnet
 	}
 	return copy
 }
@@ -377,7 +407,10 @@ func scanStoreRoots(ctx context.Context, store *usageStore, claudeRoot, codexRoo
 				if errors.Is(err, os.ErrNotExist) {
 					return nil
 				}
-				return err
+				if entry != nil && entry.IsDir() {
+					return fs.SkipDir
+				}
+				return nil
 			}
 			if ctx.Err() != nil {
 				return ctx.Err()
@@ -390,7 +423,7 @@ func scanStoreRoots(ctx context.Context, store *usageStore, claudeRoot, codexRoo
 			}
 			info, err := entry.Info()
 			if err != nil {
-				return err
+				return nil
 			}
 			key := filepath.Clean(path)
 			seen[key] = true
@@ -400,7 +433,11 @@ func scanStoreRoots(ctx context.Context, store *usageStore, claudeRoot, codexRoo
 			}
 			updated, err := parseUsageFile(key, provider)
 			if err != nil {
-				return err
+				// One unreadable file must not stop the scan or force a full reparse of every
+				// other file on the next tick. Record it at its current size so it is retried
+				// only when it changes.
+				log.Printf("usage: skip %s: %v", key, err)
+				updated = usageFile{Provider: provider, Events: []usageEvent{}}
 			}
 			updated.Size = info.Size()
 			updated.Offset = info.Size()
@@ -430,8 +467,7 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 		return file, err
 	}
 	defer f.Close()
-	scanner := bufio.NewScanner(io.LimitReader(f, 128<<20))
-	scanner.Buffer(make([]byte, 4096), 8<<20)
+	scanner := newLineScanner(io.LimitReader(f, 128<<20), 8<<20)
 	if provider == "claude" {
 		messages := map[string]usageEvent{}
 		anonymous := 0
@@ -757,8 +793,23 @@ func countSessions(files map[string]usageFile, provider string, since, until tim
 	return count
 }
 
+// readClaudeCredentials returns the Claude Code login JSON. Linux keeps it in
+// ~/.claude/.credentials.json; macOS keeps it in the login Keychain under the
+// "Claude Code-credentials" service, which the security tool can read for the same user.
+func readClaudeCredentials(ctx context.Context, path string) ([]byte, error) {
+	b, err := os.ReadFile(path)
+	if err == nil || !errors.Is(err, os.ErrNotExist) || runtime.GOOS != "darwin" {
+		return b, err
+	}
+	out := strings.TrimSpace(command(ctx, 3*time.Second, "security", "find-generic-password", "-s", "Claude Code-credentials", "-w"))
+	if out == "" {
+		return nil, os.ErrNotExist
+	}
+	return []byte(out), nil
+}
+
 func refreshClaudeQuota(ctx context.Context, store *usageStore, credentialsPath string, client *http.Client, now time.Time) {
-	b, err := os.ReadFile(credentialsPath)
+	b, err := readClaudeCredentials(ctx, credentialsPath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return
@@ -792,6 +843,14 @@ func refreshClaudeQuota(ctx context.Context, store *usageStore, credentialsPath 
 		return
 	}
 	defer response.Body.Close()
+	if response.StatusCode == http.StatusTooManyRequests {
+		store.ClaudeQuota.Error = "Claude quota is rate limited, last sample kept"
+		return
+	}
+	if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden {
+		store.ClaudeQuota.Error = "open Claude Code once to refresh the login"
+		return
+	}
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
 		store.ClaudeQuota.Error = "Claude quota is temporarily unavailable"
 		return
@@ -838,3 +897,65 @@ func deviceName() string {
 	}
 	return "this device"
 }
+
+// lineScanner reads newline separated records like bufio.Scanner but skips a line that is
+// longer than max instead of stopping with "token too long". Session logs can hold a single
+// multi megabyte line (a pasted image, a huge tool result), and one such line must not hide
+// every other event in the file.
+type lineScanner struct {
+	reader  *bufio.Reader
+	max     int
+	line    []byte
+	err     error
+	skipped int
+}
+
+func newLineScanner(r io.Reader, max int) *lineScanner {
+	return &lineScanner{reader: bufio.NewReaderSize(r, 64<<10), max: max}
+}
+
+func (s *lineScanner) Scan() bool {
+	for {
+		s.line = s.line[:0]
+		tooLong := false
+		for {
+			chunk, err := s.reader.ReadSlice('\n')
+			if !tooLong {
+				if len(s.line)+len(chunk) > s.max {
+					tooLong = true
+					s.line = s.line[:0]
+				} else {
+					s.line = append(s.line, chunk...)
+				}
+			}
+			if err == nil {
+				break
+			}
+			if errors.Is(err, bufio.ErrBufferFull) {
+				continue
+			}
+			if errors.Is(err, io.EOF) {
+				if len(s.line) == 0 && !tooLong {
+					return false
+				}
+				s.err = nil
+				if tooLong {
+					s.skipped++
+					return false
+				}
+				return true
+			}
+			s.err = err
+			return false
+		}
+		if tooLong {
+			s.skipped++
+			continue
+		}
+		s.line = bytes.TrimRight(s.line, "\r\n")
+		return true
+	}
+}
+
+func (s *lineScanner) Bytes() []byte { return s.line }
+func (s *lineScanner) Err() error    { return s.err }

@@ -69,6 +69,22 @@ func command(ctx context.Context, timeout time.Duration, name string, args ...st
 func sh(ctx context.Context, name string, args ...string) string {
 	return command(ctx, 4*time.Second, name, args...)
 }
+
+// shLenient is sh for tools such as lsof that exit nonzero when one of many requested items
+// is not visible, while still printing everything that is.
+func shLenient(ctx context.Context, name string, args ...string) string {
+	ctx, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.WaitDelay = time.Second
+	out := &boundedOutput{limit: 8 << 20}
+	cmd.Stdout = out
+	_ = cmd.Run()
+	if ctx.Err() != nil {
+		return ""
+	}
+	return out.String()
+}
 func number(s string) float64 { n, _ := strconv.ParseFloat(s, 64); return n }
 func integer(s string) int    { n, _ := strconv.Atoi(s); return n }
 func tilde(p, home string) string {
@@ -187,11 +203,27 @@ func (c *collectors) title(port int) string {
 }
 func (c *collectors) getPorts() []portInfo {
 	return c.ports.get(3*time.Second, func() []portInfo {
-		list := parseSS(sh(c.ctx, "ss", "-H", "-ltnp"), c.cfg.Hide)
+		var list []portInfo
+		cwds := map[int]string{}
+		if runtime.GOOS == "darwin" {
+			list = parseLsofListeners(shLenient(c.ctx, "lsof", "-nP", "-iTCP", "-sTCP:LISTEN", "-F", "pcn"), c.cfg.Hide)
+			pids := make([]int, 0, len(list))
+			for _, p := range list {
+				if p.PID > 0 {
+					pids = append(pids, p.PID)
+				}
+			}
+			cwds = darwinCWDs(c.ctx, pids)
+		} else {
+			list = parseSS(sh(c.ctx, "ss", "-H", "-ltnp"), c.cfg.Hide)
+		}
 		for i := range list {
 			p := &list[i]
 			if p.PID > 0 {
-				cwd, _ := os.Readlink(fmt.Sprintf("/proc/%d/cwd", p.PID))
+				cwd, ok := cwds[p.PID]
+				if !ok {
+					cwd = processCWD(p.PID)
+				}
 				p.CWD = tilde(cwd, c.cfg.home)
 			}
 			p.Label = c.cfg.Known[strconv.Itoa(p.Port)]
@@ -227,7 +259,12 @@ func parsePS(out string) []process {
 func (c *collectors) getProcesses() []process {
 	return c.processes.get(3*time.Second, func() []process {
 		if runtime.GOOS == "darwin" {
-			return []process{}
+			rows := darwinProcesses(c.ctx)
+			list := make([]process, 0, len(rows))
+			for _, row := range rows {
+				list = append(list, row.process())
+			}
+			return list
 		}
 		return parsePS(sh(c.ctx, "ps", "-eo", "pid=,ppid=,etimes=,pcpu=,rss=,args="))
 	})
@@ -295,6 +332,9 @@ type agentInfo struct {
 }
 
 func paneFromEnvironment(pid int) string {
+	if runtime.GOOS == "darwin" {
+		return darwinEnvironmentValue(pid, "HERDR_PANE_ID")
+	}
 	b, err := os.ReadFile(fmt.Sprintf("/proc/%d/environ", pid))
 	if err != nil {
 		return ""
@@ -335,8 +375,7 @@ func mergeAgents(all []process, panes []tmuxPane, h herdrState, c config, paneID
 		if m := modelRE.FindStringSubmatch(p.Args); m != nil {
 			a.Model = m[1]
 		}
-		cwd, _ := os.Readlink(fmt.Sprintf("/proc/%d/cwd", p.PID))
-		a.CWD = tilde(cwd, c.home)
+		a.CWD = tilde(processCWD(p.PID), c.home)
 		cur := p
 		for depth := 0; cur.PID != 0 && depth < 12; depth++ {
 			if pane, ok := paneByPID[cur.PID]; ok {

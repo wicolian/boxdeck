@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -122,6 +123,9 @@ func TestUsageQuotaParsingPreservesNullModelWindows(t *testing.T) {
 }
 
 func TestUsageSnapshotLimitsDaysAndIncludesLocalDay(t *testing.T) {
+	previous := configuredDevice
+	configuredDevice = "box"
+	t.Cleanup(func() { configuredDevice = previous })
 	store := usageStore{Days: map[string]usageDay{
 		"claude|2026-09-15": {Provider: "claude", Day: "2026-09-15", Tokens: tokenTotals{In: 1}},
 		"claude|2026-09-16": {Provider: "claude", Day: "2026-09-16", Tokens: tokenTotals{In: 2}},
@@ -175,4 +179,95 @@ func mustRead(t *testing.T, path string) []byte {
 		t.Fatal(err)
 	}
 	return b
+}
+
+func TestUsageScannerSkipsOversizedLinesAndKeepsGoing(t *testing.T) {
+	root := t.TempDir()
+	claude := filepath.Join(root, "claude", "projects", "demo")
+	if err := os.MkdirAll(claude, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	fixture, err := os.ReadFile("testdata/usage/claude-session.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A pasted image or a huge tool result is one JSON line far past the 8 MiB record cap.
+	huge := `{"type":"user","message":{"content":"` + strings.Repeat("x", 9<<20) + `"}}` + "\n"
+	if err := os.WriteFile(filepath.Join(claude, "big.jsonl"), append([]byte(huge), fixture...), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(claude, "session.jsonl"), fixture, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 9, 17, 12, 0, 0, 0, time.UTC)
+	store, err := scanUsageRoots(filepath.Join(root, "claude"), filepath.Join(root, "codex"), pricingConfig{}, now)
+	if err != nil {
+		t.Fatalf("scan must not fail on a long line: %v", err)
+	}
+	if len(store.Files) != 2 {
+		t.Fatalf("files = %d, want 2", len(store.Files))
+	}
+	if day := store.Days["claude|2026-09-17"]; day.Tokens.In != 20 || day.Sessions != 2 {
+		t.Fatalf("events after the long line were lost: %+v", day)
+	}
+	big := store.Files[filepath.Join(claude, "big.jsonl")]
+	if big.Offset != big.Size || big.Size == 0 {
+		t.Fatalf("oversized file was not recorded at its size: %+v", big)
+	}
+}
+
+func TestLineScanner(t *testing.T) {
+	input := "one\r\n" + strings.Repeat("y", 100) + "\nthree\n" + strings.Repeat("z", 200) + "\nfive"
+	scanner := newLineScanner(strings.NewReader(input), 50)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, string(scanner.Bytes()))
+	}
+	if scanner.Err() != nil {
+		t.Fatal(scanner.Err())
+	}
+	if strings.Join(lines, ",") != "one,three,five" {
+		t.Fatalf("lines = %q", lines)
+	}
+	if scanner.skipped != 2 {
+		t.Fatalf("skipped = %d", scanner.skipped)
+	}
+	empty := newLineScanner(strings.NewReader(""), 50)
+	if empty.Scan() {
+		t.Fatal("empty input produced a line")
+	}
+}
+
+func TestUsageSnapshotDoesNotRescanEveryCall(t *testing.T) {
+	home := t.TempDir()
+	cfg := config{Host: "box", home: home, path: filepath.Join(home, "config.json")}
+	service := newUsageService(cfg)
+	service.started.Store(true)
+	now := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return now }
+	service.lastScan.Store(now.Add(-5 * time.Second).UnixNano())
+	service.scanning.Store(true) // any scan request would be refused, so watch the flag instead
+	_ = service.snapshot(context.Background(), 7)
+	if !service.scanning.Load() {
+		t.Fatal("scan flag changed")
+	}
+	service.scanning.Store(false)
+	_ = service.snapshot(context.Background(), 7)
+	if service.scanning.Load() {
+		t.Fatal("a snapshot five seconds after a scan started another scan")
+	}
+	service.lastScan.Store(now.Add(-2 * time.Minute).UnixNano())
+	_ = service.snapshot(context.Background(), 7)
+	deadline := time.Now().Add(2 * time.Second)
+	started := false
+	for time.Now().Before(deadline) {
+		if service.lastScan.Load() > now.Add(-2*time.Minute).UnixNano() {
+			started = true
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !started {
+		t.Fatal("a snapshot two minutes after the last scan did not scan")
+	}
 }

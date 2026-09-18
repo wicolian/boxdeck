@@ -73,13 +73,21 @@ Open file editor preview:
 |:---:|:---:|
 | ![Git Graph](./captures/git-graph-after.png) | ![Files phone](./captures/files-phone-after.png) |
 
-No Node runtime, npm packages or Go dependencies. Linux is the target; macOS
-builds provide partial health data. `ss`, `ps`, `tmux`, `docker` and `find` supply
-optional machine details. Their results are cached. The shared SSE sampler reads
-Linux `/proc` once per second while connected and stops when no stream clients
-remain. It reads process counters directly, with no `ps` in the one-second loop.
-Browser connections stop in a hidden tab. The older state health sample slows
-from 3 to 30 seconds after 15 seconds without a poll.
+No Node runtime, npm packages or Go dependencies. Linux and macOS are both
+supported. On Linux, `ss`, `ps`, `tmux`, `docker` and `find` supply optional
+machine details and the shared SSE sampler reads `/proc` once per second while
+connected, with no `ps` in the one-second loop. On macOS the same views come
+from `ps`, `lsof`, `sysctl`, `vm_stat` and `netstat`: agents with their working
+directory and model, listening ports with their process, CPU, memory, swap,
+load, uptime, network rates and the process list. Per core CPU and disk I/O
+rates are Linux only. Results are cached, browser connections stop in a hidden
+tab, and the older state health sample slows from 3 to 30 seconds after 15
+seconds without a poll. The Claude quota reads the Claude Code login from
+`~/.claude/.credentials.json` on Linux and from the login Keychain on macOS.
+
+| Agents on a Mac | Processes on a Mac |
+|:---:|:---:|
+| ![Agents on macOS](./captures/agents-macos.png) | ![Processes on macOS](./captures/processes-macos.png) |
 
 Current toolchain, runner, and Apple support versions are maintained in
 [docs/stack.md](docs/stack.md).
