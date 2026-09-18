@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.wicolian.boxdeck.notifications.AlertNotifications
 import dev.wicolian.boxdeck.ui.MainScreen
 import org.unifiedpush.android.connector.UnifiedPush
@@ -31,8 +32,9 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             BoxdeckTheme {
+                val storeBoxes by (application as BoxdeckApplication).boxStore.boxes.collectAsStateWithLifecycle()
                 LaunchedEffect(Unit) { viewModel.startEvents() }
-                LaunchedEffect((application as BoxdeckApplication).boxStore.boxes.value) { WearSync.publish(this@MainActivity, (application as BoxdeckApplication).boxStore.boxes.value) }
+                LaunchedEffect(storeBoxes) { WearSync.publish(this@MainActivity, storeBoxes) }
                 MainScreen(viewModel)
             }
         }
