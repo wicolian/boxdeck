@@ -40,12 +40,12 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug :wear:assembleDebug :core:test :app:lint :wear:lint
       - name: Upload phone APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-phone-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
       - name: Upload Wear APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-wear-debug
           path: android/wear/build/outputs/apk/debug/wear-debug.apk
