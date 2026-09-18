@@ -127,8 +127,11 @@ final class AppModel: ObservableObject {
         guard eventTask == nil else { return }
         eventTask = Task { [weak self] in
             guard let self else { return }
-            for try await _ in client.events() {
-                await self.refresh()
+            do {
+                for try await _ in client.events() {
+                    await self.refresh()
+                }
+            } catch {
             }
             self.eventTask = nil
         }
@@ -139,7 +142,10 @@ final class AppModel: ObservableObject {
         ntfyTask = Task { [weak self] in
             guard let self else { return }
             let client = NtfyClient()
-            for try await _ in client.stream(server: url, topic: self.ntfyTopic, token: self.ntfyToken) { await self.refresh() }
+            do {
+                for try await _ in client.stream(server: url, topic: self.ntfyTopic, token: self.ntfyToken) { await self.refresh() }
+            } catch {
+            }
             self.ntfyTask = nil
         }
     }
