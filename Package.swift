@@ -20,8 +20,8 @@ let package = Package(
             name: "BoxdeckBarTests",
             dependencies: ["BoxdeckBar"],
             path: "macos/BoxdeckBarTests",
-            swiftSettings: [.swiftLanguageMode(.v5)],
-            resources: [.copy("Fixtures")]
+            resources: [.copy("Fixtures")],
+            swiftSettings: [.swiftLanguageMode(.v5)]
         )
     ]
 )
