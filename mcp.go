@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -485,7 +486,19 @@ func mcpToolError(message string) mcpToolResult {
 
 func mcpJSONResult(value any) mcpToolResult {
 	b, _ := json.Marshal(value)
-	return mcpToolResult{ResultType: "complete", Content: []mcpToolContent{{Type: "text", Text: string(b)}}, Structured: value}
+	// structuredContent must be a JSON object (clients such as Claude Code reject an array as a
+	// malformed result), so a list is wrapped as {"items": [...], "count": n}.
+	structured := value
+	if rv := reflect.ValueOf(value); value == nil || rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
+		n := 0
+		if value != nil {
+			n = rv.Len()
+		}
+		structured = object{"items": value, "count": n}
+	} else if rv.Kind() != reflect.Map && rv.Kind() != reflect.Struct && !(rv.Kind() == reflect.Ptr && rv.Elem().Kind() == reflect.Struct) {
+		structured = object{"value": value}
+	}
+	return mcpToolResult{ResultType: "complete", Content: []mcpToolContent{{Type: "text", Text: string(b)}}, Structured: structured}
 }
 
 func mcpSchema(properties map[string]any, required ...string) map[string]any {

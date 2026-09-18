@@ -168,3 +168,17 @@ func TestConnectMintsLabeledTokenAndTogglesRun(t *testing.T) {
 		t.Fatalf("allowRun toggle: %d %s", toggleResponse.Code, toggleResponse.Body.String())
 	}
 }
+
+func TestMCPListResultsAreObjects(t *testing.T) {
+	r := mcpJSONResult([]string{"a", "b"})
+	m, ok := r.Structured.(object)
+	if !ok || m["count"] != 2 {
+		t.Fatalf("list structuredContent = %#v, want an object with count 2", r.Structured)
+	}
+	if _, ok := mcpJSONResult(object{"x": 1}).Structured.(object); !ok {
+		t.Fatal("object results must pass through")
+	}
+	if m, ok := mcpJSONResult(nil).Structured.(object); !ok || m["count"] != 0 {
+		t.Fatalf("nil result = %#v", mcpJSONResult(nil).Structured)
+	}
+}
