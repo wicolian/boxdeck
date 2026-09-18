@@ -45,10 +45,10 @@ struct SettingsView: View {
     }
 
     private func saveBox() {
-        do { try model.store.save(BoxConnection(name: boxName.isEmpty ? (URL(string: boxURL)?.host ?? "Box") : boxName, url: boxURL, token: token)); boxName = ""; boxURL = ""; token = ""; Task { await model.refresh() } } catch { error = error.localizedDescription }
+        do { try model.store.save(BoxConnection(name: boxName.isEmpty ? (URL(string: boxURL)?.host ?? "Box") : boxName, url: boxURL, token: token)); boxName = ""; boxURL = ""; token = ""; Task { await model.refresh() } } catch let caught { error = caught.localizedDescription }
     }
 
     private func handlePairing(_ url: URL) {
-        do { let pairing = try PairingURL.parse(url); try model.add(pairing); Task { await model.refresh() } } catch { error = error.localizedDescription }
+        do { let pairing = try PairingURL.parse(url); try model.add(pairing); Task { await model.refresh() } } catch let caught { error = caught.localizedDescription }
     }
 }
