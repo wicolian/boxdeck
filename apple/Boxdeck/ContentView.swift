@@ -1,5 +1,4 @@
 import SwiftUI
-import BoxdeckKit
 
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
@@ -75,12 +74,14 @@ struct DeckCard: View {
     let deck: BoxSnapshot
     var body: some View {
         BridgeCard { VStack(alignment: .leading, spacing: 8) { HStack { Text(deck.name).font(.headline); Spacer(); Text(deck.ok ? "online" : "offline").foregroundStyle(deck.ok ? BridgeTheme.moss : BridgeTheme.rust).font(.caption) }; MonoText(value: "CPU \(Int(deck.health.cpu))%  mem \(memory(deck.health))"); Text("\(deck.agents) agents  \(deck.ports) ports").font(.caption).foregroundStyle(.secondary); HStack { ForEach(deck.usage.quota.keys.sorted(), id: \.self) { provider in Text(provider).font(.caption2).foregroundStyle(BridgeTheme.amber) } } }
+        }
     }
 }
 
 struct PeerCard: View {
     let device: AppModel.DisplayDevice
     var body: some View { BridgeCard { HStack { Circle().fill(device.online ? BridgeTheme.moss : BridgeTheme.rust).frame(width: 9, height: 9); VStack(alignment: .leading) { Text(device.name).font(.headline); Text(device.peer?.os.isEmpty == false ? device.peer!.os : "tailnet device").font(.caption).foregroundStyle(.secondary); Text(device.peer?.lastSeen.isEmpty == false ? "last seen \(device.peer!.lastSeen)" : "No boxdeck installed").font(.caption2).foregroundStyle(.secondary) }; Spacer(); Text(device.peer?.boxdeck == true ? "boxdeck" : "install boxdeck").font(.caption).foregroundStyle(BridgeTheme.amber) } }
+    }
 }
 
 func memory(_ health: HealthSnapshot) -> String { health.memTotal == 0 ? "n/a" : String(format: "%.1f/%.1f GB", Double(health.memUsed) / 1_073_741_824, Double(health.memTotal) / 1_073_741_824) }

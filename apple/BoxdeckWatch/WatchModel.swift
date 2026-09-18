@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 import WatchConnectivity
 import UserNotifications
-import BoxdeckKit
 
 @MainActor
 final class WatchModel: NSObject, ObservableObject, WCSessionDelegate {

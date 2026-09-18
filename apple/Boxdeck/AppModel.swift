@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 import UserNotifications
 import UIKit
-import BoxdeckKit
 
 @MainActor
 final class AppModel: ObservableObject {

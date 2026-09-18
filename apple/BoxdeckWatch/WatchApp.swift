@@ -1,5 +1,4 @@
 import SwiftUI
-import BoxdeckKit
 
 @main
 struct BoxdeckWatchApp: App {
@@ -26,6 +25,8 @@ struct WatchNeedsYouView: View {
 
 struct WatchBoxesView: View {
     @EnvironmentObject private var model: WatchModel
-    var body: some View { NavigationStack { List(model.boxes) { box in VStack(alignment: .leading, spacing: 4) { HStack { Text(box.name).font(.headline); Spacer(); Circle().fill(box.ok ? .green : .red).frame(width: 7, height: 7) }; Text("CPU \(Int(box.health.cpu))%  mem \(memory(box.health))").font(.system(.caption, design: .monospaced)); Text("\(box.agents) agents  quota \(quota(box))").font(.caption).foregroundStyle(.secondary) } }.navigationTitle("Boxes") } }
+    var body: some View { NavigationStack { List(model.boxes) { box in VStack(alignment: .leading, spacing: 4) { HStack { Text(box.name).font(.headline); Spacer(); Circle().fill(box.ok ? .green : .red).frame(width: 7, height: 7) }; Text("CPU \(Int(box.health.cpu))%  mem \(watchMemory(box.health))").font(.system(.caption, design: .monospaced)); Text("\(box.agents) agents  quota \(quota(box))").font(.caption).foregroundStyle(.secondary) } }.navigationTitle("Boxes") } }
     private func quota(_ box: BoxSnapshot) -> String { box.usage.quota.compactMap { _, value in value?.fiveHour.map { "\(Int($0.pct))%" } }.first ?? "n/a" }
 }
+
+private func watchMemory(_ health: HealthSnapshot) -> String { health.memTotal == 0 ? "n/a" : String(format: "%.1f/%.1f GB", Double(health.memUsed) / 1_073_741_824, Double(health.memTotal) / 1_073_741_824) }

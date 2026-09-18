@@ -1,5 +1,4 @@
 import SwiftUI
-import BoxdeckKit
 
 struct BoxDetailView: View {
     @EnvironmentObject private var model: AppModel

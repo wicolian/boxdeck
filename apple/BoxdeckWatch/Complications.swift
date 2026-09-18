@@ -1,6 +1,5 @@
 import WidgetKit
 import SwiftUI
-import BoxdeckKit
 
 struct BoxdeckComplicationEntry: TimelineEntry {
     let date: Date
