@@ -93,7 +93,7 @@ cask "boxdeck-bar" do
     strategy :github_latest
   end
 
-  app "boxdeck-bar.app"
+  app "BoxdeckBar.app"
 end
 EOF
 sed -f "$sed_script" "$TMP/boxdeck-bar.rb" > "$ROOT/scripts/tap/Casks/boxdeck-bar.rb"

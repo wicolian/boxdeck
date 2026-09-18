@@ -1,0 +1,38 @@
+name: Go
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'apple/**'
+      - 'android/**'
+      - 'macos/**'
+      - 'docs/**'
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - 'apple/**'
+      - 'android/**'
+      - 'macos/**'
+      - 'docs/**'
+      - '**.md'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # ubuntu-latest is Ubuntu 24.04, verified 2026-09-18.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7 # v7.0.1 released 2026-07-20, verified 2026-09-18.
+      - uses: actions/setup-go@v7 # v7.0.0 released 2026-07-16, verified 2026-09-18.
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Vet and test server
+        run: go vet ./... && go test ./...
+      - name: Vet and test bar
+        run: go vet ./... && go test ./...
+        working-directory: cmd/boxdeck-bar

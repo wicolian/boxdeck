@@ -3,8 +3,18 @@ name: macOS bar
 on:
   workflow_dispatch:
   push:
-    branches:
-      - phase5-swift
+    branches: [main]
+    paths:
+      - 'macos/**'
+      - 'Package.swift'
+      - 'packaging/macos/**'
+      - '.github/workflows/macos-bar.yml'
+  pull_request:
+    paths:
+      - 'macos/**'
+      - 'Package.swift'
+      - 'packaging/macos/**'
+      - '.github/workflows/macos-bar.yml'
 
 permissions:
   contents: read
