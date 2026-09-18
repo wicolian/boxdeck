@@ -1,6 +1,6 @@
 cask "boxdeck-bar" do
-  version "0.3.0"
-  sha256 "c11a2547e82b0826d1a50e17a4e56eab026a96afe7e754fb18eb4f65e0dc423a"
+  version "0.4.0"
+  sha256 "34de792eb13f22c5e539522ce0182256be811c6db58c88caa559ca7d0c681075"
 
   url "https://github.com/wicolian/boxdeck/releases/download/v#{version}/boxdeck-bar_darwin_universal.zip"
   name "boxdeck-bar"

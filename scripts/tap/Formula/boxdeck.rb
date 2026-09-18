@@ -1,25 +1,25 @@
 class Boxdeck < Formula
   desc "Live console for a remote dev box"
   homepage "https://github.com/wicolian/boxdeck"
-  version "0.3.0"
+  version "0.4.0"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/wicolian/boxdeck/releases/download/v#{version}/boxdeck_darwin_arm64"
-      sha256 "ab002d6250f555f5d68b8513369e374d8389b1a33f5ccdd500e52a316923f340"
+      sha256 "42ab2c4d72dfdaaf5918c954e4917d7f11a24e559582c38b3a3b425bf489671d"
     else
       url "https://github.com/wicolian/boxdeck/releases/download/v#{version}/boxdeck_darwin_amd64"
-      sha256 "45718bd3646b41b71e55860abf3cdf350e862c30e05a0e56a8355cb82a8cf246"
+      sha256 "1495583cbd0ea5570d1014525340e01989233ad8e23c08015d0f0733234b23ce"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm?
       url "https://github.com/wicolian/boxdeck/releases/download/v#{version}/boxdeck_linux_arm64"
-      sha256 "c49fbb61c5bd312c92d0242a6a01eaa1f9363efc6ba6ca73014fbdd1154cebdd"
+      sha256 "2ae8a370f09105d2b631480129138c9cb674443b26e3078b15123b722c00cb56"
     else
       url "https://github.com/wicolian/boxdeck/releases/download/v#{version}/boxdeck_linux_amd64"
-      sha256 "eda4abb09a9cbc01fe1a924f3e00ecf204322d766ab9f5c3e0bd14a38e08b38a"
+      sha256 "790c4822f0e2338b1f1a959dcc64d00cc48341ebfbec44ef3f797b9b88d41c38"
     end
   end
 
