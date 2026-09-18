@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">boxdeck</string>
+    <string name="notification_channel_alerts">Boxdeck alerts</string>
+</resources>

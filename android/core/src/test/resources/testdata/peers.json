@@ -1,0 +1,5 @@
+[
+  {"name":"discovered","url":"http://discovered:8100","boxdeck":true,"online":true,"os":"linux"},
+  {"name":"phone","online":true,"os":"android","lastSeen":"2026-09-17T22:05:00Z"},
+  {"name":"offline","online":false,"os":"macos","lastSeen":"2026-09-17T19:05:00Z"}
+]
