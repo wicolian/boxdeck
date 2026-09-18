@@ -14,11 +14,14 @@ import (
 )
 
 func (a *app) tokenAuthed(r *http.Request) bool {
-	if len(a.cfg.Tokens) == 0 {
+	if len(a.cfg.Tokens) == 0 && !strings.HasPrefix(strings.TrimPrefix(strings.TrimSpace(r.Header.Get("Authorization")), "Bearer "), "act.") {
 		return false
 	}
 	scheme, token, ok := strings.Cut(strings.TrimSpace(r.Header.Get("Authorization")), " ")
 	if ok && strings.EqualFold(scheme, "Bearer") && token != "" && !strings.ContainsAny(token, " \t\r\n") {
+		if strings.HasPrefix(token, "act.") {
+			return a.actionTokenAllows(token, r)
+		}
 		return tokenMatches(a.cfg.Tokens, token)
 	}
 	if r.URL.Path == "/cdp" || strings.HasPrefix(r.URL.Path, "/cdp/") {

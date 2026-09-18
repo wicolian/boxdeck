@@ -269,8 +269,10 @@ private topic, then add this to the boxdeck config:
 Open the ntfy app, tap Subscribe, enter the same private topic, and done. The
 Alerts view can test the sink. Critical alerts carry the highest ntfy priority,
 the deck link, and action buttons for Approve, Yes, No, Interrupt and Snooze 2h.
-The buttons use the fleet token through the existing alert action endpoints.
-Keep the topic private and expose boxdeck only on a private tailnet or VPN.
+Each button carries a token minted for that one alert: it can only run that alert's own
+actions (and ack, snooze, resolve) and it expires after 24 hours. The fleet token never
+leaves the box. Keep the topic private anyway, and expose boxdeck only on a private
+tailnet or VPN.
 
 Alerts view captures:
 
@@ -293,9 +295,16 @@ incident. A recovery emits one info event:
 {"probes":[{"name":"ci","cmd":"gh run list ...","every":"5m","timeout":"30s"}]}
 ```
 
-The loopback-only inbox shortcut accepts `POST /api/alerts` with
-`X-Boxdeck-Local: 1` only when the TCP peer is 127.0.0.1 or ::1. Other clients
-must use the normal deck cookie, Basic authentication or bearer token.
+From any terminal on the box, without a token:
+
+```sh
+boxdeck alert --source tests --severity critical --title "Tests failed" --body "Open the log"
+npm test || boxdeck alert --source tests --severity critical --title "npm test failed"
+```
+
+It reads `~/.local/share/boxdeck/inbox-secret` (created by the deck, mode 600, so only your
+user can send) and posts to the loopback port with it in `X-Boxdeck-Local`. Other clients
+use the normal deck cookie, Basic authentication or a bearer token.
 
 ## One login
 

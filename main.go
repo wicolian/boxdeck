@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -54,6 +55,7 @@ type app struct {
 	gitStatusMemo map[string]gitStatusCache
 	apps          *appManager
 	alerts        *alertManager
+	inboxSecret   string
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -78,12 +80,17 @@ func newApp(cfg config, secret []byte) *app {
 	a.usage = newUsageService(cfg)
 	a.apps = newAppsManager(ctx, cfg)
 	a.alerts = newAlertManager(cfg)
+	if secret, err := ensureInboxSecret(cfg.home); err == nil {
+		a.inboxSecret = secret
+	} else {
+		log.Printf("inbox secret: %v", err)
+	}
 	for i := range a.alerts.cfg.Sinks {
 		if a.alerts.cfg.Sinks[i].DeckURL == "" {
 			a.alerts.cfg.Sinks[i].DeckURL = "http://" + cfg.Host + ":" + strconv.Itoa(int(cfg.Port))
 		}
-		a.alerts.cfg.Sinks[i].AuthToken = cfg.FleetToken
 	}
+	a.alerts.mintAction = func(alertID string) string { return a.mintActionToken(alertID, time.Now()) }
 	a.boxesMemo.failures = map[string]time.Time{}
 	return a
 }
@@ -134,7 +141,7 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.healthAPI(w, r)
 		return
 	}
-	if !a.authed(r) && !(r.Method == http.MethodPost && r.URL.Path == "/api/alerts" && isLoopbackAlertRequest(r)) {
+	if !a.authed(r) && !(r.Method == http.MethodPost && r.URL.Path == "/api/alerts" && a.isLocalInboxRequest(r)) {
 		a.unauthorized(w, r)
 		return
 	}
@@ -437,6 +444,8 @@ func main() {
 		}
 	} else if command == "app" {
 		err = appCommand(os.Args[2:])
+	} else if command == "alert" {
+		err = alertCommand(os.Args[2:])
 	} else {
 		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl|usage|app]")
 	}

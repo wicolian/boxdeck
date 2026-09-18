@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -246,6 +245,7 @@ type alertSnapshot struct {
 }
 
 type alertManager struct {
+	mintAction    func(alertID string) string
 	mu            sync.Mutex
 	cfg           alertConfig
 	path          string
@@ -1100,7 +1100,7 @@ func (m *alertManager) deliverAttempt(ctx context.Context, sink alertSink, alert
 		request.Header.Set("Priority", ntfyPriority(alert.Severity))
 		request.Header.Set("Tags", ntfyTag(alert.Severity))
 		request.Header.Set("Click", strings.TrimRight(sink.DeckURL, "/")+alert.Link)
-		request.Header.Set("Actions", ntfyActions(sink.DeckURL, sink.AuthToken, alert.Actions))
+		request.Header.Set("Actions", ntfyActions(sink.DeckURL, m.actionTokenFor(alert), alert.Actions))
 		if sink.Token != "" {
 			request.Header.Set("Authorization", "Bearer "+sink.Token)
 		}
@@ -1252,13 +1252,11 @@ func (a *app) startAlerts() {
 	}
 }
 
-func isLoopbackAlertRequest(r *http.Request) bool {
-	if r.Header.Get("X-Boxdeck-Local") != "1" {
-		return false
+// actionTokenFor returns a per alert token for notification buttons, or "" when the app has not
+// wired a minter (tests), in which case no Authorization header is sent at all.
+func (m *alertManager) actionTokenFor(alert Alert) string {
+	if m.mintAction == nil {
+		return ""
 	}
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		host = r.RemoteAddr
-	}
-	return net.ParseIP(host).IsLoopback()
+	return m.mintAction(alert.ID)
 }

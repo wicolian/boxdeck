@@ -3,6 +3,10 @@
   const addView = window.boxdeck && window.boxdeck.addView;
   if (!addView) return;
   const esc = (value) => String(value == null ? '' : value).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Alert links and action paths come from the server, but the inbox lets any local process file an
+  // alert, so only deck hash links and same origin paths are ever rendered.
+  var safeLink = function (u) { var s = String(u || '#/overview').trim(); return (/^#\//.test(s) || /^\/(?!\/)/.test(s)) ? s : '#/overview'; };
+  var safePath = function (p) { var s = String(p || '').trim(); return /^\/api\/[A-Za-z0-9_\-\/.]+$/.test(s) ? s : ''; };
   const api = async (path, options) => {
     const response = await fetch(path, Object.assign({cache: 'no-store'}, options || {}));
     const value = await response.json().catch(() => ({}));
@@ -46,11 +50,11 @@
   }
   function actionButton(action, alert) {
     const body = encodeURIComponent(JSON.stringify(action.body || {}));
-    return '<button class="alert-action" data-alert-path="' + esc(action.path) + '" data-alert-method="' + esc(action.method || 'POST') + '" data-alert-body="' + body + '">' + esc(action.label) + '</button>';
+    return '<button class="alert-action" data-alert-path="' + esc(safePath(action.path)) + '" data-alert-method="' + esc(action.method || 'POST') + '" data-alert-body="' + body + '">' + esc(action.label) + '</button>';
   }
   function card(alert) {
     const actions = (alert.actions || []).map((action) => actionButton(action, alert)).join('');
-    return '<article class="alert-card ' + esc(alert.severity) + '" data-alert-id="' + esc(alert.id) + '"><div class="alert-mark" aria-label="' + esc(alert.severity) + '"></div><div class="alert-main"><div class="alert-top"><strong>' + esc(alert.title) + '</strong><span class="alert-age">' + age(alert.at) + (alert.count > 1 ? ' / ' + alert.count : '') + '</span></div><p>' + esc(alert.body) + '</p><div class="alert-meta"><span>' + esc(alert.box || 'local') + '</span><span>' + esc(alert.rule) + '</span><a href="' + esc(alert.link || '#/overview') + '">Open</a></div><div class="alert-actions">' + actions + '<button data-alert-command="ack">Ack</button><button data-alert-command="snooze">Snooze</button><button data-alert-command="resolve">Resolve</button></div></div></article>';
+    return '<article class="alert-card ' + esc(alert.severity) + '" data-alert-id="' + esc(alert.id) + '"><div class="alert-mark" aria-label="' + esc(alert.severity) + '"></div><div class="alert-main"><div class="alert-top"><strong>' + esc(alert.title) + '</strong><span class="alert-age">' + age(alert.at) + (alert.count > 1 ? ' / ' + alert.count : '') + '</span></div><p>' + esc(alert.body) + '</p><div class="alert-meta"><span>' + esc(alert.box || 'local') + '</span><span>' + esc(alert.rule) + '</span><a href="' + esc(safeLink(alert.link)) + '">Open</a></div><div class="alert-actions">' + actions + '<button data-alert-command="ack">Ack</button><button data-alert-command="snooze">Snooze</button><button data-alert-command="resolve">Resolve</button></div></div></article>';
   }
   function renderList() {
     if (!container) return;
