@@ -5,6 +5,9 @@ need either the deck cookie, Basic authentication, or a bearer token. Create a
 token with `boxdeck token new`, keep it in an environment variable, and send it
 as `Authorization: Bearer $TOKEN`.
 
+Current toolchain and platform compatibility details are maintained in
+[docs/stack.md](docs/stack.md).
+
 The additive config fields are:
 
 ```json

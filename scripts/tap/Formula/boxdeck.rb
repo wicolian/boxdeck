@@ -27,6 +27,11 @@ class Boxdeck < Formula
     bin.install Dir["boxdeck*"][0] => "boxdeck"
   end
 
+  livecheck do
+    url "https://github.com/wicolian/boxdeck"
+    strategy :github_latest
+  end
+
   service do
     run [opt_bin/"boxdeck", "serve"]
     keep_alive true
