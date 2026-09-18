@@ -40,7 +40,8 @@ object AlertNotifications {
             .setAutoCancel(true)
             .setContentIntent(openIntent(context, boxUrl, alert.id))
         alert.actions.take(3).forEachIndexed { index, action ->
-            builder.addAction(action.label.ifBlank { "Act" }, actionIntent(context, boxUrl, action, alert.id, index))
+            val pendingIntent = actionIntent(context, boxUrl, action, alert.id, index)
+            builder.addAction(NotificationCompat.Action.Builder(android.R.drawable.ic_menu_send, action.label.ifBlank { "Act" }, pendingIntent).build())
         }
         runCatching { NotificationManagerCompat.from(context).notify(alert.id.hashCode(), builder.build()) }
     }
