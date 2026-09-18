@@ -12,11 +12,12 @@ import (
 )
 
 type netNode struct {
-	Name    string   `json:"name"`
-	DNSName string   `json:"dnsName,omitempty"`
-	OS      string   `json:"os,omitempty"`
-	IPs     []string `json:"ips"`
-	Online  bool     `json:"online"`
+	Name     string   `json:"name"`
+	DNSName  string   `json:"dnsName,omitempty"`
+	OS       string   `json:"os,omitempty"`
+	LastSeen string   `json:"lastSeen,omitempty"`
+	IPs      []string `json:"ips"`
+	Online   bool     `json:"online"`
 }
 
 type tailscaleStatus struct {
@@ -50,6 +51,7 @@ func parseTailscaleStatus(data []byte) (tailscaleStatus, error) {
 			OS           string   `json:"OS"`
 			TailscaleIPs []string `json:"TailscaleIPs"`
 			Online       bool     `json:"Online"`
+			LastSeen     string   `json:"LastSeen"`
 		} `json:"Self"`
 		Peer map[string]struct {
 			HostName     string   `json:"HostName"`
@@ -57,14 +59,15 @@ func parseTailscaleStatus(data []byte) (tailscaleStatus, error) {
 			OS           string   `json:"OS"`
 			TailscaleIPs []string `json:"TailscaleIPs"`
 			Online       bool     `json:"Online"`
+			LastSeen     string   `json:"LastSeen"`
 		} `json:"Peer"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return tailscaleStatus{}, err
 	}
-	status := tailscaleStatus{Self: netNode{Name: raw.Self.HostName, DNSName: strings.TrimSuffix(raw.Self.DNSName, "."), OS: raw.Self.OS, IPs: nodeIPs(raw.Self.TailscaleIPs), Online: raw.Self.Online}, Peers: []netNode{}}
+	status := tailscaleStatus{Self: netNode{Name: raw.Self.HostName, DNSName: strings.TrimSuffix(raw.Self.DNSName, "."), OS: raw.Self.OS, LastSeen: raw.Self.LastSeen, IPs: nodeIPs(raw.Self.TailscaleIPs), Online: raw.Self.Online}, Peers: []netNode{}}
 	for _, peer := range raw.Peer {
-		status.Peers = append(status.Peers, netNode{Name: peer.HostName, DNSName: strings.TrimSuffix(peer.DNSName, "."), OS: peer.OS, IPs: nodeIPs(peer.TailscaleIPs), Online: peer.Online})
+		status.Peers = append(status.Peers, netNode{Name: peer.HostName, DNSName: strings.TrimSuffix(peer.DNSName, "."), OS: peer.OS, LastSeen: peer.LastSeen, IPs: nodeIPs(peer.TailscaleIPs), Online: peer.Online})
 	}
 	sort.Slice(status.Peers, func(i, j int) bool { return status.Peers[i].Name < status.Peers[j].Name })
 	return status, nil

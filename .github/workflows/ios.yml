@@ -1,0 +1,32 @@
+name: Apple apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [phase5-ios]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Test shared package
+        run: swift test --package-path apple/BoxdeckKit
+      - name: Generate Xcode project
+        run: cd apple && xcodegen generate --spec project.yml
+      - name: Build iOS simulator app
+        run: xcodebuild -project apple/Boxdeck.xcodeproj -scheme Boxdeck -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath .work/ios-derived CODE_SIGNING_ALLOWED=NO build
+      - name: Build watchOS simulator app
+        run: xcodebuild -project apple/Boxdeck.xcodeproj -scheme BoxdeckWatch -sdk watchsimulator -destination 'generic/platform=watchOS Simulator' -derivedDataPath .work/watch-derived CODE_SIGNING_ALLOWED=NO build
+      - name: Package simulator apps
+        run: |
+          mkdir -p .work/artifacts
+          ditto -c -k --sequesterRsrc --keepParent .work/ios-derived/Build/Products/Debug-iphonesimulator/Boxdeck.app .work/artifacts/Boxdeck-iphonesimulator.zip
+          ditto -c -k --sequesterRsrc --keepParent .work/watch-derived/Build/Products/Debug-watchsimulator/BoxdeckWatch.app .work/artifacts/BoxdeckWatch-watchsimulator.zip
+      - name: Upload simulator apps
+        uses: actions/upload-artifact@v4
+        with:
+          name: boxdeck-apple-simulator-apps
+          path: .work/artifacts/*.zip

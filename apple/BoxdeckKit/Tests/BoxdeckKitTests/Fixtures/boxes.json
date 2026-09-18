@@ -1,0 +1,4 @@
+[
+  {"name":"box","url":"http://box:8100","local":true,"ok":true,"health":{"cpu":12,"memUsed":3650722201,"memTotal":16106127360,"load1":0.4},"agents":3,"ports":5,"usage":{"today":{"claude":{"tokens":{"in":1}},"codex":{"tokens":{"in":2}}},"quota":{"claude":{"fiveHour":{"pct":20},"sevenDay":{"pct":68}},"codex":null}}},
+  {"name":"discovered","url":"http://discovered:8100","ok":true,"discovered":true,"tag":"tailnet","health":{"cpu":1,"memUsed":1,"memTotal":2,"load1":0.1},"agents":4,"ports":2,"usage":{"today":{},"quota":{}}}
+]

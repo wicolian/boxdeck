@@ -1,0 +1,83 @@
+name: Boxdeck
+options:
+  bundleIdPrefix: dev.wicolian
+  deploymentTarget:
+    iOS: "17.0"
+    watchOS: "10.0"
+  createIntermediateGroups: true
+targets:
+  Boxdeck:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Boxdeck
+      - path: BoxdeckKit/Sources/BoxdeckKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck
+        SWIFT_VERSION: "5.10"
+        CODE_SIGNING_ALLOWED: NO
+    info:
+      path: Boxdeck/Info.plist
+      properties:
+        CFBundleDisplayName: Boxdeck
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - boxdeck
+        NSCameraUsageDescription: Scan a Boxdeck pairing QR code.
+        UIBackgroundModes:
+          - fetch
+          - remote-notification
+    scheme:
+      testTargets: []
+  BoxdeckWatch:
+    type: application.watchapp2
+    platform: watchOS
+    deploymentTarget: "10.0"
+    dependencies:
+      - target: BoxdeckWatch Extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch
+        SWIFT_VERSION: "5.10"
+        CODE_SIGNING_ALLOWED: NO
+        INFOPLIST_FILE: BoxdeckWatchContainer/Info.plist
+  BoxdeckWatch Extension:
+    type: watchkit2-extension
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: BoxdeckWatch
+        excludes:
+          - Complications.swift
+      - path: BoxdeckKit/Sources/BoxdeckKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch.extension
+        SWIFT_VERSION: "5.10"
+        CODE_SIGNING_ALLOWED: NO
+        INFOPLIST_FILE: BoxdeckWatch/Info.plist
+  BoxdeckWatch Complication:
+    type: app-extension
+    platform: watchOS
+    deploymentTarget: "10.0"
+    sources:
+      - path: BoxdeckWatch/Complications.swift
+      - path: BoxdeckKit/Sources/BoxdeckKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.wicolian.boxdeck.watch.complication
+        SWIFT_VERSION: "5.10"
+        CODE_SIGNING_ALLOWED: NO
+schemes:
+  Boxdeck:
+    build:
+      targets:
+        Boxdeck: all
+  BoxdeckWatch:
+    build:
+      targets:
+        BoxdeckWatch: all
+        BoxdeckWatch Extension: all
+        BoxdeckWatch Complication: all

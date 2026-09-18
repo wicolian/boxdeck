@@ -56,6 +56,7 @@ type app struct {
 	apps          *appManager
 	alerts        *alertManager
 	inboxSecret   string
+	tokenMu       sync.Mutex
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -229,6 +230,10 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.netAPI(w, r)
 	case r.URL.Path == "/api/net/peers":
 		a.netPeersAPI(w, r)
+	case r.URL.Path == "/api/pair.json":
+		a.pairJSON(w, r)
+	case r.URL.Path == "/api/pair":
+		a.pairPNG(w, r)
 	case r.URL.Path == "/views-net.js" || r.URL.Path == "/views-net.css":
 		a.netViewAsset(w, r)
 	case r.URL.Path == "/cdp" || strings.HasPrefix(r.URL.Path, "/cdp/"):

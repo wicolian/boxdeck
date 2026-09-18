@@ -328,6 +328,20 @@ It reads `~/.local/share/boxdeck/inbox-secret` (created by the deck, mode 600, s
 user can send) and posts to the loopback port with it in `X-Boxdeck-Local`. Other clients
 use the normal deck cookie, Basic authentication or a bearer token.
 
+## iPhone and Apple Watch
+
+The Apple targets live under `apple/`. The iPhone app has Needs You, Boxes, Usage,
+and Settings tabs. Add a box with its URL and bearer token, or open the deck
+Settings view and scan the Pair a phone QR. The Boxes tab includes every peer
+reported by Tailscale, including devices without boxdeck, with an install hint.
+The watch app has large Needs You actions, a boxes glance, and a complication
+that refreshes every 15 minutes.
+
+There is no push backend yet. For background delivery, install the ntfy app on
+the phone and subscribe to the same topic configured in the deck's ntfy sink.
+The Boxdeck app listens to the ntfy JSON stream while it is in the foreground.
+The future APNs relay contract is in [PUSH.md](PUSH.md).
+
 ## One login
 
 The sign-in page sets a signed, HttpOnly, SameSite=Lax cookie for 30 days. Its
