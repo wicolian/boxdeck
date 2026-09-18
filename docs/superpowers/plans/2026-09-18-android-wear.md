@@ -6,7 +6,7 @@
 
 **Architecture:** `android/core` is a pure JVM Kotlin library containing serializable API models, an OkHttp client, SSE event handling, menu model logic, and quiet-hours logic. `android/app` owns Android persistence, Compose screens, CameraX and ML Kit pairing, WebView login, notifications, and UnifiedPush intake. `android/wear` is a standalone Wear Compose app with a Data Layer bridge, tile, and complication, sharing the core models and client.
 
-**Tech Stack:** Kotlin 2.x, Gradle wrapper, AGP 8.x, compileSdk 35, minSdk 26 for the phone and 30 for Wear, kotlinx.serialization, OkHttp, Jetpack Compose Material 3, CameraX, ML Kit barcode scanning, AndroidX security crypto, Wear Compose, Horologist tiles, and GitHub Actions.
+**Tech Stack:** Kotlin 2.3.21, Gradle 9.6.0, AGP 9.4.0, compileSdk 36, minSdk 26 for the phone and 30 for Wear, Compose BOM 2026.06.01, kotlinx.serialization, OkHttp, Jetpack Compose Material 3, CameraX, ML Kit barcode scanning, AndroidX security crypto, Wear Compose, Horologist tiles, and GitHub Actions.
 
 **Spec:** `/home/ubuntu/codes/boxdeck/.work/phase5/PROMPT-android.md`, with API behavior from `API.md`, alert contracts from `PROMPT-alerts.md`, and pairing and screen alignment from `PROMPT-ios.md`.
 
@@ -16,13 +16,13 @@
 - Use the dark bridge tokens hull `#0b0e13`, deck `#10141b`, ink, amber `#e8a33d`, moss, and rust; no gradients and no icon soup.
 - Keep credentials out of reports, screenshots, and committed files.
 - Support `boxdeck://add?url=&token=`, `boxdeck://box/<name>`, and `boxdeck://alert/<id>`.
-- Sweep all changed text for `·`, `—`, and `–` before the done marker.
+- Check changed text for the three disallowed Unicode punctuation characters before the done marker.
 - The CI workflow must run core tests and lint, assemble both debug APKs, and upload both APKs.
 
 ### Task 1: Gradle workspace and pure core module
 
 **Files:**
-- Create: `android/settings.gradle.kts`, `android/build.gradle.kts`, `android/gradle.properties`, `android/gradle/wrapper/gradle-wrapper.properties`, `android/gradlew`, `android/gradlew.bat`, `android/gradle/wrapper/gradle-wrapper.jar`
+- Create: `android/settings.gradle.kts`, `android/build.gradle.kts`, `android/gradle.properties`, `android/gradle/wrapper/gradle-wrapper.properties`, `android/gradlew`, `android/gradlew.bat`
 - Create: `android/core/build.gradle.kts`
 - Create: `android/core/src/main/kotlin/dev/wicolian/boxdeck/core/Models.kt`, `BoxdeckClient.kt`, `MenuModel.kt`, `QuietHours.kt`
 - Create: `android/core/src/test/kotlin/dev/wicolian/boxdeck/core/CoreTest.kt`
