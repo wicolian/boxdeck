@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -57,6 +58,8 @@ type app struct {
 	alerts        *alertManager
 	inboxSecret   string
 	tokenMu       sync.Mutex
+	mcpMu         sync.Mutex
+	mcpSessions   map[string]mcpSession
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -70,8 +73,15 @@ func fileURL(relative string) string {
 	return (&url.URL{Path: "/files/" + filepath.ToSlash(relative)}).String()
 }
 func newApp(cfg config, secret []byte) *app {
+	if cfg.agentRE == nil {
+		pattern := cfg.AgentPattern
+		if pattern == "" {
+			pattern = `^(\S*/)?(claude|codex|aider|opencode|goose)(\s|$)`
+		}
+		cfg.agentRE, _ = regexp.Compile(pattern)
+	}
 	ctx, cancel := context.WithCancel(context.Background())
-	a := &app{cfg: cfg, secret: secret, ctx: ctx, cancel: cancel, gitStatusMemo: map[string]gitStatusCache{}}
+	a := &app{cfg: cfg, secret: secret, ctx: ctx, cancel: cancel, gitStatusMemo: map[string]gitStatusCache{}, mcpSessions: map[string]mcpSession{}}
 	a.live = newLiveHub(ctx, cfg.home)
 	a.browser = newBrowserManager(cfg.home, ctx)
 	a.peers = &peerDiscovery{}
@@ -142,6 +152,10 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.healthAPI(w, r)
 		return
 	}
+	if r.URL.Path == "/mcp" {
+		a.mcpHTTP(w, r)
+		return
+	}
 	if !a.authed(r) && !(r.Method == http.MethodPost && r.URL.Path == "/api/alerts" && a.isLocalInboxRequest(r)) {
 		a.unauthorized(w, r)
 		return
@@ -179,6 +193,8 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.uiProcs(w, r)
 	case r.URL.Path == "/api/ui/settings":
 		a.uiSettings(w, r)
+	case r.URL.Path == "/api/connect":
+		a.connectAPI(w, r)
 	case r.URL.Path == "/api/usage":
 		a.usageAPI(w, r)
 	case r.URL.Path == "/api/usage/all":
@@ -451,8 +467,10 @@ func main() {
 		err = appCommand(os.Args[2:])
 	} else if command == "alert" {
 		err = alertCommand(os.Args[2:])
+	} else if command == "mcp" {
+		err = mcpCommand(os.Args[2:])
 	} else {
-		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl|usage|app]")
+		err = fmt.Errorf("usage: boxdeck [serve|install|version|token|ctl|usage|app|alert|mcp]")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "boxdeck:", err)

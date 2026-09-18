@@ -357,3 +357,108 @@ $ boxdeck ctl --box local --table run "printf ready"
 ready
 exit 0
 ```
+
+## MCP
+
+Boxdeck exposes an authenticated Model Context Protocol endpoint at
+`POST /mcp`. The current protocol is `2026-07-28`. The server also accepts
+legacy `2025-11-25`, `2025-06-18`, and `2025-03-26` clients. Current requests
+are stateless and carry protocol metadata in `params._meta` on every request.
+HTTP clients also send `MCP-Protocol-Version` and `Mcp-Method` on every POST.
+`tools/call` additionally sends `Mcp-Name` matching `params.name`.
+
+The current flow is:
+
+```sh
+curl -sS -X POST http://box:8100/mcp \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Accept: application/json' -H 'Content-Type: application/json' \
+  -H 'MCP-Protocol-Version: 2026-07-28' -H 'Mcp-Method: tools/list' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientInfo":{"name":"example","version":"1"},"io.modelcontextprotocol/clientCapabilities":{}}}}'
+```
+
+`tools/list` returns `resultType`, `tools`, `ttlMs`, and `cacheScope`. The list
+is private because it depends on the bearer token. `server/discover` reports
+the supported versions. Tool execution failures are successful JSON-RPC
+responses with `isError:true`; malformed requests and unknown methods are
+JSON-RPC errors. Screenshots return an MCP `image` content block with PNG
+base64 data.
+
+Legacy clients use `initialize`, receive `Mcp-Session-Id`, send
+`notifications/initialized`, and can open `GET /mcp` for an SSE stream of
+`notifications/message` events from the alert event log. `DELETE /mcp` ends a
+legacy session. A POST with `Accept: text/event-stream` returns the same single
+JSON-RPC response as one SSE event. The modern protocol does not use GET,
+DELETE, or connection sessions, but the compatibility path remains available.
+
+The Connect section in Settings and `GET /api/connect` provide ready snippets.
+`POST /api/connect` with `{"newToken":true}` mints an `agent` token. Send
+`{"allowRun":true,"newToken":false}` to change the run setting without a
+restart. The same token can be revoked with `boxdeck token revoke PREFIX`.
+
+Examples of every available tool:
+
+```json
+{"method":"box_state","arguments":{}}
+{"method":"box_ports","arguments":{}}
+{"method":"box_processes","arguments":{"sort":"cpu","n":20,"filter":"boxdeck"}}
+{"method":"box_process_kill","arguments":{"pid":1234,"signal":"SIGTERM"}}
+{"method":"box_agents","arguments":{}}
+{"method":"agent_read","arguments":{"pane":"w1:p1","lines":80}}
+{"method":"agent_prompt","arguments":{"pane":"w1:p1","text":"check the failing test"}}
+{"method":"agent_keys","arguments":{"pane":"w1:p1","keys":"Enter"}}
+{"method":"agent_interrupt","arguments":{"pane":"w1:p1"}}
+{"method":"agent_focus","arguments":{"pane":"w1:p1"}}
+{"method":"alerts_list","arguments":{"state":"open"}}
+{"method":"alert_ack","arguments":{"id":"alert-id"}}
+{"method":"alert_snooze","arguments":{"id":"alert-id","until":"2h"}}
+{"method":"alert_resolve","arguments":{"id":"alert-id"}}
+{"method":"alert_create","arguments":{"source":"tests","severity":"critical","title":"Tests failed","body":"Open the log"}}
+{"method":"usage","arguments":{"days":7}}
+{"method":"usage_all","arguments":{"days":30}}
+{"method":"boxes","arguments":{}}
+{"method":"devices","arguments":{}}
+{"method":"apps_list","arguments":{}}
+{"method":"app_start","arguments":{"id":"t3code"}}
+{"method":"app_stop","arguments":{"id":"t3code"}}
+{"method":"app_log","arguments":{"id":"t3code","lines":100}}
+{"method":"files_list","arguments":{"path":"reports"}}
+{"method":"file_read","arguments":{"path":"reports/latest.md","max":100000}}
+{"method":"file_write","arguments":{"path":"notes.md","content":"hello\n","ifMatch":"mtime-from-file-read"}}
+{"method":"git_repos","arguments":{}}
+{"method":"git_status","arguments":{"repo":"/home/me/project"}}
+{"method":"git_diff","arguments":{"repo":"/home/me/project","path":"README.md"}}
+{"method":"git_log","arguments":{"repo":"/home/me/project","n":20}}
+{"method":"browser_start","arguments":{"headless":true}}
+{"method":"browser_stop","arguments":{}}
+{"method":"browser_pages","arguments":{}}
+{"method":"browser_navigate","arguments":{"page":"page-id","url":"https://example.com"}}
+{"method":"browser_screenshot","arguments":{"page":"page-id"}}
+{"method":"browser_click","arguments":{"page":"page-id","x":420,"y":180}}
+{"method":"browser_type","arguments":{"page":"page-id","text":"hello"}}
+{"method":"run","arguments":{"cmd":"go test ./...","cwd":"~/src/app","timeoutMs":60000}}
+```
+
+The `run` tool is omitted from `tools/list` unless `allowRun` is true. It
+executes as the boxdeck service user through `bash -lc`, so it should remain
+off on shared networks.
+
+The isolated port 8109 QA client returned these trimmed responses:
+
+```text
+initialize: {"jsonrpc":"2.0","id":1,"result":{"resultType":"complete","protocolVersion":"2026-07-28","capabilities":{"logging":{},"tools":{"listChanged":false}},"serverInfo":{"name":"boxdeck","version":"dev"}}}
+tools/list: {"jsonrpc":"2.0","id":2,"result":{"resultType":"complete","ttlMs":30000,"cacheScope":"private","tools":["agent_focus","agent_interrupt","agent_keys","agent_prompt","agent_read", "...", "usage_all"]}}
+tool count: 37 with allowRun false
+```
+
+The same QA run used `claude mcp add --transport http boxdeck-qa
+http://127.0.0.1:8109/mcp` with the bearer header. `claude mcp list` reported
+`boxdeck-qa: http://127.0.0.1:8109/mcp (HTTP) - Connected`, then the entry was
+removed with `claude mcp remove boxdeck-qa`.
+
+The stdio bridge is included in the same binary:
+
+```sh
+boxdeck mcp --to http://box:8100 --token "$TOKEN"
+claude mcp add boxdeck -- boxdeck mcp --to http://box:8100 --token "$TOKEN"
+```

@@ -140,6 +140,15 @@ func (a *app) uiSettings(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cfg["tokens"] = "0 tokens"
 	}
+	if labels, ok := cfg["tokenLabels"].(map[string]any); ok {
+		visible := []string{}
+		for _, label := range labels {
+			if name, ok := label.(string); ok && name != "" {
+				visible = append(visible, name)
+			}
+		}
+		cfg["tokenLabels"] = visible
+	}
 	if boxes, ok := cfg["boxes"].([]any); ok {
 		for _, v := range boxes {
 			if box, ok := v.(map[string]any); ok {

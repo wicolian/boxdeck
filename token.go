@@ -45,6 +45,24 @@ func tokenMatches(configured []string, token string) bool {
 	return valid
 }
 
+func tokenLabel(cfg config, token string) string {
+	if cfg.TokenLabels == nil {
+		return ""
+	}
+	return cfg.TokenLabels[token]
+}
+
+func addLabeledToken(cfg *config, token, label string) {
+	cfg.Tokens = append(cfg.Tokens, token)
+	if strings.TrimSpace(label) == "" {
+		return
+	}
+	if cfg.TokenLabels == nil {
+		cfg.TokenLabels = map[string]string{}
+	}
+	cfg.TokenLabels[token] = label
+}
+
 func randomToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -130,7 +148,12 @@ func tokenCommandWithConfig(cfg *config, args []string) error {
 			if len(prefix) > 12 {
 				prefix = prefix[:12]
 			}
-			fmt.Printf("%d %s... (%d characters)\n", i+1, prefix, len(token))
+			label := tokenLabel(*cfg, token)
+			if label != "" {
+				fmt.Printf("%d %s... (%d characters) [%s]\n", i+1, prefix, len(token), label)
+			} else {
+				fmt.Printf("%d %s... (%d characters)\n", i+1, prefix, len(token))
+			}
 		}
 		return nil
 	case "revoke":
@@ -150,7 +173,11 @@ func tokenCommandWithConfig(cfg *config, args []string) error {
 		if found < 0 {
 			return fmt.Errorf("no token starts with %q", prefix)
 		}
+		revoked := cfg.Tokens[found]
 		cfg.Tokens = append(cfg.Tokens[:found], cfg.Tokens[found+1:]...)
+		if cfg.TokenLabels != nil {
+			delete(cfg.TokenLabels, revoked)
+		}
 		if err := saveConfig(*cfg); err != nil {
 			return err
 		}

@@ -44,9 +44,10 @@ func (a *app) pairJSON(w http.ResponseWriter, r *http.Request) {
 		jsonReply(w, http.StatusInternalServerError, object{"error": "Could not create a pairing token"})
 		return
 	}
-	a.cfg.Tokens = append(a.cfg.Tokens, token)
+	addLabeledToken(&a.cfg, token, "phone")
 	if err := saveConfig(a.cfg); err != nil {
 		a.cfg.Tokens = a.cfg.Tokens[:len(a.cfg.Tokens)-1]
+		delete(a.cfg.TokenLabels, token)
 		jsonReply(w, http.StatusInternalServerError, object{"error": "Could not save the pairing token"})
 		return
 	}
@@ -66,9 +67,10 @@ func (a *app) pairPNG(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not create a pairing token", http.StatusInternalServerError)
 		return
 	}
-	a.cfg.Tokens = append(a.cfg.Tokens, token)
+	addLabeledToken(&a.cfg, token, "phone")
 	if err := saveConfig(a.cfg); err != nil {
 		a.cfg.Tokens = a.cfg.Tokens[:len(a.cfg.Tokens)-1]
+		delete(a.cfg.TokenLabels, token)
 		http.Error(w, "Could not save the pairing token", http.StatusInternalServerError)
 		return
 	}
