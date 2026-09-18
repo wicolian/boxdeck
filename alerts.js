@@ -97,13 +97,84 @@
       try { await api('/api/alerts/rules', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({rules: next, quiet: config.quiet, quietAllowCritical: config.quietAllowCritical})}); await loadRules(); container.querySelector('#alerts-status').textContent = 'Rules saved'; } catch (error) { container.querySelector('#alerts-status').textContent = error.message; }
     };
   }
+  function sinkLabel(sink) {
+    if (sink.type === 'apns') return 'Native push';
+    if (sink.type === 'webpush') return 'Browser push';
+    if (sink.type === 'ntfy') return 'ntfy, optional if you do not want to run the iOS app';
+    return sink.type;
+  }
   function renderDelivery() {
-    const sinks = (config && config.sinks || []).slice().sort((left, right) => (left.type === 'apns' ? -1 : right.type === 'apns' ? 1 : 0));
+    const order = {apns: 0, webpush: 1};
+    const sinks = (config && config.sinks || []).slice().sort((left, right) => (order[left.type] ?? 9) - (order[right.type] ?? 9));
     const delivery = config && config.delivery || {};
-    const rows = sinks.length ? sinks.map((sink) => { const name = sink.name || sink.type; const label = sink.type === 'apns' ? 'Native push' : sink.type === 'ntfy' ? 'ntfy, optional if you do not want to run the iOS app' : sink.type; return '<div class="alert-delivery-row"><span><strong>' + esc(label) + '</strong><small>' + esc(name) + '</small></span><span class="alert-delivery-result">' + esc(delivery[name]?.status || 'not tested') + '</span><button data-test-sink="' + esc(name) + '">Test</button></div>'; }).join('') : '<div class="alert-empty">No delivery sinks are enabled. Configure native push in Settings, or ntfy if you do not want to run the iOS app.</div>';
-    container.querySelector('#alerts-panel').innerHTML = '<div class="alert-delivery-list">' + rows + '</div><div class="alert-quiet"><strong>Quiet hours</strong><span>' + esc((config.quiet && config.quiet.from) || 'not set') + ' to ' + esc((config.quiet && config.quiet.to) || 'not set') + '</span><button id="disarm-alerts">' + (config.disarmed ? 'Turn alerts on' : 'Disarm alerts') + '</button></div><p id="alerts-status" class="alert-status"></p>';
+    const rows = sinks.length ? sinks.map((sink) => { const name = sink.name || sink.type; return '<div class="alert-delivery-row"><span><strong>' + esc(sinkLabel(sink)) + '</strong><small>' + esc(name) + '</small></span><span class="alert-delivery-result">' + esc(delivery[name]?.status || 'not tested') + '</span><button data-test-sink="' + esc(name) + '">Test</button></div>'; }).join('') : '<div class="alert-empty">No delivery sinks are enabled. Turn on browser push below, configure native push in Settings, or ntfy if you do not want to run the iOS app.</div>';
+    container.querySelector('#alerts-panel').innerHTML = '<div class="alert-delivery-list">' + rows + '</div><section id="webpush-block" class="alert-webpush" aria-live="polite"></section><div class="alert-quiet"><strong>Quiet hours</strong><span>' + esc((config.quiet && config.quiet.from) || 'not set') + ' to ' + esc((config.quiet && config.quiet.to) || 'not set') + '</span><button id="disarm-alerts">' + (config.disarmed ? 'Turn alerts on' : 'Disarm alerts') + '</button></div><p id="alerts-status" class="alert-status"></p>';
     container.querySelectorAll('[data-test-sink]').forEach((button) => button.onclick = async () => { try { await api('/api/alerts/sinks/test?name=' + encodeURIComponent(button.dataset.testSink)); await loadRules(); } catch (error) { container.querySelector('#alerts-status').textContent = error.message; } });
     container.querySelector('#disarm-alerts').onclick = async () => { try { await api('/api/alerts/disarm', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({on: !config.disarmed})}); await loadRules(); } catch (error) { container.querySelector('#alerts-status').textContent = error.message; } };
+    renderWebPush();
+  }
+
+  // Browser push. The deck signs with its own VAPID key, so no third party account is needed.
+  // Push only works from a secure context: localhost, or https behind Tailscale or a proxy.
+  const webPush = {
+    supported() { return Boolean(window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window); },
+    async registration() { return navigator.serviceWorker.register('/sw.js', {scope: '/'}); },
+    async current() {
+      if (!this.supported()) return null;
+      const registration = await navigator.serviceWorker.getRegistration('/');
+      return registration ? registration.pushManager.getSubscription() : null;
+    },
+    async subscribe(publicKey) {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') throw new Error('Notifications are blocked for this site. Allow them in the browser site settings and try again.');
+      const registration = await this.registration();
+      await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey: publicKey});
+      await api('/api/push/web/subscribe', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({subscription: subscription.toJSON(), name: ''})});
+      return subscription;
+    },
+    async unsubscribe() {
+      const subscription = await this.current();
+      if (!subscription) return;
+      await api('/api/push/web/subscribe', {method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({endpoint: subscription.endpoint})}).catch(() => {});
+      await subscription.unsubscribe();
+    }
+  };
+  // Same id the server derives: the first 16 characters of base64url(sha256(endpoint)).
+  async function endpointID(endpoint) {
+    if (!window.crypto || !crypto.subtle) return '';
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
+    return btoa(String.fromCharCode.apply(null, new Uint8Array(digest))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, 16);
+  }
+  function webPushStatusText() {
+    if (!window.isSecureContext) return 'Browser push needs a secure page. Open the deck at http://localhost:' + (location.port || '8100') + ' on the box, or over https behind Tailscale or a proxy.';
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return 'This browser does not support Web Push.';
+    if (window.Notification && Notification.permission === 'denied') return 'Notifications are blocked for this site. Allow them in the browser site settings to get alerts here.';
+    return '';
+  }
+  async function renderWebPush() {
+    const block = container && container.querySelector('#webpush-block');
+    if (!block) return;
+    let status = null;
+    let mine = null;
+    try { status = await api('/api/push/web'); } catch (error) { block.innerHTML = '<div class="alert-empty">' + esc(error.message) + '</div>'; return; }
+    try { mine = await webPush.current(); } catch (error) { mine = null; }
+    if (!block.isConnected) return;
+    const subscriptions = status.subscriptions || [];
+    const mineID = mine ? await endpointID(mine.endpoint) : '';
+    const blocked = webPushStatusText();
+    const head = '<div class="alert-webpush-head"><span><strong>Browser push</strong><small>' + (mine ? 'This device gets alerts, even with the deck closed.' : 'Get alerts on this device without the iOS app or ntfy.') + '</small></span>' + (blocked ? '' : mine ? '<span class="alert-webpush-buttons"><button id="webpush-test">Send test</button><button id="webpush-stop" class="button-quiet">Stop</button></span>' : '<button id="webpush-start" class="button-primary">Get alerts on this device</button>') + '</div>';
+    const note = blocked ? '<p class="alert-webpush-note">' + esc(blocked) + '</p>' : '';
+    const rows = subscriptions.length ? '<div class="alert-webpush-list">' + subscriptions.map((item) => '<div class="alert-delivery-row"><span><strong>' + esc(item.name || 'Browser') + (mineID && item.id === mineID ? ' <em>this device</em>' : '') + '</strong><small>' + esc(item.host || '') + '</small></span><span class="alert-delivery-result">' + esc(item.lastDelivery && item.lastDelivery.status ? item.lastDelivery.status + (item.lastDelivery.message ? ', ' + item.lastDelivery.message : '') : 'no delivery yet') + '</span><button data-webpush-remove="' + esc(item.id) + '" class="button-quiet">Forget</button></div>').join('') + '</div>' : '<p class="alert-webpush-note">No browser is subscribed yet.</p>';
+    block.innerHTML = head + note + rows;
+    const say = (text) => { const line = container.querySelector('#alerts-status'); if (line) line.textContent = text; };
+    const start = block.querySelector('#webpush-start');
+    if (start) start.onclick = async () => { start.disabled = true; try { await webPush.subscribe(status.publicKey); say('This device now gets alerts'); await loadRules(); } catch (error) { say(error.message); start.disabled = false; } };
+    const stop = block.querySelector('#webpush-stop');
+    if (stop) stop.onclick = async () => { stop.disabled = true; try { await webPush.unsubscribe(); say('This device no longer gets alerts'); await loadRules(); } catch (error) { say(error.message); stop.disabled = false; } };
+    const test = block.querySelector('#webpush-test');
+    if (test) test.onclick = async () => { test.disabled = true; try { const result = await api('/api/push/web/test', {method: 'POST'}); const failed = (result.results || []).filter((item) => item.status !== 'delivered'); say(failed.length ? failed.map((item) => item.message).join('; ') : 'Test sent'); await loadRules(); } catch (error) { say(error.message); } test.disabled = false; };
+    block.querySelectorAll('[data-webpush-remove]').forEach((button) => button.onclick = async () => { try { await api('/api/push/web/subscribe', {method: 'DELETE', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: button.dataset.webpushRemove})}); if (mine && mineID && button.dataset.webpushRemove === mineID) await mine.unsubscribe().catch(() => {}); await loadRules(); } catch (error) { say(error.message); } });
   }
   async function loadRules() { config = await api('/api/alerts/rules'); if (mode === 'rules') renderRules(); if (mode === 'delivery') renderDelivery(); }
   async function load() {

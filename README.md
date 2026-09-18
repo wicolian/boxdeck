@@ -297,8 +297,22 @@ in the Phone push block in Settings. The deck sends directly to Apple APNs, and
 the iPhone and Apple Watch show Approve, Yes, No, Interrupt, Snooze 2h, and Ack.
 See [docs/ios-setup.md](docs/ios-setup.md) for the ten setup steps.
 
-ntfy remains available if you do not want to run the iOS app. Install the ntfy
-app, subscribe to a private topic, then add this to the boxdeck config:
+Browser push works on any laptop or phone without an app. Open Alerts, choose
+Delivery, and select Get alerts on this device. The deck generates its own VAPID
+key on first run, so no third party account is involved: the browser's push
+service only ever sees an encrypted payload. Notifications show the alert with
+Approve, Yes, No, Interrupt, and Snooze 2h buttons, and a tap opens the deck at
+the alert. Each button carries the same per alert action token as ntfy. Browser
+push needs a secure page: `http://localhost:8100` on the box, or https behind
+Tailscale or a reverse proxy. The Delivery tab says so when the page is plain
+http. Subscriptions are sealed with the deck secret in
+`~/.local/share/boxdeck/webpush.json` (mode 0600) and a browser that
+unsubscribes is forgotten on the next send. Nothing is sent while alerts are
+disarmed or during quiet hours, and the service worker never caches the deck.
+
+ntfy remains available if you do not want to run the iOS app or a browser.
+Install the ntfy app, subscribe to a private topic, then add this to the
+boxdeck config:
 
 ```json
 {
@@ -334,6 +348,12 @@ Alerts view captures:
 Phone layout:
 
 ![Alerts on a phone](./captures/alerts/phone-list-cards.png)
+
+Browser push in the Delivery tab, before and after a browser subscribes:
+
+| Get alerts on this device | A subscribed browser |
+|:---:|:---:|
+| ![Browser push offer](./captures/alerts/delivery-webpush.png) | ![Browser push subscribed](./captures/alerts/delivery-webpush-subscribed.png) |
 
 Shell probes use `bash -lc`, with exit 0 healthy and nonzero or timeout as one
 incident. A recovery emits one info event:
