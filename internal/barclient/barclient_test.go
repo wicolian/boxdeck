@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func fixture(t *testing.T, name string) []byte {
@@ -115,6 +116,10 @@ func TestBuildMenuShowsNeedsYouAlertsAndEscalatesIcon(t *testing.T) {
 }
 
 func TestMenuModelUnreachableAndDiscovered(t *testing.T) {
+	// The menu shows the local time; pin it so the test passes outside UTC.
+	local := time.Local
+	time.Local = time.UTC
+	t.Cleanup(func() { time.Local = local })
 	model := BuildMenu([]BoxSnapshot{
 		{Name: "down", URL: "http://down:8100", Since: "2026-09-17T22:05:00Z"},
 		{Name: "tail", URL: "http://tail:8100", Discovered: true, Tag: "tailnet", OK: true},
