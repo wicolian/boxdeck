@@ -3,7 +3,7 @@ package main
 import "strings"
 
 // pricing is expressed in USD per million tokens, list price, taken from the providers' own
-// pricing pages on 2026-09-17 (platform.claude.com/docs/en/about-claude/pricing and
+// pricing pages on 2026-09-23 (platform.claude.com/docs/en/about-claude/pricing and
 // developers.openai.com/api/docs/pricing). Cache write is the 5 minute write rate.
 type pricing struct {
 	In         float64 `json:"in"`
@@ -24,9 +24,13 @@ const longContextTokens = 272_000
 
 func defaultPricing() map[string]pricing {
 	return map[string]pricing{
-		// Claude, per platform.claude.com. Cache read is 0.1x input (0.025x on Fable 5.1).
+		// Claude, per platform.claude.com. Cache read is 0.1x input (0.025x on Fable 5.1 and
+		// Mythos 5.1, 0.05x on Opus 5.5).
 		"claude-fable-5-1":          {In: 10, CachedIn: 0.25, CacheWrite: 12.5, Out: 50, Set: true},
+		"claude-mythos-5-1":         {In: 10, CachedIn: 0.25, CacheWrite: 12.5, Out: 50, Set: true},
 		"claude-fable-5":            {In: 10, CachedIn: 1, CacheWrite: 12.5, Out: 50, Set: true},
+		"claude-mythos-5":           {In: 10, CachedIn: 1, CacheWrite: 12.5, Out: 50, Set: true},
+		"claude-opus-5-5":           {In: 4, CachedIn: 0.2, CacheWrite: 5, Out: 20, Set: true},
 		"claude-opus-5":             {In: 5, CachedIn: 0.5, CacheWrite: 6.25, Out: 25, Set: true},
 		"claude-opus-4-8":           {In: 5, CachedIn: 0.5, CacheWrite: 6.25, Out: 25, Set: true},
 		"claude-opus-4-7":           {In: 5, CachedIn: 0.5, CacheWrite: 6.25, Out: 25, Set: true},
@@ -38,22 +42,37 @@ func defaultPricing() map[string]pricing {
 		"claude-haiku-4-5":          {In: 1, CachedIn: 0.1, CacheWrite: 1.25, Out: 5, Set: true},
 		"claude-haiku-4-5-20251001": {In: 1, CachedIn: 0.1, CacheWrite: 1.25, Out: 5, Set: true},
 		// OpenAI, per developers.openai.com, standard tier, short context. Cache write is 1.25x input.
+		// The pro models have no cached input rate, so cached tokens bill at the full input rate.
 		"gpt-6-astra":   {In: 10, CachedIn: 1, CacheWrite: 12.5, Out: 50, Set: true},
+		"gpt-6-sol":     {In: 2, CachedIn: 0.2, CacheWrite: 2.5, Out: 10, Set: true},
+		"gpt-6-luna":    {In: 0.1, CachedIn: 0.01, CacheWrite: 0.125, Out: 0.5, Set: true},
 		"gpt-5.6-sol":   {In: 4, CachedIn: 0.4, CacheWrite: 5, Out: 20, Set: true},
 		"gpt-5.6-terra": {In: 2, CachedIn: 0.2, CacheWrite: 2.5, Out: 12, Set: true},
 		"gpt-5.6-luna":  {In: 0.2, CachedIn: 0.02, CacheWrite: 0.25, Out: 1.2, Set: true},
 		"gpt-5.5":       {In: 5, CachedIn: 0.5, CacheWrite: 6.25, Out: 30, Set: true},
+		"gpt-5.5-pro":   {In: 30, CachedIn: 30, CacheWrite: 37.5, Out: 180, Set: true},
 		"gpt-5.4":       {In: 2.5, CachedIn: 0.25, CacheWrite: 3.125, Out: 15, Set: true},
-		"gpt-5.2":       {In: 1.25, CachedIn: 0.125, CacheWrite: 1.5625, Out: 10, Set: true},
+		"gpt-5.4-mini":  {In: 0.75, CachedIn: 0.075, CacheWrite: 0.9375, Out: 4.5, Set: true},
+		"gpt-5.4-nano":  {In: 0.2, CachedIn: 0.02, CacheWrite: 0.25, Out: 1.25, Set: true},
+		"gpt-5.4-pro":   {In: 30, CachedIn: 30, CacheWrite: 37.5, Out: 180, Set: true},
+		"gpt-5.2":       {In: 1.75, CachedIn: 0.175, CacheWrite: 2.1875, Out: 14, Set: true},
+		"gpt-5.2-pro":   {In: 21, CachedIn: 21, CacheWrite: 26.25, Out: 168, Set: true},
 		"gpt-5.1":       {In: 1.25, CachedIn: 0.125, CacheWrite: 1.5625, Out: 10, Set: true},
 		"gpt-5":         {In: 1.25, CachedIn: 0.125, CacheWrite: 1.5625, Out: 10, Set: true},
+		"gpt-5-mini":    {In: 0.25, CachedIn: 0.025, CacheWrite: 0.3125, Out: 2, Set: true},
+		"gpt-5-nano":    {In: 0.05, CachedIn: 0.005, CacheWrite: 0.0625, Out: 0.4, Set: true},
+		"gpt-5-pro":     {In: 15, CachedIn: 15, CacheWrite: 18.75, Out: 120, Set: true},
 		// OpenAI long context rates (a turn with more than longContextTokens of input).
 		"gpt-6-astra+long":   {In: 20, CachedIn: 2, CacheWrite: 25, Out: 75, Set: true},
+		"gpt-6-sol+long":     {In: 4, CachedIn: 0.4, CacheWrite: 5, Out: 15, Set: true},
+		"gpt-6-luna+long":    {In: 0.2, CachedIn: 0.02, CacheWrite: 0.25, Out: 0.75, Set: true},
 		"gpt-5.6-sol+long":   {In: 8, CachedIn: 0.8, CacheWrite: 10, Out: 30, Set: true},
 		"gpt-5.6-terra+long": {In: 4, CachedIn: 0.4, CacheWrite: 5, Out: 18, Set: true},
 		"gpt-5.6-luna+long":  {In: 0.4, CachedIn: 0.04, CacheWrite: 0.5, Out: 1.8, Set: true},
 		"gpt-5.5+long":       {In: 10, CachedIn: 1, CacheWrite: 12.5, Out: 45, Set: true},
+		"gpt-5.5-pro+long":   {In: 60, CachedIn: 60, CacheWrite: 75, Out: 270, Set: true},
 		"gpt-5.4+long":       {In: 5, CachedIn: 0.5, CacheWrite: 6.25, Out: 22.5, Set: true},
+		"gpt-5.4-pro+long":   {In: 60, CachedIn: 60, CacheWrite: 75, Out: 270, Set: true},
 	}
 }
 
