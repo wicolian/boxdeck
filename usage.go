@@ -44,6 +44,9 @@ func (t *tokenTotals) add(other tokenTotals) {
 }
 
 type usageEvent struct {
+	// ID is the Claude message id. A forked or resumed session copies earlier messages
+	// into its own file, so the same id can appear in more than one file.
+	ID        string      `json:"id,omitempty"`
 	Model     string      `json:"model"`
 	Timestamp time.Time   `json:"timestamp"`
 	Tokens    tokenTotals `json:"tokens"`
@@ -205,7 +208,7 @@ func newUsageService(cfg config) *usageService {
 }
 
 func emptyUsageStore() usageStore {
-	return usageStore{Version: 1, Files: map[string]usageFile{}, Days: map[string]usageDay{}}
+	return usageStore{Version: usageStoreVersion, Files: map[string]usageFile{}, Days: map[string]usageDay{}}
 }
 
 func (s *usageService) start(ctx context.Context) {
@@ -332,6 +335,10 @@ func codexRoot(home string) string {
 	return filepath.Join(home, ".codex")
 }
 
+// usageStoreVersion 2 stores Claude message ids. An older store is parsed again from the
+// session files. Its day totals are kept until that first scan replaces them.
+const usageStoreVersion = 2
+
 func loadUsageStore(path string) (usageStore, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -343,6 +350,15 @@ func loadUsageStore(path string) (usageStore, error) {
 	var store usageStore
 	if err := json.Unmarshal(b, &store); err != nil {
 		return usageStore{}, err
+	}
+	if store.Version < usageStoreVersion {
+		fresh := emptyUsageStore()
+		fresh.ClaudeQuota = store.ClaudeQuota
+		if store.Days != nil {
+			fresh.Days = store.Days
+		}
+		fresh.QuotaHistory = store.QuotaHistory
+		return fresh, nil
 	}
 	if store.Files == nil {
 		store.Files = map[string]usageFile{}
@@ -515,7 +531,7 @@ func parseUsageFile(path, provider string) (usageFile, error) {
 				anonymous++
 				id = fmt.Sprintf("anonymous-%d", anonymous)
 			}
-			messages[id] = usageEvent{Model: cleanModel(message.Model), Timestamp: when, Tokens: tokenTotals{In: usage.In, CachedIn: usage.CachedIn, CacheWrite: usage.CacheWrite, Out: usage.Out}}
+			messages[id] = usageEvent{ID: message.ID, Model: cleanModel(message.Model), Timestamp: when, Tokens: tokenTotals{In: usage.In, CachedIn: usage.CachedIn, CacheWrite: usage.CacheWrite, Out: usage.Out}}
 		}
 		if err := scanner.Err(); err != nil {
 			return file, err
@@ -661,7 +677,15 @@ func rebuildDays(store *usageStore, pricing pricingConfig, now time.Time) {
 	sessionSeen := map[string]map[string]bool{}
 	store.CodexQuota = codexQuota{}
 	store.CodexQuotaAt = time.Time{}
-	for path, file := range store.Files {
+	// Sorted, so a parent session (s1.jsonl) keeps a message before its forks (s1/subagents/...).
+	paths := make([]string, 0, len(store.Files))
+	for path := range store.Files {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	claudeSeen := map[string]bool{}
+	for _, path := range paths {
+		file := store.Files[path]
 		if file.Provider == "codex" && file.quota().Present && file.QuotaAt.After(now.Add(-24*time.Hour)) && (store.CodexQuotaAt.IsZero() || file.QuotaAt.After(store.CodexQuotaAt)) {
 			store.CodexQuota = file.quota()
 			store.CodexQuotaAt = file.QuotaAt
@@ -669,6 +693,12 @@ func rebuildDays(store *usageStore, pricing pricingConfig, now time.Time) {
 		for _, event := range file.Events {
 			if event.Tokens.In == 0 && event.Tokens.CachedIn == 0 && event.Tokens.CacheWrite == 0 && event.Tokens.Out == 0 {
 				continue // synthetic or empty messages carry no usage and would only add noise rows
+			}
+			if file.Provider == "claude" && event.ID != "" {
+				if claudeSeen[event.ID] {
+					continue
+				}
+				claudeSeen[event.ID] = true
 			}
 			day := event.Timestamp.UTC().Format("2006-01-02")
 			key := file.Provider + "|" + day

@@ -207,10 +207,14 @@ func TestUsageScannerSkipsOversizedLinesAndKeepsGoing(t *testing.T) {
 	if len(store.Files) != 2 {
 		t.Fatalf("files = %d, want 2", len(store.Files))
 	}
-	if day := store.Days["claude|2026-09-17"]; day.Tokens.In != 20 || day.Sessions != 2 {
-		t.Fatalf("events after the long line were lost: %+v", day)
-	}
 	big := store.Files[filepath.Join(claude, "big.jsonl")]
+	if len(big.Events) != len(store.Files[filepath.Join(claude, "session.jsonl")].Events) || len(big.Events) == 0 {
+		t.Fatalf("events after the long line were lost: %+v", big.Events)
+	}
+	// Both files hold the same messages, so the day counts them once.
+	if day := store.Days["claude|2026-09-17"]; day.Tokens.In != 10 {
+		t.Fatalf("claude day = %+v", day)
+	}
 	if big.Offset != big.Size || big.Size == 0 {
 		t.Fatalf("oversized file was not recorded at its size: %+v", big)
 	}
@@ -269,5 +273,41 @@ func TestUsageSnapshotDoesNotRescanEveryCall(t *testing.T) {
 	}
 	if !started {
 		t.Fatal("a snapshot two minutes after the last scan did not scan")
+	}
+}
+
+func TestUsageScannerCountsClaudeMessageOnceAcrossFiles(t *testing.T) {
+	root := t.TempDir()
+	session := filepath.Join(root, "claude", "projects", "demo")
+	// A forked subagent copies the parent's messages into its own file.
+	if err := os.MkdirAll(filepath.Join(session, "s1", "subagents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	copyFixture(t, "testdata/usage/claude-session.jsonl", filepath.Join(session, "s1.jsonl"))
+	copyFixture(t, "testdata/usage/claude-session.jsonl", filepath.Join(session, "s1", "subagents", "agent-a.jsonl"))
+	store, err := scanUsageRoots(filepath.Join(root, "claude"), filepath.Join(root, "codex"), pricingConfig{}, time.Date(2026, 9, 17, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if day := store.Days["claude|2026-09-17"]; day.Tokens.In != 10 || day.Tokens.Out != 20 || day.Sessions != 1 {
+		t.Fatalf("claude day = %+v", day)
+	}
+	if day := store.Days["claude|2026-09-16"]; day.Tokens.In != 1200 || day.Tokens.Out != 450 {
+		t.Fatalf("claude earlier day = %+v", day)
+	}
+}
+
+func TestUsageStoreFromOlderVersionIsRescanned(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "usage.json")
+	old := usageStore{Version: 1, Files: map[string]usageFile{"a.jsonl": {Provider: "claude", Size: 9, Offset: 9}}, QuotaHistory: []quotaSample{{Provider: "claude"}}}
+	if err := saveUsageStore(path, old); err != nil {
+		t.Fatal(err)
+	}
+	store, err := loadUsageStore(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if store.Version != usageStoreVersion || len(store.Files) != 0 || len(store.QuotaHistory) != 1 {
+		t.Fatalf("store = %+v", store)
 	}
 }
