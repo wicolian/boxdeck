@@ -65,6 +65,7 @@ type app struct {
 	tokenMu       sync.Mutex
 	mcpMu         sync.Mutex
 	mcpSessions   map[string]mcpSession
+	github        *githubService
 }
 
 func jsonEncode(w io.Writer, v any) error { return json.NewEncoder(w).Encode(v) }
@@ -94,6 +95,7 @@ func newApp(cfg config, secret []byte) *app {
 	a.health = &healthSampler{ctx: ctx, hist: map[string][]float64{"cpu": {}, "mem": {}, "swap": {}, "load": {}}}
 	a.mirrors = &mirrorManager{ctx: ctx, cfg: cfg, entries: map[int]mirrorEntry{}}
 	a.usage = newUsageService(cfg)
+	a.github = newGitHubService(runGH)
 	a.apps = newAppsManager(ctx, cfg)
 	a.alerts = newAlertManager(cfg)
 	a.push = newPushRegistry(cfg.home)
@@ -235,6 +237,8 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		a.usageAPI(w, r)
 	case r.URL.Path == "/api/usage/all":
 		a.usageAllAPI(w, r)
+	case r.URL.Path == "/api/github":
+		a.githubAPI(w, r)
 	case r.URL.Path == "/api/edit/new":
 		a.editNew(w, r)
 	case r.URL.Path == "/api/edit/rename":

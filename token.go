@@ -25,6 +25,7 @@ var readOnlyPaths = map[string]bool{
 	"/api/usage":     true,
 	"/api/usage/all": true,
 	"/api/health":    true,
+	"/api/github":    true,
 }
 
 func bearerToken(r *http.Request) (string, bool) {

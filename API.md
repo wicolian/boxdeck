@@ -39,6 +39,7 @@ A read-only token can only send `GET` or `HEAD` to exactly these paths:
 - `/api/usage`
 - `/api/usage/all`
 - `/api/health`
+- `/api/github`
 
 Every other request with a read-only token gets `403` with
 `{"error":"This token is read-only"}`. This includes `/api/run`, all `POST`,
@@ -63,6 +64,7 @@ curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/docker"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/boxes"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage?days=7"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/usage/all"
+curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/github"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/apps"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/files?path=reports"
 curl -sS -H "Authorization: Bearer $TOKEN" "$BOXDECK_TO/api/git/repos"
@@ -91,6 +93,32 @@ For a regular file it returns the file bytes with a matching content type.
 Paths are lexical descendants of `filesRoot`; symlinks are allowed in the same
 way as the deck file viewer. Hidden entries and `node_modules` are omitted from
 directory listings.
+
+`github` is a small GitHub summary for status screens. boxdeck runs `gh` on
+the host with the auth that the host already has, so the screen never holds a
+GitHub token. It returns the open pull requests that the host's gh account
+authored, the CI rollup of the last commit of each one, and the failed workflow
+runs by that account in the last 24 hours in the repositories of those pull
+requests:
+
+```json
+{"ok":true,"login":"octo","prs":{"open":2,"failing":1,"pending":0,"passing":1,
+ "items":[{"repo":"o/a","number":12,"title":"Fix the thing","ci":"failing","url":"https://github.com/o/a/pull/12","draft":false}]},
+ "runs":{"failed":1,"items":[{"repo":"o/a","name":"CI","branch":"fix","url":"https://github.com/o/a/actions/runs/9","createdAt":"2026-10-20T08:00:00Z"}]},
+ "fetchedAt":"2026-10-20T09:00:00Z"}
+```
+
+`ci` is `failing` (FAILURE or ERROR), `pending` (PENDING or EXPECTED),
+`passing` (SUCCESS) or `none` (no checks). `open` counts `items` (at most 50).
+A PR with `ci` `none` is in `open` but in none of the three counts. `runs` is
+best-effort: if that part fails, `runs` is empty and `ok` stays true.
+
+The reply is always `200`. When gh is missing or not signed in, it is
+`{"ok":false,"error":"gh not authenticated on this host",...}`; a timeout or
+another gh failure also gives `ok:false` with a short `error`. `prs.items` and
+`runs.items` are always lists, never `null`. A good result is cached for 5
+minutes and a failed one for 30 seconds. Concurrent requests share one fetch,
+and the gh calls have a 20 second limit in total. A read-only token may read it.
 
 `health` is unauthenticated and returns only `{"ok":true,"version":"dev"}`.
 It is suitable for a load balancer probe.
