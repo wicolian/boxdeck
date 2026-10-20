@@ -292,6 +292,11 @@ token on a private tailnet and revoke it with `boxdeck token revoke PREFIX`.
 The Connect section also provides Codex, Cursor, Windsurf, curl and stdio
 bridge snippets, plus a phone pairing QR.
 
+For a screen that only shows status, such as a TV, make a read-only token with
+`boxdeck token new --read-only tv`. It can only `GET` `/api/boxes`,
+`/api/agents`, `/api/usage`, `/api/usage/all` and `/api/health`; everything
+else returns 403. See [API.md](./API.md#read-only-tokens).
+
 ## Alerts and phone delivery
 
 Alerts watch agent input waits, stuck terminal panes, usage limits, quotas, box

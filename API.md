@@ -13,6 +13,7 @@ The additive config fields are:
 ```json
 {
   "tokens": [],
+  "readOnlyTokens": [],
   "fleetToken": "same-private-token-on-every-box",
   "boxes": [{"name":"old-thinkpad","url":"http://thinkpad:8100","token":"..."}],
   "allowRun": false,
@@ -22,6 +23,33 @@ The additive config fields are:
 
 `boxdeck token list` shows only token prefixes. `boxdeck token revoke PREFIX`
 removes one matching token. A token is printed in full only by `token new`.
+`boxdeck token new [LABEL]` can store a label that `token list` shows.
+
+### Read-only tokens
+
+`boxdeck token new --read-only [LABEL]` makes a read-only token for a wall
+screen, a TV or any other device that only shows status. It starts with `bdr_`
+and is stored in `readOnlyTokens`, not in `tokens`. `token list` marks it
+`read-only`, and `token revoke PREFIX` removes it.
+
+A read-only token can only send `GET` or `HEAD` to exactly these paths:
+
+- `/api/boxes`
+- `/api/agents`
+- `/api/usage`
+- `/api/usage/all`
+- `/api/health`
+
+Every other request with a read-only token gets `403` with
+`{"error":"This token is read-only"}`. This includes `/api/run`, all `POST`,
+`PUT` and `DELETE` requests, websocket upgrades, `/api/pair*`, `/api/connect`,
+alerts and alert actions, `/mcp`, `/cdp` (also `?token=`), files, the terminal
+and the HTML pages. A binary older than this feature does not know
+`readOnlyTokens`, so it rejects these tokens instead of giving them full power.
+
+```sh
+curl -sS -H "Authorization: Bearer $READ_ONLY_TOKEN" "$BOXDECK_TO/api/agents"
+```
 
 ## Read endpoints
 

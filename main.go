@@ -169,6 +169,11 @@ func (a *app) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "forbidden", 403)
 		return
 	}
+	// A read-only token is refused before any other route, including /login, /mcp and /cdp.
+	if a.readOnlyBearer(r) && !readOnlyAllows(r) {
+		jsonReply(w, http.StatusForbidden, object{"error": "This token is read-only"})
+		return
+	}
 	if r.URL.Path == "/login" {
 		a.login(w, r)
 		return
